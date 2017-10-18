@@ -1,3 +1,0 @@
-#!/bin/bash
-
-protoc -I src/plumbing/ src/plumbing/*.proto --go_out=plugins=grpc:src/plumbing
