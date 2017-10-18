@@ -1,0 +1,8 @@
+
+# golang
+/pkg/
+/bin/
+*.coverprofile
+
+# macOS
+.DS_Store
