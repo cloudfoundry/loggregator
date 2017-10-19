@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
+
+	"golang.org/x/net/idna"
 )
 
 type GRPC struct {
@@ -66,6 +69,12 @@ func Parse(reader io.Reader) (*Config, error) {
 	if config.DopplerAddrWithAZ == "" {
 		return nil, fmt.Errorf("DopplerAddrWithAZ is required")
 	}
+
+	config.DopplerAddrWithAZ, err = idna.ToASCII(config.DopplerAddrWithAZ)
+	if err != nil {
+		return nil, err
+	}
+	config.DopplerAddrWithAZ = strings.Replace(config.DopplerAddrWithAZ, "@", "-", -1)
 
 	return config, nil
 }
