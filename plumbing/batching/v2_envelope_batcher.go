@@ -3,7 +3,7 @@ package batching
 import (
 	"time"
 
-	"code.cloudfoundry.org/batching"
+	"code.cloudfoundry.org/go-batching"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
