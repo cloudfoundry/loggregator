@@ -12,7 +12,7 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 
-	gendiodes "code.cloudfoundry.org/diodes"
+	gendiodes "code.cloudfoundry.org/go-diodes"
 
 	"code.cloudfoundry.org/loggregator/metron/internal/clientpool"
 	clientpoolv2 "code.cloudfoundry.org/loggregator/metron/internal/clientpool/v2"

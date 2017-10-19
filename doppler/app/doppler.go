@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	gendiodes "code.cloudfoundry.org/diodes"
+	gendiodes "code.cloudfoundry.org/go-diodes"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/doppler/internal/server"
 	"code.cloudfoundry.org/loggregator/doppler/internal/server/v1"

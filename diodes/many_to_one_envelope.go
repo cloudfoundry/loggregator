@@ -1,7 +1,7 @@
 package diodes
 
 import (
-	gendiodes "code.cloudfoundry.org/diodes"
+	gendiodes "code.cloudfoundry.org/go-diodes"
 	"github.com/cloudfoundry/sonde-go/events"
 )
 

@@ -3,7 +3,7 @@ package diodes
 import (
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
-	gendiodes "code.cloudfoundry.org/diodes"
+	gendiodes "code.cloudfoundry.org/go-diodes"
 )
 
 // ManyToOneEnvelopeV2 diode is optimal for many writers and a single reader for
