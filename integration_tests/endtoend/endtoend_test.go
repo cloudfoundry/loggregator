@@ -4,11 +4,6 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/integration_tests/endtoend"
-
-	"tools/benchmark/experiment"
-	"tools/benchmark/messagegenerator"
-	"tools/benchmark/writestrategies"
-
 	"code.cloudfoundry.org/loggregator/testservers"
 
 	. "github.com/onsi/ginkgo"
@@ -38,11 +33,11 @@ var _ = Describe("End to end tests", func() {
 
 		const writeRatePerSecond = 10
 		metronStreamWriter := endtoend.NewMetronStreamWriter(metronPorts.UDP)
-		generator := messagegenerator.NewLogMessageGenerator("custom-app-id")
-		writeStrategy := writestrategies.NewConstantWriteStrategy(generator, metronStreamWriter, writeRatePerSecond)
+		generator := endtoend.NewLogMessageGenerator("custom-app-id")
+		writeStrategy := endtoend.NewConstantWriteStrategy(generator, metronStreamWriter, writeRatePerSecond)
 
 		firehoseReader := endtoend.NewFirehoseReader(tcPorts.WS)
-		ex := experiment.NewExperiment(firehoseReader)
+		ex := endtoend.NewExperiment(firehoseReader)
 		ex.AddWriteStrategy(writeStrategy)
 
 		ex.Warmup()
