@@ -52,7 +52,7 @@ var _ = Describe("AppServiceStoreWatcher", func() {
 		)
 
 		go watcher.Run()
-		watcher.Stop()
+		adapter.stop()
 
 		Eventually(addCh).Should(BeClosed())
 		Eventually(removeCh).Should(BeClosed())
@@ -295,6 +295,11 @@ func (s *spyStore) watchDir() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.watchDir_
+}
+
+func (s *spyStore) stop() {
+	close(s.watchEvent)
+	close(s.watchErr)
 }
 
 func (s *spyStore) Watch(key string) (<-chan storeadapter.WatchEvent, chan<- bool, <-chan error) {

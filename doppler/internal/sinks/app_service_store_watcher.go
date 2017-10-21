@@ -28,8 +28,6 @@ type AppServiceStoreWatcher struct {
 	adapter                   Store
 	outAddChan, outRemoveChan chan<- AppService
 	cache                     AppServiceWatcherCache
-
-	done chan struct{}
 }
 
 // NewAppServiceStoreWatcher creates an AppServiceStoreWatcher which consumes
@@ -45,48 +43,29 @@ func NewAppServiceStoreWatcher(
 		outAddChan:    outAddChan,
 		outRemoveChan: outRemoveChan,
 		cache:         cache,
-		done:          make(chan struct{}),
 	}, outAddChan, outRemoveChan
 }
 
-// FIXME Add is a private function called only within this file.
-func (w *AppServiceStoreWatcher) Add(appService AppService) {
+func (w *AppServiceStoreWatcher) add(appService AppService) {
 	if !w.cache.Exists(appService) {
 		w.cache.Add(appService)
 		w.outAddChan <- appService
 	}
 }
 
-// FIXME Remove is a private function called only within this file.
-func (w *AppServiceStoreWatcher) Remove(appService AppService) {
+func (w *AppServiceStoreWatcher) remove(appService AppService) {
 	if w.cache.Exists(appService) {
 		w.cache.Remove(appService)
 		w.outRemoveChan <- appService
 	}
 }
 
-// FIXME RemoveApp is a private function called only within this file.
-func (w *AppServiceStoreWatcher) RemoveApp(appId string) []AppService {
+func (w *AppServiceStoreWatcher) removeApp(appId string) []AppService {
 	appServices := w.cache.RemoveApp(appId)
 	for _, appService := range appServices {
 		w.outRemoveChan <- appService
 	}
 	return appServices
-}
-
-// FIXME Get is unused and should be deleted.
-func (w *AppServiceStoreWatcher) Get(appId string) []AppService {
-	return w.cache.Get(appId)
-}
-
-// FIXME Exists is unused and should be deleted.
-func (w *AppServiceStoreWatcher) Exists(appService AppService) bool {
-	return w.cache.Exists(appService)
-}
-
-// FIXME Stop is a private function called only by test. It should be deleted.
-func (w *AppServiceStoreWatcher) Stop() {
-	close(w.done)
 }
 
 // Run consumes from the store until the store disconnects.
@@ -96,20 +75,17 @@ func (w *AppServiceStoreWatcher) Run() {
 		close(w.outRemoveChan)
 	}()
 
-	events, stopChan, errChan := w.adapter.Watch(adapterWatchDir)
+	events, _, errChan := w.adapter.Watch(adapterWatchDir)
 
 	w.registerExistingServicesFromStore()
 	for {
 		select {
-		case <-w.done:
-			close(stopChan)
-			return
 		case err, ok := <-errChan:
 			if !ok {
 				return
 			}
 			log.Printf("AppStoreWatcher: Got error while waiting for ETCD events: %s", err.Error())
-			events, stopChan, errChan = w.adapter.Watch(adapterWatchDir)
+			events, _, errChan = w.adapter.Watch(adapterWatchDir)
 		case event, ok := <-events:
 			if !ok {
 				return
@@ -125,7 +101,7 @@ func (w *AppServiceStoreWatcher) Run() {
 				if err != nil {
 					continue
 				}
-				w.Add(appService)
+				w.add(appService)
 			case storeadapter.DeleteEvent, storeadapter.ExpireEvent:
 				w.deleteEvent(event.PrevNode)
 			}
@@ -141,7 +117,7 @@ func (w *AppServiceStoreWatcher) registerExistingServicesFromStore() {
 			if err != nil {
 				continue
 			}
-			w.Add(appService)
+			w.add(appService)
 		}
 	}
 }
@@ -163,7 +139,7 @@ func (w *AppServiceStoreWatcher) deleteEvent(node *storeadapter.StoreNode) {
 	if node.Dir {
 		key := node.Key
 		appId := path.Base(key)
-		w.RemoveApp(appId)
+		w.removeApp(appId)
 		return
 	}
 
@@ -171,5 +147,5 @@ func (w *AppServiceStoreWatcher) deleteEvent(node *storeadapter.StoreNode) {
 	if err != nil {
 		return
 	}
-	w.Remove(appService)
+	w.remove(appService)
 }
