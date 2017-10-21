@@ -6,14 +6,12 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/dopplerservice"
-	"code.cloudfoundry.org/loggregator/dopplerservice/fakes"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/cloudfoundry/storeadapter"
 	"github.com/cloudfoundry/storeadapter/storerunner/etcdstorerunner"
+
+	. "github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
+	. "github.com/onsi/gomega"
 )
 
 // Using etcd for service discovery is a deprecated code path
@@ -70,7 +68,7 @@ var _ = XDescribe("Announcer", func() {
 			})
 
 			It("creates, then maintains the node", func() {
-				fakeadapter := &fakes.FakeStoreAdapter{}
+				fakeadapter := &FakeStoreAdapter{}
 				dopplerservice.Announce(ip, time.Second, &conf, fakeadapter)
 				Expect(fakeadapter.CreateCallCount()).To(Equal(1))
 				Expect(fakeadapter.MaintainNodeCallCount()).To(Equal(1))
@@ -78,7 +76,7 @@ var _ = XDescribe("Announcer", func() {
 
 			It("Panics if MaintainNode returns error", func() {
 				err := errors.New("some etcd time out error")
-				fakeadapter := &fakes.FakeStoreAdapter{}
+				fakeadapter := &FakeStoreAdapter{}
 				fakeadapter.MaintainNodeReturns(nil, nil, err)
 				Expect(func() {
 					dopplerservice.Announce(ip, time.Second, &conf, fakeadapter)
@@ -109,14 +107,14 @@ var _ = XDescribe("Announcer", func() {
 		})
 
 		It("maintains the node", func() {
-			fakeadapter := &fakes.FakeStoreAdapter{}
+			fakeadapter := &FakeStoreAdapter{}
 			dopplerservice.AnnounceLegacy(ip, time.Second, &conf, fakeadapter)
 			Expect(fakeadapter.MaintainNodeCallCount()).To(Equal(1))
 		})
 
 		It("Panics if MaintainNode returns error", func() {
 			err := errors.New("some etcd time out error")
-			fakeadapter := &fakes.FakeStoreAdapter{}
+			fakeadapter := &FakeStoreAdapter{}
 			fakeadapter.MaintainNodeReturns(nil, nil, err)
 			Expect(func() {
 				dopplerservice.AnnounceLegacy(ip, time.Second, &conf, fakeadapter)
