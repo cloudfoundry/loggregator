@@ -6,130 +6,107 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/dopplerservice"
-	"github.com/cloudfoundry/storeadapter"
-	"github.com/cloudfoundry/storeadapter/storerunner/etcdstorerunner"
 
+	"github.com/cloudfoundry/storeadapter"
 	. "github.com/onsi/ginkgo"
-	ginkgoConfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 )
 
-// Using etcd for service discovery is a deprecated code path
-var _ = XDescribe("Announcer", func() {
+var _ = Describe("Announcer", func() {
 	var (
-		ip          string
-		conf        dopplerservice.Config
-		etcdRunner  *etcdstorerunner.ETCDClusterRunner
-		etcdAdapter storeadapter.StoreAdapter
-	)
-
-	BeforeSuite(func() {
-		ip = "127.0.0.1"
-
-		etcdPort := 5500 + ginkgoConfig.GinkgoConfig.ParallelNode*10
-		etcdRunner = etcdstorerunner.NewETCDClusterRunner(etcdPort, 1, nil)
-		etcdRunner.Start()
-
-		etcdAdapter = etcdRunner.Adapter(nil)
-
 		conf = dopplerservice.Config{
 			JobName:      "doppler_z1",
 			Index:        "0",
 			Zone:         "z1",
 			OutgoingPort: 8888,
 		}
-	})
+		// legacyKey  = "/healthstatus/doppler/z1/doppler_z1/0"
+		// dopplerKey = "/doppler/meta/z1/doppler_z1/0"
+	)
 
-	AfterSuite(func() {
-		etcdAdapter.Disconnect()
-		etcdRunner.Stop()
-	})
-	var stopChan chan chan bool
+	It("creates a node", func() {
+		store := &spyDopplerConfigStore{}
 
-	BeforeEach(func() {
-		etcdRunner.Reset()
-		stopChan = nil
-	})
+		dopplerservice.Announce("127.0.0.1", time.Second, &conf, store)
 
-	AfterEach(func() {
-		if stopChan != nil {
-			notify := make(chan bool)
-			Eventually(stopChan).Should(BeSent(notify))
-			Eventually(notify).Should(BeClosed())
+		expected := storeadapter.StoreNode{
+			Key:   "/doppler/meta/z1/doppler_z1/0",
+			Value: []byte("{\"version\":1,\"endpoints\":[\"ws://127.0.0.1:8888\"]}"),
+			TTL:   uint64(time.Second.Seconds()),
 		}
+		Expect(store.createNode).To(Equal(expected))
 	})
 
-	Context("Announce", func() {
-		Context("with valid ETCD config", func() {
-			var dopplerKey string
+	It("maintains a node", func() {
+		store := &spyDopplerConfigStore{}
 
-			BeforeEach(func() {
-				dopplerKey = fmt.Sprintf("/doppler/meta/%s/%s/%s", conf.Zone, conf.JobName, conf.Index)
-			})
+		dopplerservice.Announce("127.0.0.1", time.Second, &conf, store)
 
-			It("creates, then maintains the node", func() {
-				fakeadapter := &FakeStoreAdapter{}
-				dopplerservice.Announce(ip, time.Second, &conf, fakeadapter)
-				Expect(fakeadapter.CreateCallCount()).To(Equal(1))
-				Expect(fakeadapter.MaintainNodeCallCount()).To(Equal(1))
-			})
-
-			It("Panics if MaintainNode returns error", func() {
-				err := errors.New("some etcd time out error")
-				fakeadapter := &FakeStoreAdapter{}
-				fakeadapter.MaintainNodeReturns(nil, nil, err)
-				Expect(func() {
-					dopplerservice.Announce(ip, time.Second, &conf, fakeadapter)
-				}).To(Panic())
-			})
-
-			It("announces only udp and websocket", func() {
-				dopplerMeta := fmt.Sprintf(`{"version": 1, "endpoints":["udp://%[1]s:1234", "ws://%[1]s:8888" ]}`, ip)
-
-				stopChan = dopplerservice.Announce(ip, time.Second, &conf, etcdAdapter)
-
-				Eventually(func() []byte {
-					node, err := etcdAdapter.Get(dopplerKey)
-					if err != nil {
-						return nil
-					}
-					return node.Value
-				}).Should(MatchJSON(dopplerMeta))
-			})
-		})
+		expected := storeadapter.StoreNode{
+			Key:   "/doppler/meta/z1/doppler_z1/0",
+			Value: []byte("{\"version\":1,\"endpoints\":[\"ws://127.0.0.1:8888\"]}"),
+			TTL:   uint64(time.Second.Seconds()),
+		}
+		Expect(store.maintainNode).To(Equal(expected))
 	})
 
-	Context("AnnounceLegacy", func() {
-		var legacyKey string
+	It("panics when maintaining a node fails", func() {
+		store := &spyDopplerConfigStore{}
+		store.maintainNodeErr = errors.New("maintain failed")
 
-		BeforeEach(func() {
-			legacyKey = fmt.Sprintf("/healthstatus/doppler/%s/%s/%s", conf.Zone, conf.JobName, conf.Index)
-		})
+		Expect(func() {
+			dopplerservice.Announce("127.0.0.1", time.Second, &conf, store)
+		}).To(Panic())
+	})
 
-		It("maintains the node", func() {
-			fakeadapter := &FakeStoreAdapter{}
-			dopplerservice.AnnounceLegacy(ip, time.Second, &conf, fakeadapter)
-			Expect(fakeadapter.MaintainNodeCallCount()).To(Equal(1))
-		})
+	It("announces only udp and websocket", func() {
+		store := &spyDopplerConfigStore{}
 
-		It("Panics if MaintainNode returns error", func() {
-			err := errors.New("some etcd time out error")
-			fakeadapter := &FakeStoreAdapter{}
-			fakeadapter.MaintainNodeReturns(nil, nil, err)
-			Expect(func() {
-				dopplerservice.AnnounceLegacy(ip, time.Second, &conf, fakeadapter)
-			}).To(Panic())
-		})
+		dopplerservice.Announce("127.0.0.1", time.Second, &conf, store)
 
-		It("Should maintain legacy healthstatus key and value", func() {
-			stopChan = dopplerservice.AnnounceLegacy(ip, time.Second, &conf, etcdAdapter)
-			Eventually(func() []byte {
-				node, err := etcdAdapter.Get(legacyKey)
-				if err != nil {
-					return nil
-				}
-				return node.Value
-			}).Should(Equal([]byte(ip)))
-		})
+		expected := fmt.Sprintf(
+			`{"version": 1, "endpoints":["ws://%[1]s:8888" ]}`,
+			"127.0.0.1",
+		)
+		Expect(store.createNode.Value).To(MatchJSON(expected))
+	})
+
+	It("maintains the legacy node", func() {
+		store := &spyDopplerConfigStore{}
+
+		dopplerservice.AnnounceLegacy("127.0.0.1", time.Second, &conf, store)
+
+		expected := storeadapter.StoreNode{
+			Key:   "/healthstatus/doppler/z1/doppler_z1/0",
+			Value: []byte("127.0.0.1"),
+			TTL:   uint64(time.Second.Seconds()),
+		}
+		Expect(store.maintainNode).To(Equal(expected))
+	})
+
+	It("panics when MaintainNode returns error for the legacy node", func() {
+		store := &spyDopplerConfigStore{}
+		store.maintainNodeErr = errors.New("maintain failed")
+
+		Expect(func() {
+			dopplerservice.AnnounceLegacy("127.0.0.1", time.Second, &conf, store)
+		}).To(Panic())
 	})
 })
+
+type spyDopplerConfigStore struct {
+	createNode      storeadapter.StoreNode
+	maintainNode    storeadapter.StoreNode
+	maintainNodeErr error
+}
+
+func (s *spyDopplerConfigStore) Create(n storeadapter.StoreNode) error {
+	s.createNode = n
+
+	return nil
+}
+
+func (s *spyDopplerConfigStore) MaintainNode(n storeadapter.StoreNode) (<-chan bool, chan chan bool, error) {
+	s.maintainNode = n
+	return make(chan bool), make(chan chan bool), s.maintainNodeErr
+}

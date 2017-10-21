@@ -25,7 +25,12 @@ type Config struct {
 	OutgoingPort uint32
 }
 
-func Announce(ip string, ttl time.Duration, config *Config, storeAdapter storeadapter.StoreAdapter) chan (chan bool) {
+type DopplerConfigStore interface {
+	Create(storeadapter.StoreNode) error
+	MaintainNode(storeadapter.StoreNode) (<-chan bool, chan chan bool, error)
+}
+
+func Announce(ip string, ttl time.Duration, config *Config, store DopplerConfigStore) chan (chan bool) {
 	dopplerMetaBytes, err := buildDopplerMeta(ip, config)
 	if err != nil {
 		panic(err)
@@ -40,8 +45,8 @@ func Announce(ip string, ttl time.Duration, config *Config, storeAdapter storead
 		TTL:   uint64(ttl.Seconds()),
 	}
 	// Call to create to make sure node is created before we return
-	storeAdapter.Create(node)
-	status, stopChan, err := storeAdapter.MaintainNode(node)
+	store.Create(node)
+	status, stopChan, err := store.MaintainNode(node)
 
 	if err != nil {
 		panic(err)
@@ -57,9 +62,9 @@ func Announce(ip string, ttl time.Duration, config *Config, storeAdapter storead
 	return stopChan
 }
 
-func AnnounceLegacy(ip string, ttl time.Duration, config *Config, storeAdapter storeadapter.StoreAdapter) chan (chan bool) {
+func AnnounceLegacy(ip string, ttl time.Duration, config *Config, store DopplerConfigStore) chan (chan bool) {
 	key := fmt.Sprintf("%s/%s/%s/%s", LEGACY_ROOT, config.Zone, config.JobName, config.Index)
-	status, stopChan, err := storeAdapter.MaintainNode(storeadapter.StoreNode{
+	status, stopChan, err := store.MaintainNode(storeadapter.StoreNode{
 		Key:   key,
 		Value: []byte(ip),
 		TTL:   uint64(ttl.Seconds()),
