@@ -12,17 +12,14 @@ import (
 	fakeMS "github.com/cloudfoundry/dropsonde/metric_sender/fake"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/storeadapter/storerunner/etcdstorerunner"
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	"google.golang.org/grpc/grpclog"
 )
 
 var (
-	etcdRunner          *etcdstorerunner.ETCDClusterRunner
 	pathToTCPEchoServer string
 	fakeMetricSender    *fakeMS.FakeMetricSender
 	fakeEventEmitter    *fake.FakeEventEmitter
@@ -38,11 +35,6 @@ func TestSinks(t *testing.T) {
 var _ = SynchronizedBeforeSuite(func() []byte {
 	return nil
 }, func(encodedBuiltArtifacts []byte) {
-	etcdPort := 5000 + (config.GinkgoConfig.ParallelNode)*10
-	etcdRunner = etcdstorerunner.NewETCDClusterRunner(etcdPort, 1, nil)
-
-	etcdRunner.Start()
-
 	var err error
 	pathToTCPEchoServer, err = gexec.Build("tools/echo/cmd/tcp_server")
 	Expect(err).NotTo(HaveOccurred())
@@ -55,18 +47,6 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	batcher := metricbatcher.New(sender, 100*time.Millisecond)
 	metrics.Initialize(sender, batcher)
 }, 10)
-
-var _ = SynchronizedAfterSuite(func() {
-	if etcdRunner != nil {
-		etcdRunner.Stop()
-	}
-}, func() {
-	gexec.CleanupBuildArtifacts()
-})
-
-var _ = BeforeEach(func() {
-	etcdRunner.Reset()
-})
 
 func AddWSSink(receivedChan chan []byte, port string, path string) (*websocket.Conn, chan bool, <-chan bool) {
 	dontKeepAliveChan := make(chan bool, 1)
