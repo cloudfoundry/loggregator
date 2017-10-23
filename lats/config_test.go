@@ -2,6 +2,7 @@ package lats_test
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 )
@@ -31,10 +32,15 @@ type MetronConfig struct {
 	Zone                     string
 }
 
-func Load() *TestConfig {
-	configFile, err := os.Open(configPath())
+func Load() (*TestConfig, error) {
+	path := os.Getenv("CONFIG")
+	if path == "" {
+		return nil, errors.New("Must set $CONFIG to point to an integration config .json file.")
+	}
+
+	configFile, err := os.Open(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	config := &TestConfig{
@@ -48,7 +54,7 @@ func Load() *TestConfig {
 	decoder := json.NewDecoder(configFile)
 	err = decoder.Decode(config)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if config.DropsondePort == 0 {
@@ -59,7 +65,7 @@ func Load() *TestConfig {
 		log.Panic("Config requires IP but is missing")
 	}
 
-	return config
+	return config, nil
 }
 
 func (tc *TestConfig) SaveMetronConfig() {
@@ -84,13 +90,4 @@ func (tc *TestConfig) SaveMetronConfig() {
 
 	metronConfigFile.Write(bytes)
 	metronConfigFile.Close()
-}
-
-func configPath() string {
-	path := os.Getenv("CONFIG")
-	if path == "" {
-		panic("Must set $CONFIG to point to an integration config .json file.")
-	}
-
-	return path
 }

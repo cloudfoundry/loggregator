@@ -14,7 +14,12 @@ import (
 func TestLats(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	config = Load()
+	var err error
+	config, err = Load()
+	if err != nil {
+		t.Log(err.Error())
+		return
+	}
 
 	BeforeSuite(func() {
 		config.SaveMetronConfig()
