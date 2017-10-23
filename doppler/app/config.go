@@ -24,12 +24,6 @@ type GRPC struct {
 }
 
 type Config struct {
-	// TODO: Are these only used in registration?
-	Index   string
-	JobName string
-	IP      string
-	Zone    string
-
 	MaxRetainedLogMessages       uint32
 	MessageDrainBufferSize       uint
 	ContainerMetricTTLSeconds    int
@@ -46,10 +40,6 @@ type Config struct {
 }
 
 func (c *Config) validate() (err error) {
-	if c.IP == "" {
-		return errors.New("invalid doppler config, no IP provided")
-	}
-
 	if c.MaxRetainedLogMessages == 0 {
 		return errors.New("Need max number of log messages to retain per application")
 	}

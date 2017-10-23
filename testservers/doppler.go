@@ -14,11 +14,6 @@ import (
 
 func BuildDopplerConfig(metronUDPPort, metronGRPCPort int) app.Config {
 	return app.Config{
-		Index:   "42",
-		JobName: "test-job-name",
-		Zone:    "test-availability-zone",
-		IP:      "127.0.0.1",
-
 		GRPC: app.GRPC{
 			CertFile: Cert("doppler.crt"),
 			KeyFile:  Cert("doppler.key"),
