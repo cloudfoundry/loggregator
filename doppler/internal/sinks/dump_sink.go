@@ -92,7 +92,3 @@ func (d *DumpSink) AppID() string {
 func (d *DumpSink) Identifier() string {
 	return d.appId
 }
-
-func (d *DumpSink) ShouldReceiveErrors() bool {
-	return true
-}

@@ -18,10 +18,8 @@ import (
 
 var _ = Describe("Metron", func() {
 	It("writes downstream via gRPC", func() {
-		etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-		defer etcdCleanup()
 		dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-			testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+			testservers.BuildDopplerConfig(0, 0),
 		)
 		defer dopplerCleanup()
 		metronCleanup, metronPorts := testservers.StartMetron(
@@ -33,13 +31,19 @@ var _ = Describe("Metron", func() {
 
 		err := dropsonde.Initialize(fmt.Sprintf("localhost:%d", metronPorts.UDP), "test-origin")
 		Expect(err).NotTo(HaveOccurred())
-		subscriptionClient, err := egressClient.Subscribe(
-			context.Background(),
-			&plumbing.SubscriptionRequest{
-				ShardID: "shard-id",
-			},
-		)
-		Expect(err).ToNot(HaveOccurred())
+
+		var subscriptionClient plumbing.Doppler_SubscribeClient
+		f := func() error {
+			var err error
+			subscriptionClient, err = egressClient.Subscribe(
+				context.Background(),
+				&plumbing.SubscriptionRequest{
+					ShardID: "shard-id",
+				},
+			)
+			return err
+		}
+		Eventually(f).ShouldNot(HaveOccurred())
 
 		By("sending a message into metron")
 		err = logs.SendAppLog("test-app-id", "An event happened!", "test-app-id", "0")

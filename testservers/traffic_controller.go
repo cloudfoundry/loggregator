@@ -12,9 +12,10 @@ import (
 	tcConf "code.cloudfoundry.org/loggregator/trafficcontroller/app"
 )
 
-func BuildTrafficControllerConf(etcdClientURL string, dopplerGRPCPort, metronPort int) tcConf.Config {
+func BuildTrafficControllerConf(dopplerGRPCPort, metronPort int) tcConf.Config {
 	return tcConf.Config{
-		IP: "127.0.0.1",
+		IP:           "127.0.0.1",
+		DopplerAddrs: []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
 
 		GRPC: tcConf.GRPC{
 			Port:     uint16(dopplerGRPCPort),
@@ -26,8 +27,6 @@ func BuildTrafficControllerConf(etcdClientURL string, dopplerGRPCPort, metronPor
 			UDPAddress: fmt.Sprintf("localhost:%d", metronPort),
 		},
 		HealthAddr: "localhost:0",
-
-		EtcdUrls: []string{etcdClientURL}, EtcdMaxConcurrentRequests: 5,
 
 		SystemDomain:   "vcap.me",
 		SkipCertVerify: true,

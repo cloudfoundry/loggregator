@@ -13,8 +13,6 @@ type BuildPaths struct {
 	Metron            string `json:"metron"`
 	Doppler           string `json:"doppler"`
 	TrafficController string `json:"traffic_controller"`
-	SyslogDrainBinder string `json:"syslog_drain_binder"`
-	Etcd              string `json:"etcd"`
 }
 
 func (bp BuildPaths) Marshal() ([]byte, error) {
@@ -29,8 +27,6 @@ func (bp BuildPaths) SetEnv() {
 	os.Setenv("METRON_BUILD_PATH", bp.Metron)
 	os.Setenv("DOPPLER_BUILD_PATH", bp.Doppler)
 	os.Setenv("TRAFFIC_CONTROLLER_BUILD_PATH", bp.TrafficController)
-	os.Setenv("SYSLOG_DRAIN_BINDER_BUILD_PATH", bp.SyslogDrainBinder)
-	os.Setenv("ETCD_BUILD_PATH", bp.Etcd)
 }
 
 func Build() (BuildPaths, chan error) {
@@ -43,8 +39,6 @@ func Build() (BuildPaths, chan error) {
 		bp.Metron = os.Getenv("METRON_BUILD_PATH")
 		bp.Doppler = os.Getenv("DOPPLER_BUILD_PATH")
 		bp.TrafficController = os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
-		bp.SyslogDrainBinder = os.Getenv("SYSLOG_DRAIN_BINDER_BUILD_PATH")
-		bp.Etcd = os.Getenv("ETCD_BUILD_PATH")
 		return bp, errors
 	}
 
@@ -52,7 +46,7 @@ func Build() (BuildPaths, chan error) {
 		mu sync.Mutex
 		wg sync.WaitGroup
 	)
-	wg.Add(5)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -88,30 +82,6 @@ func Build() (BuildPaths, chan error) {
 		mu.Lock()
 		defer mu.Unlock()
 		bp.TrafficController = tcPath
-	}()
-
-	go func() {
-		defer wg.Done()
-		drainBinderPath, err := gexec.Build("code.cloudfoundry.org/loggregator/syslog_drain_binder", "-race")
-		if err != nil {
-			errors <- err
-			return
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		bp.SyslogDrainBinder = drainBinderPath
-	}()
-
-	go func() {
-		defer wg.Done()
-		etcdPath, err := gexec.Build("github.com/coreos/etcd", "-race")
-		if err != nil {
-			errors <- err
-			return
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		bp.Etcd = etcdPath
 	}()
 
 	wg.Wait()

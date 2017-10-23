@@ -10,8 +10,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
-
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"golang.org/x/net/context"
 )
@@ -30,9 +28,13 @@ type DopplerPool interface {
 	Close(dopplerAddr string)
 }
 
+type Event struct {
+	GRPCDopplers []string
+}
+
 // Finder yields events that tell us what dopplers are available.
 type Finder interface {
-	Next() dopplerservice.Event
+	Next() Event
 }
 
 type MetaMetricBatcher interface {

@@ -18,10 +18,8 @@ import (
 var _ = Describe("Firehose test", func() {
 	Context("gRPC ingress/egress", func() {
 		It("receives log messages", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -65,10 +63,8 @@ var _ = Describe("Firehose test", func() {
 		})
 
 		It("receives container metrics", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -112,10 +108,8 @@ var _ = Describe("Firehose test", func() {
 		})
 
 		It("two separate firehose subscriptions receive the same message", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -164,10 +158,8 @@ var _ = Describe("Firehose test", func() {
 		})
 
 		It("firehose subscriptions split message load", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -212,10 +204,8 @@ var _ = Describe("Firehose test", func() {
 		})
 
 		It("does not receive duplicate logs for missing app ID", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV2Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -275,10 +265,8 @@ var _ = Describe("Firehose test", func() {
 		})
 
 		It("does not receive duplicate logs for missing app ID with a filter", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV2Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))

@@ -1,8 +1,6 @@
 package sinks_test
 
 import (
-	"net"
-	"net/url"
 	"sync"
 	"time"
 
@@ -22,12 +20,7 @@ import (
 var _ = Describe("SinkManager", func() {
 	var (
 		fakeMetricSender *fakeMS.FakeMetricSender
-		blackListManager = sinks.NewBlackListManager(
-			[]sinks.IPRange{{Start: "10.10.10.10", End: "10.10.10.20"}},
-		)
-		sinkManager                              *sinks.SinkManager
-		sinkManagerDone                          chan struct{}
-		newAppServiceChan, deletedAppServiceChan chan sinks.AppService
+		sinkManager      *sinks.SinkManager
 	)
 
 	BeforeEach(func() {
@@ -36,23 +29,20 @@ var _ = Describe("SinkManager", func() {
 		fakeMetricSender.Reset()
 
 		health := newSpyHealthRegistrar()
-		sinkManager = sinks.NewSinkManager(1, true, blackListManager, 100,
-			"dropsonde-origin", 1*time.Second, 0, 1*time.Second,
-			1*time.Second, nil, testhelper.NewMetricClient(), health)
-
-		newAppServiceChan = make(chan sinks.AppService)
-		deletedAppServiceChan = make(chan sinks.AppService)
-
-		sinkManagerDone = make(chan struct{})
-		go func() {
-			defer close(sinkManagerDone)
-			sinkManager.Start(newAppServiceChan, deletedAppServiceChan)
-		}()
+		sinkManager = sinks.NewSinkManager(
+			1,
+			100,
+			"dropsonde-origin",
+			1*time.Second,
+			1*time.Second,
+			nil,
+			testhelper.NewMetricClient(),
+			health,
+		)
 	})
 
 	AfterEach(func() {
 		sinkManager.Stop()
-		<-sinkManagerDone
 	})
 
 	Describe("SendTo", func() {
@@ -185,180 +175,7 @@ var _ = Describe("SinkManager", func() {
 		})
 	})
 
-	Context("when an add update is received", func() {
-		It("creates a new syslog sink with syslog writer", func() {
-			initialNumSinks := fakeMetricSender.GetValue(
-				"messageRouter.numberOfSyslogSinks",
-			).Value
-			newAppServiceChan <- sinks.NewServiceInfo(
-				"aptastic",
-				"syslog://127.0.1.1:885",
-				"org.space.app.1",
-			)
-
-			f := func() float64 {
-				return fakeMetricSender.GetValue(
-					"messageRouter.numberOfSyslogSinks",
-				).Value
-			}
-			Eventually(f, 2).Should(Equal(initialNumSinks + 1))
-		})
-
-		It("creates a new syslog sink with tlsWriter", func() {
-			initialNumSinks := fakeMetricSender.GetValue(
-				"messageRouter.numberOfSyslogSinks",
-			).Value
-			newAppServiceChan <- sinks.NewServiceInfo(
-				"aptastic",
-				"syslog-tls://127.0.1.1:885",
-				"org.space.app.1",
-			)
-
-			f := func() float64 {
-				return fakeMetricSender.GetValue(
-					"messageRouter.numberOfSyslogSinks",
-				).Value
-			}
-			Eventually(f, 2).Should(Equal(initialNumSinks + 1))
-		})
-
-		It("creates a new syslog sink with httpsWriter", func() {
-			initialNumSinks := fakeMetricSender.GetValue(
-				"messageRouter.numberOfSyslogSinks",
-			).Value
-			newAppServiceChan <- sinks.NewServiceInfo(
-				"aptastic",
-				"https://127.0.1.1:885",
-				"org.space.app.1",
-			)
-
-			f := func() float64 {
-				return fakeMetricSender.GetValue(
-					"messageRouter.numberOfSyslogSinks",
-				).Value
-			}
-			Eventually(f, 2).Should(Equal(initialNumSinks + 1))
-		})
-
-		Context("with an invalid drain Url", func() {
-			var errorSink *channelSink
-
-			BeforeEach(func() {
-				errorSink = &channelSink{appId: "aptastic",
-					identifier: "myAppChan1",
-					done:       make(chan struct{}),
-				}
-				sinkManager.RegisterSink(errorSink)
-			})
-
-			It("sends an error message if the drain URL is blacklisted", func() {
-				newAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"syslog://10.10.10.11:884",
-					"org.space.app.1",
-				)
-
-				Eventually(errorSink.Received).Should(HaveLen(1))
-				errorMsg := errorSink.Received()[0]
-				Expect(string(errorMsg.GetLogMessage().GetMessage())).To(
-					MatchRegexp("Invalid syslog drain URL"),
-				)
-			})
-
-			It("sends an error message if the drain URL is invalid", func() {
-				newAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"syslog//invalid",
-					"org.space.app.1",
-				)
-
-				Eventually(errorSink.Received).Should(HaveLen(1))
-				errorMsg := errorSink.Received()[0]
-				Expect(string(errorMsg.GetLogMessage().GetMessage())).To(
-					MatchRegexp("Invalid syslog drain URL"),
-				)
-			})
-		})
-
-		Context("when a delete update is received", func() {
-			It("deletes the corresponding syslog sink if it exists", func() {
-				initialNumSinks := fakeMetricSender.GetValue(
-					"messageRouter.numberOfSyslogSinks",
-				).Value
-				newAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"syslog://127.0.1.1:886",
-					"org.space.app.1",
-				)
-
-				f := func() float64 {
-					return fakeMetricSender.GetValue(
-						"messageRouter.numberOfSyslogSinks",
-					).Value
-				}
-				Eventually(f, 2).Should(Equal(initialNumSinks + 1))
-
-				deletedAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"syslog://127.0.1.1:886",
-					"org.space.app.1",
-				)
-
-				Eventually(f, 2).Should(Equal(initialNumSinks))
-			})
-
-			It("handles a delete for a nonexistent sink", func() {
-				initialNumSinks := fakeMetricSender.GetValue(
-					"messageRouter.numberOfSyslogSinks",
-				).Value
-				deletedAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"syslog://127.0.1.1:886",
-					"org.space.app.1",
-				)
-
-				f := func() float64 {
-					return fakeMetricSender.GetValue(
-						"messageRouter.numberOfSyslogSinks",
-					).Value
-				}
-				Eventually(f, 2).Should(Equal(initialNumSinks))
-			})
-
-			It("deletes a sink based on its identifier", func() {
-				initialNumSinks := fakeMetricSender.GetValue(
-					"messageRouter.numberOfSyslogSinks",
-				).Value
-				newAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"https://acme.org/foo%3Dbar",
-					"org.space.app.1",
-				)
-
-				f := func() float64 {
-					return fakeMetricSender.GetValue(
-						"messageRouter.numberOfSyslogSinks",
-					).Value
-				}
-				Eventually(f, 2).Should(Equal(initialNumSinks + 1))
-
-				deletedAppServiceChan <- sinks.NewServiceInfo(
-					"aptastic",
-					"https://acme.org/foo%3Dbar",
-					"org.space.app.1",
-				)
-
-				Eventually(f, 2).Should(Equal(initialNumSinks))
-			})
-		})
-	})
-
 	Describe("Stop", func() {
-		It("stops", func() {
-			sinkManager.Stop()
-			Eventually(sinkManagerDone).Should(BeClosed())
-		})
-
 		It("stops all registered sinks", func(done Done) {
 			sink := &channelSink{appId: "myApp1",
 				identifier: "myAppChan1",
@@ -409,44 +226,6 @@ var _ = Describe("SinkManager", func() {
 				Eventually(func() []*events.Envelope {
 					return sinkManager.RecentLogsFor("appId")
 				}).Should(HaveLen(0))
-			})
-		})
-
-		Context("with a SyslogSink", func() {
-			var syslogSink sinks.Sink
-
-			BeforeEach(func() {
-				url := &url.URL{Scheme: "syslog", Host: "localhost:9998"}
-				writer, _ := sinks.NewSyslogWriter(
-					url,
-					"appId",
-					"loggregator",
-					&net.Dialer{Timeout: 500 * time.Millisecond},
-					0,
-				)
-				syslogSink = sinks.NewSyslogSink(
-					"appId",
-					url,
-					100,
-					writer,
-					func(string, string) {},
-					"dropsonde-origin",
-				)
-
-				sinkManager.RegisterSink(syslogSink)
-			})
-
-			It("removes the sink", func() {
-				f := func() float64 {
-					return fakeMetricSender.GetValue(
-						"messageRouter.numberOfSyslogSinks",
-					).Value
-				}
-				Eventually(f, 2).Should(BeEquivalentTo(1))
-
-				sinkManager.UnregisterSink(syslogSink)
-
-				Eventually(f, 2).Should(BeEquivalentTo(0))
 			})
 		})
 
@@ -511,22 +290,6 @@ var _ = Describe("SinkManager", func() {
 		})
 	})
 
-	Describe("SendSyslogErrorToLoggregator", func() {
-		It("listens and broadcasts error messages", func() {
-			sink := &channelSink{
-				appId:      "myApp",
-				identifier: "myAppChan1",
-				done:       make(chan struct{}),
-			}
-			sinkManager.RegisterSink(sink)
-			sinkManager.SendSyslogErrorToLoggregator("error msg", "myApp")
-
-			Eventually(sink.Received).Should(HaveLen(1))
-
-			errorMsg := string(sink.Received()[0].GetLogMessage().GetMessage())
-			Expect(errorMsg).To(Equal("error msg"))
-		})
-	})
 })
 
 type channelSink struct {
@@ -583,8 +346,7 @@ func (c *channelSink) Received() []*events.Envelope {
 	return data
 }
 
-func (c *channelSink) Identifier() string        { return c.identifier }
-func (c *channelSink) ShouldReceiveErrors() bool { return true }
+func (c *channelSink) Identifier() string { return c.identifier }
 
 func (c *channelSink) GetInstrumentationMetric() sinks.Metric {
 	return sinks.Metric{Name: "numberOfMessagesLost", Value: 25}

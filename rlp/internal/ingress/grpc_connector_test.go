@@ -4,8 +4,8 @@ import (
 	"log"
 	"net"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
+	"code.cloudfoundry.org/loggregator/plumbing"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/ingress"
 
@@ -70,7 +70,7 @@ var _ = Describe("GRPCConnector", func() {
 				)
 
 				BeforeEach(func() {
-					event := dopplerservice.Event{
+					event := plumbing.Event{
 						GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
 					}
 
@@ -125,10 +125,10 @@ var _ = Describe("GRPCConnector", func() {
 			})
 
 			Context("when a doppler comes online before stream has established", func() {
-				var event dopplerservice.Event
+				var event plumbing.Event
 
 				BeforeEach(func() {
-					event = dopplerservice.Event{
+					event = plumbing.Event{
 						GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
 					}
 
@@ -231,17 +231,17 @@ func captureSubscribeSender(doppler *MockDopplerServer) v2.Egress_BatchedReceive
 type mockFinder struct {
 	NextCalled chan bool
 	NextOutput struct {
-		Ret0 chan dopplerservice.Event
+		Ret0 chan plumbing.Event
 	}
 }
 
 func newMockFinder() *mockFinder {
 	m := &mockFinder{}
 	m.NextCalled = make(chan bool, 100)
-	m.NextOutput.Ret0 = make(chan dopplerservice.Event, 100)
+	m.NextOutput.Ret0 = make(chan plumbing.Event, 100)
 	return m
 }
-func (m *mockFinder) Next() dopplerservice.Event {
+func (m *mockFinder) Next() plumbing.Event {
 	m.NextCalled <- true
 	return <-m.NextOutput.Ret0
 }

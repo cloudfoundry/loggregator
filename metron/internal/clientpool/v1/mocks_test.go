@@ -3,7 +3,6 @@ package v1_test
 import (
 	"io"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/plumbing"
 
 	"golang.org/x/net/context"
@@ -15,17 +14,17 @@ import (
 type mockEventer struct {
 	NextCalled chan bool
 	NextOutput struct {
-		Ret0 chan dopplerservice.Event
+		Ret0 chan plumbing.Event
 	}
 }
 
 func newMockEventer() *mockEventer {
 	m := &mockEventer{}
 	m.NextCalled = make(chan bool, 100)
-	m.NextOutput.Ret0 = make(chan dopplerservice.Event, 100)
+	m.NextOutput.Ret0 = make(chan plumbing.Event, 100)
 	return m
 }
-func (m *mockEventer) Next() dopplerservice.Event {
+func (m *mockEventer) Next() plumbing.Event {
 	m.NextCalled <- true
 	return <-m.NextOutput.Ret0
 }

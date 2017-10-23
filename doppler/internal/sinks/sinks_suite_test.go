@@ -3,7 +3,6 @@ package sinks_test
 import (
 	"io/ioutil"
 	"log"
-	"net/http"
 	"testing"
 	"time"
 
@@ -12,17 +11,14 @@ import (
 	fakeMS "github.com/cloudfoundry/dropsonde/metric_sender/fake"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"google.golang.org/grpc/grpclog"
 )
 
 var (
-	pathToTCPEchoServer string
-	fakeMetricSender    *fakeMS.FakeMetricSender
-	fakeEventEmitter    *fake.FakeEventEmitter
+	fakeMetricSender *fakeMS.FakeMetricSender
+	fakeEventEmitter *fake.FakeEventEmitter
 )
 
 func TestSinks(t *testing.T) {
@@ -35,10 +31,6 @@ func TestSinks(t *testing.T) {
 var _ = SynchronizedBeforeSuite(func() []byte {
 	return nil
 }, func(encodedBuiltArtifacts []byte) {
-	var err error
-	pathToTCPEchoServer, err = gexec.Build("tools/echo/cmd/tcp_server")
-	Expect(err).NotTo(HaveOccurred())
-
 	fakeEventEmitter = fake.NewFakeEventEmitter("doppler")
 	fakeMetricSender = fakeMS.NewFakeMetricSender()
 	metrics.Initialize(fakeMetricSender, nil)
@@ -47,44 +39,3 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	batcher := metricbatcher.New(sender, 100*time.Millisecond)
 	metrics.Initialize(sender, batcher)
 }, 10)
-
-func AddWSSink(receivedChan chan []byte, port string, path string) (*websocket.Conn, chan bool, <-chan bool) {
-	dontKeepAliveChan := make(chan bool, 1)
-	connectionDroppedChannel := make(chan bool, 1)
-
-	var ws *websocket.Conn
-	var err error
-	Eventually(func() error {
-		ws, _, err = websocket.DefaultDialer.Dial("ws://127.0.0.1:"+port+path, http.Header{})
-		return err
-	}).Should(Succeed())
-	Expect(ws).NotTo(BeNil())
-
-	go func() {
-		for {
-			_, data, err := ws.ReadMessage()
-			if err != nil {
-				connectionDroppedChannel <- true
-				close(receivedChan)
-				return
-			}
-			receivedChan <- data
-		}
-	}()
-
-	go func() {
-		for {
-			err := ws.WriteMessage(websocket.BinaryMessage, []byte{42})
-			if err != nil {
-				break
-			}
-			select {
-			case <-dontKeepAliveChan:
-				return
-			case <-time.After(10 * time.Millisecond):
-				// keep-alive
-			}
-		}
-	}()
-	return ws, dontKeepAliveChan, connectionDroppedChannel
-}

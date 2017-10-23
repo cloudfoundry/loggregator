@@ -1,14 +1,12 @@
 package plumbing
 
-import "code.cloudfoundry.org/loggregator/dopplerservice"
-
 type StaticFinder struct {
-	event chan dopplerservice.Event
+	event chan Event
 }
 
 func NewStaticFinder(addrs []string) *StaticFinder {
-	event := make(chan dopplerservice.Event, 10)
-	event <- dopplerservice.Event{
+	event := make(chan Event, 10)
+	event <- Event{
 		GRPCDopplers: addrs,
 	}
 	return &StaticFinder{
@@ -19,11 +17,11 @@ func NewStaticFinder(addrs []string) *StaticFinder {
 func (f *StaticFinder) Start() {}
 
 func (f *StaticFinder) Stop() {
-	f.event <- dopplerservice.Event{
+	f.event <- Event{
 		GRPCDopplers: []string{},
 	}
 }
 
-func (f *StaticFinder) Next() dopplerservice.Event {
+func (f *StaticFinder) Next() Event {
 	return <-f.event
 }

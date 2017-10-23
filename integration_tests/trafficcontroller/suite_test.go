@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/cloudfoundry/storeadapter"
-	"github.com/cloudfoundry/storeadapter/storerunner/etcdstorerunner"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/grpclog"
 
@@ -28,8 +26,6 @@ const (
 var (
 	trafficControllerExecPath string
 	trafficControllerSession  *gexec.Session
-	etcdRunner                *etcdstorerunner.ETCDClusterRunner
-	etcdPort                  int
 	localIPAddress            string
 	fakeDoppler               *FakeDoppler
 	configFile                string
@@ -43,10 +39,6 @@ func TestIntegrationTest(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	killEtcdCmd := exec.Command("pkill", "etcd")
-	killEtcdCmd.Run()
-	setupEtcdAdapter()
-	setupDopplerInEtcd()
 	setupFakeAuthServer()
 	setupFakeUaaServer()
 
@@ -85,30 +77,7 @@ var _ = AfterEach(func() {
 
 var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
-	etcdRunner.Stop()
 })
-
-func setupEtcdAdapter() {
-	etcdPort = 4001
-	etcdRunner = etcdstorerunner.NewETCDClusterRunner(etcdPort, 1, nil)
-	etcdRunner.Start()
-}
-
-func setupDopplerInEtcd() {
-	adapter := etcdRunner.Adapter(nil)
-
-	node := storeadapter.StoreNode{
-		Key:   "/healthstatus/doppler/z1/doppler/0",
-		Value: []byte("localhost"),
-	}
-	adapter.Create(node)
-
-	node = storeadapter.StoreNode{
-		Key:   "/doppler/meta/z1/doppler/0",
-		Value: []byte(`{"version":1,"endpoints":["ws://localhost:1234"]}`),
-	}
-	adapter.Create(node)
-}
 
 var setupFakeAuthServer = func() {
 	fakeAuthServer := &FakeAuthServer{ApiEndpoint: ":42123"}

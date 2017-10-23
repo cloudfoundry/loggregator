@@ -99,25 +99,6 @@ func (g *AppGroup) sink(id string) Sink {
 	return wrapper.Sink
 }
 
-func (g *AppGroup) SyslogSinks() []Sink {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-
-	results := []Sink{}
-	for _, wrapper := range g.wrappers {
-		if wrapper == nil {
-			continue
-		}
-		_, ok := wrapper.Sink.(*SyslogSink)
-		if !ok {
-			continue
-		}
-		results = append(results, wrapper.Sink)
-	}
-
-	return results
-}
-
 func (g *AppGroup) RemoveSink(sink Sink) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -184,19 +165,6 @@ func (g *AppGroup) BroadcastError(msg *events.Envelope) {
 	for _, wrapper := range g.wrappers {
 		if wrapper == nil {
 			continue
-		}
-		if wrapper.Sink.ShouldReceiveErrors() {
-			select {
-			case wrapper.InputChan <- msg:
-			default:
-				// metric-documentation-v1: (sinks.errors.dropped) Number of errors dropped
-				// while inserting error into sink.
-				g.batcher.BatchIncrementCounter("sinks.errors.dropped")
-
-				// metric-documentation-v2: (loggregator.doppler.sinks.errors.dropped)
-				// Number of errors dropped while inserting error into sink.
-				g.errorMetric.Increment(1)
-			}
 		}
 	}
 }

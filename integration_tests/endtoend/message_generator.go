@@ -73,32 +73,3 @@ func BasicLogMessageEnvelope(origin string, appID string) *events.Envelope {
 		},
 	}
 }
-
-type LegacyLogGenerator struct{}
-
-func NewLegacyLogGenerator() *LegacyLogGenerator {
-	return &LegacyLogGenerator{}
-}
-
-func (*LegacyLogGenerator) Generate() []byte {
-	return BasicLegacyLogMessage()
-}
-
-func BasicLegacyLogMessage() []byte {
-	message, _ := proto.Marshal(BasicLegacyLogMessageEnvelope())
-	return message
-}
-
-func BasicLegacyLogMessageEnvelope() *LogEnvelope {
-
-	return &LogEnvelope{
-		RoutingKey: proto.String("routing-key"),
-		Signature:  []byte(""),
-		LogMessage: &LogMessage{
-			Message:     []byte("test message"),
-			MessageType: LogMessage_OUT.Enum(),
-			Timestamp:   proto.Int64(time.Now().UnixNano()),
-			AppId:       proto.String("app-id"),
-		},
-	}
-}

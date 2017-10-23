@@ -12,7 +12,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-func BuildDopplerConfig(etcdClientURL string, metronUDPPort, metronGRPCPort int) app.Config {
+func BuildDopplerConfig(metronUDPPort, metronGRPCPort int) app.Config {
 	return app.Config{
 		Index:   "42",
 		JobName: "test-job-name",
@@ -26,9 +26,6 @@ func BuildDopplerConfig(etcdClientURL string, metronUDPPort, metronGRPCPort int)
 		},
 		HealthAddr: "localhost:0",
 
-		EtcdUrls:                  []string{etcdClientURL},
-		EtcdMaxConcurrentRequests: 10,
-
 		MetronConfig: app.MetronConfig{
 			UDPAddress:  fmt.Sprintf("127.0.0.1:%d", metronUDPPort),
 			GRPCAddress: fmt.Sprintf("127.0.0.1:%d", metronGRPCPort),
@@ -38,12 +35,8 @@ func BuildDopplerConfig(etcdClientURL string, metronUDPPort, metronGRPCPort int)
 		ContainerMetricTTLSeconds:       120,
 		MaxRetainedLogMessages:          10,
 		MessageDrainBufferSize:          100,
-		SinkDialTimeoutSeconds:          10,
-		SinkIOTimeoutSeconds:            10,
 		SinkInactivityTimeoutSeconds:    120,
-		SinkSkipCertVerify:              true,
 		UnmarshallerCount:               5,
-		OutgoingPort:                    8081,
 	}
 }
 

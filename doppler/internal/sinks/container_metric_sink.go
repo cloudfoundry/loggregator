@@ -92,10 +92,6 @@ func (sink *ContainerMetricSink) Identifier() string {
 	return "container-metrics-" + sink.appID
 }
 
-func (sink *ContainerMetricSink) ShouldReceiveErrors() bool {
-	return false
-}
-
 func (sink *ContainerMetricSink) updateMetric(event *events.Envelope) {
 	sink.lock.Lock()
 	defer sink.lock.Unlock()

@@ -19,10 +19,8 @@ import (
 var _ = Describe("Persistence", func() {
 	Describe("Container Metrics", func() {
 		It("returns container metrics for an app", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -43,10 +41,8 @@ var _ = Describe("Persistence", func() {
 		})
 
 		It("does not receive metrics for different appIds", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -73,10 +69,8 @@ var _ = Describe("Persistence", func() {
 		})
 
 		It("returns only the latest container metric", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -101,10 +95,8 @@ var _ = Describe("Persistence", func() {
 
 	Describe("Recent Logs", func() {
 		It("receives recent log messages", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -124,10 +116,8 @@ var _ = Describe("Persistence", func() {
 		})
 
 		It("only receives messages for the specified appId", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
@@ -151,10 +141,8 @@ var _ = Describe("Persistence", func() {
 		})
 
 		It("only receives the most recent logs", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))

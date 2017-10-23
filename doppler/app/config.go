@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
-
-	"code.cloudfoundry.org/loggregator/doppler/internal/sinks"
 )
 
 const HeartbeatInterval = 10 * time.Second
@@ -15,12 +13,6 @@ const HeartbeatInterval = 10 * time.Second
 type MetronConfig struct {
 	UDPAddress  string
 	GRPCAddress string
-}
-
-type EtcdTLSClientConfig struct {
-	CertFile string
-	KeyFile  string
-	CAFile   string
 }
 
 type GRPC struct {
@@ -32,37 +24,25 @@ type GRPC struct {
 }
 
 type Config struct {
-	DisableSyslogDrains             bool
-	DisableAnnounce                 bool
-	BlackListIps                    []sinks.IPRange
-	ContainerMetricTTLSeconds       int
-	EtcdMaxConcurrentRequests       int
-	EtcdUrls                        []string
-	EtcdRequireTLS                  bool
-	EtcdTLSClientConfig             EtcdTLSClientConfig
-	Index                           string
-	JobName                         string
-	IP                              string
-	MaxRetainedLogMessages          uint32
-	MessageDrainBufferSize          uint
+	// TODO: Are these only used in registration?
+	Index   string
+	JobName string
+	IP      string
+	Zone    string
+
+	MaxRetainedLogMessages       uint32
+	MessageDrainBufferSize       uint
+	ContainerMetricTTLSeconds    int
+	SinkInactivityTimeoutSeconds int
+
 	MetricBatchIntervalMilliseconds uint
-	MetronConfig                    MetronConfig
 	WebsocketHost                   string
 	GRPC                            GRPC
-	SinkDialTimeoutSeconds          int
-	SinkIOTimeoutSeconds            int
-	SinkInactivityTimeoutSeconds    int
-	SinkSkipCertVerify              bool
 	UnmarshallerCount               int
-	WebsocketWriteTimeoutSeconds    int
-	Zone                            string
-	PPROFPort                       uint32
-	HealthAddr                      string
 
-	// TODO: Deprecated. We left this in during the removal of Dopplers
-	// outgoing websocket server. This is still needed so that
-	// trafficcontroller can find dopplers via etcd.
-	OutgoingPort uint32 `json:"-"`
+	PPROFPort    uint32
+	HealthAddr   string
+	MetronConfig MetronConfig
 }
 
 func (c *Config) validate() (err error) {
@@ -72,19 +52,6 @@ func (c *Config) validate() (err error) {
 
 	if c.MaxRetainedLogMessages == 0 {
 		return errors.New("Need max number of log messages to retain per application")
-	}
-
-	if c.BlackListIps != nil {
-		err = sinks.ValidateIpAddresses(c.BlackListIps)
-		if err != nil {
-			return err
-		}
-	}
-
-	if c.EtcdRequireTLS {
-		if c.EtcdTLSClientConfig.CertFile == "" || c.EtcdTLSClientConfig.KeyFile == "" || c.EtcdTLSClientConfig.CAFile == "" {
-			return errors.New("invalid etcd TLS client configuration")
-		}
 	}
 
 	if len(c.GRPC.CAFile) == 0 {
@@ -118,9 +85,7 @@ func ParseConfig(configFile string) (*Config, error) {
 }
 
 func Parse(confData []byte) (*Config, error) {
-	config := &Config{
-		OutgoingPort: 8081,
-	}
+	config := &Config{}
 
 	err := json.Unmarshal(confData, config)
 	if err != nil {
@@ -139,20 +104,8 @@ func Parse(confData []byte) (*Config, error) {
 		config.MetricBatchIntervalMilliseconds = 5000
 	}
 
-	if config.SinkDialTimeoutSeconds == 0 {
-		config.SinkDialTimeoutSeconds = 1
-	}
-
-	if config.WebsocketWriteTimeoutSeconds == 0 {
-		config.WebsocketWriteTimeoutSeconds = 30
-	}
-
 	if config.UnmarshallerCount == 0 {
 		config.UnmarshallerCount = 1
-	}
-
-	if config.EtcdMaxConcurrentRequests < 1 {
-		config.EtcdMaxConcurrentRequests = 1
 	}
 
 	if config.HealthAddr == "" {

@@ -13,10 +13,8 @@ import (
 
 var _ = Describe("Doppler Health Endpoint", func() {
 	It("returns health metrics", func() {
-		etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-		defer etcdCleanup()
 		dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-			testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+			testservers.BuildDopplerConfig(0, 0),
 		)
 		defer dopplerCleanup()
 

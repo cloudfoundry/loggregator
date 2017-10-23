@@ -104,12 +104,6 @@ var _ = Describe("Containermetric", func() {
 
 	})
 
-	Describe("ShouldReceiveErrors", func() {
-		It("returns false", func() {
-			Expect(sink.ShouldReceiveErrors()).To(BeFalse())
-		})
-	})
-
 	It("closes after a period of inactivity", func() {
 		health := newSpyHealthRegistrar()
 		containerMetricSink := sinks.NewContainerMetricSink("myAppId", 2*time.Second, 1*time.Millisecond, health)

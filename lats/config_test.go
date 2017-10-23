@@ -13,9 +13,6 @@ type TestConfig struct {
 
 	DropsondePort int
 
-	EtcdUrls              []string
-	EtcdRequireTLS        bool
-	EtcdTLSClientConfig   TLSClientConfig
 	MetronTLSClientConfig TLSClientConfig
 
 	ReverseLogProxyAddr string
@@ -28,15 +25,10 @@ type TLSClientConfig struct {
 }
 
 type MetronConfig struct {
-	IncomingUDPPort               int
-	EtcdUrls                      []string
-	LoggregatorDropsondePort      int
-	Index                         string
-	EtcdMaxConcurrentRequests     int
-	EtcdQueryIntervalMilliseconds int
-	Zone                          string
-	EtcdRequireTLS                bool
-	EtcdTLSClientConfig           TLSClientConfig
+	IncomingUDPPort          int
+	LoggregatorDropsondePort int
+	Index                    string
+	Zone                     string
 }
 
 func Load() *TestConfig {
@@ -77,22 +69,12 @@ func (tc *TestConfig) SaveMetronConfig() {
 	// fixture file had to go.
 	metronConfig := MetronConfig{
 		IncomingUDPPort:          3457,
-		EtcdUrls:                 []string{"http://10.244.0.42:4001"},
 		LoggregatorDropsondePort: 3457,
 		Index: "0",
-		EtcdMaxConcurrentRequests: 1,
-		Zone: "z1",
+		Zone:  "z1",
 	}
 
 	metronConfig.IncomingUDPPort = tc.DropsondePort
-	if len(tc.EtcdUrls) != 0 {
-		metronConfig.EtcdUrls = tc.EtcdUrls
-	}
-
-	if tc.EtcdRequireTLS {
-		metronConfig.EtcdRequireTLS = true
-		metronConfig.EtcdTLSClientConfig = tc.EtcdTLSClientConfig
-	}
 
 	metronConfigFile, err := os.Create("fixtures/metron.json")
 	bytes, err := json.Marshal(metronConfig)

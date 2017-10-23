@@ -40,6 +40,7 @@ func (p *PusherFetcher) Fetch(addr string) (io.Closer, plumbing.DopplerIngestor_
 
 	pusher, err := client.Pusher(context.Background())
 	if err != nil {
+		p.health.Dec("dopplerConnections")
 		conn.Close()
 		return nil, nil, fmt.Errorf("error establishing ingestor stream to %s: %s", addr, err)
 	}

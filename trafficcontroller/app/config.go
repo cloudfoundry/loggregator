@@ -14,13 +14,6 @@ type MetronConfig struct {
 	GRPCAddress string
 }
 
-// EtcdTLSClientConfig holds TLS configuration for communication to etcd.
-type EtcdTLSClientConfig struct {
-	CertFile string
-	KeyFile  string
-	CAFile   string
-}
-
 // GRPC holds TLS configuration for gRPC communcation to doppler and metron.
 // Port is the Port to dial for communcation with doppler.
 type GRPC struct {
@@ -41,11 +34,6 @@ type CCTLSClientConfig struct {
 
 // Config holds all Configuration options for trafficcontroller.
 type Config struct {
-	EtcdUrls                  []string
-	EtcdMaxConcurrentRequests int
-	EtcdRequireTLS            bool
-	EtcdTLSClientConfig       EtcdTLSClientConfig
-
 	IP                    string
 	ApiHost               string
 	CCTLSClientConfig     CCTLSClientConfig
@@ -98,10 +86,6 @@ func Parse(r io.Reader) (*Config, error) {
 }
 
 func (c *Config) setDefaults() {
-	if c.EtcdMaxConcurrentRequests < 1 {
-		c.EtcdMaxConcurrentRequests = 10
-	}
-
 	if c.GRPC.Port == 0 {
 		c.GRPC.Port = 8082
 	}
@@ -124,12 +108,6 @@ func (c *Config) validate() error {
 
 	if c.IP == "" {
 		return errors.New("Need IP address for access logging")
-	}
-
-	if c.EtcdRequireTLS {
-		if c.EtcdTLSClientConfig.CertFile == "" || c.EtcdTLSClientConfig.KeyFile == "" || c.EtcdTLSClientConfig.CAFile == "" {
-			return errors.New("invalid etcd TLS client configuration")
-		}
 	}
 
 	if len(c.GRPC.CAFile) == 0 {

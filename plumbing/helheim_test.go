@@ -8,7 +8,6 @@ package plumbing_test
 import (
 	"time"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/plumbing"
 
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
@@ -38,17 +37,17 @@ func (m *mockPlumbingReceiver) Recv() (*plumbing.Response, error) {
 type mockFinder struct {
 	NextCalled chan bool
 	NextOutput struct {
-		Ret0 chan dopplerservice.Event
+		Ret0 chan plumbing.Event
 	}
 }
 
 func newMockFinder() *mockFinder {
 	m := &mockFinder{}
 	m.NextCalled = make(chan bool, 100)
-	m.NextOutput.Ret0 = make(chan dopplerservice.Event, 100)
+	m.NextOutput.Ret0 = make(chan plumbing.Event, 100)
 	return m
 }
-func (m *mockFinder) Next() dopplerservice.Event {
+func (m *mockFinder) Next() plumbing.Event {
 	m.NextCalled <- true
 	return <-m.NextOutput.Ret0
 }

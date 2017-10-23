@@ -1,6 +1,7 @@
 package v1_test
 
 import (
+	"io"
 	"net"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
@@ -17,11 +18,21 @@ var _ = Describe("PusherFetcher", func() {
 	It("opens a stream to the server", func() {
 		server := newSpyIngestorServer()
 		Expect(server.Start()).To(Succeed())
-		defer server.Stop()
+		defer func() {
+			server.Stop()
+		}()
 
 		fetcher := v1.NewPusherFetcher(newSpyRegistry(), grpc.WithInsecure())
-		closer, pusher, err := fetcher.Fetch(server.addr)
-		Expect(err).ToNot(HaveOccurred())
+		var (
+			closer io.Closer
+			pusher plumbing.DopplerIngestor_PusherClient
+		)
+		f := func() error {
+			var err error
+			closer, pusher, err = fetcher.Fetch(server.addr)
+			return err
+		}
+		Eventually(f).ShouldNot(HaveOccurred())
 
 		pusher.Send(&plumbing.EnvelopeData{})
 
@@ -37,8 +48,11 @@ var _ = Describe("PusherFetcher", func() {
 		registry := newSpyRegistry()
 
 		fetcher := v1.NewPusherFetcher(registry, grpc.WithInsecure())
-		_, _, err := fetcher.Fetch(server.addr)
-		Expect(err).ToNot(HaveOccurred())
+		f := func() error {
+			_, _, err := fetcher.Fetch(server.addr)
+			return err
+		}
+		Eventually(f).ShouldNot(HaveOccurred())
 
 		Expect(registry.GetValue("dopplerConnections")).To(Equal(int64(1)))
 		Expect(registry.GetValue("dopplerV1Streams")).To(Equal(int64(1)))
@@ -52,8 +66,13 @@ var _ = Describe("PusherFetcher", func() {
 		registry := newSpyRegistry()
 
 		fetcher := v1.NewPusherFetcher(registry, grpc.WithInsecure())
-		closer, _, err := fetcher.Fetch(server.addr)
-		Expect(err).ToNot(HaveOccurred())
+		var closer io.Closer
+		f := func() error {
+			var err error
+			closer, _, err = fetcher.Fetch(server.addr)
+			return err
+		}
+		Eventually(f).ShouldNot(HaveOccurred())
 
 		closer.Close()
 		Expect(registry.GetValue("dopplerConnections")).To(Equal(int64(0)))

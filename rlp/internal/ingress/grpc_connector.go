@@ -8,8 +8,8 @@ import (
 	"time"
 	"unsafe"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/metricemitter"
+	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 )
@@ -28,7 +28,7 @@ type DopplerPool interface {
 
 // Finder yields events that tell us what dopplers are available.
 type Finder interface {
-	Next() dopplerservice.Event
+	Next() plumbing.Event
 }
 
 // GRPCConnector establishes GRPC connections to dopplers and allows calls to

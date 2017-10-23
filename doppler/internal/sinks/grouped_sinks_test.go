@@ -2,7 +2,6 @@ package sinks_test
 
 import (
 	"net"
-	"net/url"
 	"time"
 
 	"code.cloudfoundry.org/loggregator/doppler/internal/sinks"
@@ -30,7 +29,7 @@ var _ = Describe("GroupedSink", func() {
 	Describe("Broadcast", func() {
 		Context("when all pre-existing firehose connections have been deleted", func() {
 			It("sends message to all registered app sinks", func() {
-				appSink := sinks.NewSyslogSink("123", &url.URL{Host: "url"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+				appSink := sinks.NewDumpSink("123", 5, time.Hour, &spyHealthRegistrar{})
 				appSinkInputChan := make(chan *events.Envelope, 10)
 				groupedSinks.RegisterAppSink(appSinkInputChan, appSink)
 
@@ -43,14 +42,13 @@ var _ = Describe("GroupedSink", func() {
 
 		It("sends message to all registered sinks that match the appId", func() {
 			appId := "123"
-			appSink := sinks.NewSyslogSink("123", &url.URL{Host: "url"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			appSink := sinks.NewDumpSink(appId, 5, time.Hour, &spyHealthRegistrar{})
 
 			otherInputChan := make(chan *events.Envelope)
 			groupedSinks.RegisterAppSink(otherInputChan, appSink)
 
 			appId = "789"
-			appSink = sinks.NewSyslogSink(appId, &url.URL{Host: "url"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-
+			appSink = sinks.NewDumpSink(appId, 5, time.Hour, &spyHealthRegistrar{})
 			groupedSinks.RegisterAppSink(inputChan, appSink)
 
 			msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
@@ -84,75 +82,17 @@ var _ = Describe("GroupedSink", func() {
 		})
 	})
 
-	Describe("BroadcastError", func() {
-		It("sends message to all registered sinks that match the appId", func() {
-			appId := "123"
-			health := newSpyHealthRegistrar()
-			appSink := sinks.NewDumpSink(appId, 10, time.Second, health)
-			otherInputChan := make(chan *events.Envelope, 1)
-			groupedSinks.RegisterAppSink(otherInputChan, appSink)
-
-			appId = "789"
-			appSink = sinks.NewDumpSink(appId, 10, time.Second, health)
-
-			groupedSinks.RegisterAppSink(inputChan, appSink)
-			msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "error message", appId, "App"), "origin")
-			groupedSinks.BroadcastError(appId, msg)
-
-			Eventually(inputChan).Should(Receive(Equal(msg)))
-			Expect(otherInputChan).To(HaveLen(0))
-		})
-
-		It("does not send to sinks that don't want errors", func() {
-			appId := "789"
-
-			health := newSpyHealthRegistrar()
-			sink1 := sinks.NewDumpSink(appId, 10, time.Second, health)
-			sink2 := sinks.NewSyslogSink(appId, &url.URL{Host: "url"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-
-			groupedSinks.RegisterAppSink(inputChan, sink1)
-			groupedSinks.RegisterAppSink(inputChan, sink2)
-			msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "error message", appId, "App"), "origin")
-			groupedSinks.BroadcastError(appId, msg)
-			Expect(<-inputChan).To(Equal(msg))
-			Expect(inputChan).To(HaveLen(0))
-		})
-
-		It("does not block when sending to slow sink", func() {
-			appId := "syslog-a"
-			fakeSink1A := &fakeSink{sinkId: "sink1", appId: appId, shouldRxErrors: true}
-			inputChan1A := make(chan *events.Envelope)
-			groupedSinks.RegisterAppSink(inputChan1A, fakeSink1A)
-
-			c := make(chan struct{})
-			go func() {
-				defer close(c)
-				msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
-				groupedSinks.BroadcastError(appId, msg)
-			}()
-
-			Eventually(c).Should(BeClosed())
-		})
-	})
-
 	Describe("Register", func() {
 		It("returns false for empty app ids", func() {
 			appId := ""
-			appSink := sinks.NewSyslogSink(appId, &url.URL{Host: "url"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-			result := groupedSinks.RegisterAppSink(inputChan, appSink)
-			Expect(result).To(BeFalse())
-		})
-
-		It("returns false for empty identifiers", func() {
-			appId := "appId"
-			appSink := sinks.NewSyslogSink(appId, &url.URL{Host: ""}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			appSink := sinks.NewDumpSink(appId, 5, time.Hour, &spyHealthRegistrar{})
 			result := groupedSinks.RegisterAppSink(inputChan, appSink)
 			Expect(result).To(BeFalse())
 		})
 
 		It("returns false when registering a duplicate", func() {
 			appId := "789"
-			appSink := sinks.NewSyslogSink(appId, &url.URL{Host: "url"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			appSink := sinks.NewDumpSink(appId, 5, time.Hour, &spyHealthRegistrar{})
 			groupedSinks.RegisterAppSink(inputChan, appSink)
 			result := groupedSinks.RegisterAppSink(inputChan, appSink)
 			Expect(result).To(BeFalse())
@@ -161,10 +101,11 @@ var _ = Describe("GroupedSink", func() {
 
 	Describe("CloseAndDelete", func() {
 		It("only deletes a specific sink", func() {
-			target := "789"
+			target1 := "123"
+			target2 := "789"
 
-			sink1 := sinks.NewSyslogSink(target, &url.URL{Host: "url1"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-			sink2 := sinks.NewSyslogSink(target, &url.URL{Host: "url2"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			sink1 := sinks.NewDumpSink(target1, 5, time.Hour, &spyHealthRegistrar{})
+			sink2 := sinks.NewDumpSink(target2, 5, time.Hour, &spyHealthRegistrar{})
 
 			groupedSinks.RegisterAppSink(inputChan, sink1)
 			groupedSinks.RegisterAppSink(inputChan, sink2)
@@ -175,27 +116,15 @@ var _ = Describe("GroupedSink", func() {
 
 		It("handle deletes for non-existing appIds", func() {
 			target := "789"
-			sink1 := sinks.NewSyslogSink(target, &url.URL{Host: "url1"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			sink1 := sinks.NewDumpSink(target, 5, time.Hour, &spyHealthRegistrar{})
 
 			ok := groupedSinks.CloseAndDelete(sink1)
 			Expect(ok).To(BeFalse())
 		})
 
-		It("handle deletes for existing appIds but unregistered drain URLs", func() {
-			target := "789"
-
-			sink1 := sinks.NewSyslogSink(target, &url.URL{Host: "url1"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-			sink2 := sinks.NewSyslogSink(target, &url.URL{Host: "url2"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-
-			groupedSinks.RegisterAppSink(inputChan, sink1)
-
-			ok := groupedSinks.CloseAndDelete(sink2)
-			Expect(ok).To(BeFalse())
-		})
-
 		It("closes the inputChan", func() {
 			target := "789"
-			sink := sinks.NewSyslogSink(target, &url.URL{Host: "url1"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			sink := sinks.NewDumpSink(target, 5, time.Hour, &spyHealthRegistrar{})
 
 			groupedSinks.RegisterAppSink(inputChan, sink)
 			groupedSinks.CloseAndDelete(sink)
@@ -205,15 +134,6 @@ var _ = Describe("GroupedSink", func() {
 	})
 
 	Describe("DeleteAll", func() {
-		It("removes all the sinks", func() {
-			sink := &fakeSink{sinkId: "sink1", appId: "app1"}
-			groupedSinks.RegisterAppSink(make(chan *events.Envelope), sink)
-
-			groupedSinks.DeleteAll()
-
-			Expect(groupedSinks.DrainFor("app1", "sink1")).To(BeNil())
-		})
-
 		It("closes all the sinks input chans", func() {
 			sink1 := &fakeSink{sinkId: "sink1", appId: "app1"}
 
@@ -225,39 +145,11 @@ var _ = Describe("GroupedSink", func() {
 		})
 	})
 
-	Describe("DrainFor", func() {
-		It("returns only sinks that match the appid and drain URL", func() {
-			target := "789"
-
-			sink1 := sinks.NewSyslogSink(target, &url.URL{Scheme: "syslog", Host: "other sink"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-			sink2 := sinks.NewSyslogSink(target, &url.URL{Scheme: "syslog", Host: "sink we are searching for"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-
-			groupedSinks.RegisterAppSink(inputChan, sink1)
-			groupedSinks.RegisterAppSink(inputChan, sink2)
-
-			sinkDrain := groupedSinks.DrainFor(target, "syslog://sink we are searching for")
-			Expect(sinkDrain).To(Equal(sink2))
-		})
-
-		It("returns nil if no drains are registered", func() {
-			target := "789"
-			sink := sinks.NewSyslogSink(target, &url.URL{Host: "url2"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-
-			groupedSinks.RegisterAppSink(inputChan, sink)
-
-			Expect(groupedSinks.DrainFor(target, "url1")).To(BeNil())
-		})
-
-		It("return nils if no drains exist", func() {
-			Expect(groupedSinks.DrainFor("empty", "empty")).To(BeNil())
-		})
-	})
-
 	Describe("DumpFor", func() {
 		It("returns only dumps", func() {
 			appId := "789"
-			sink1 := sinks.NewSyslogSink(appId, &url.URL{Host: "url1"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
-			sink2 := sinks.NewSyslogSink(appId, &url.URL{Host: "url2"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			sink1 := sinks.NewContainerMetricSink(appId, 1*time.Second, time.Second, &spyHealthRegistrar{})
+			sink2 := sinks.NewContainerMetricSink(appId, 1*time.Second, time.Second, &spyHealthRegistrar{})
 			health := newSpyHealthRegistrar()
 			sink3 := sinks.NewDumpSink(appId, 5, time.Second, health)
 
@@ -285,7 +177,7 @@ var _ = Describe("GroupedSink", func() {
 		It("returns nil if no dumps are registered", func() {
 			target := "789"
 
-			sink1 := sinks.NewSyslogSink(target, &url.URL{Host: "url1"}, 100, DummySyslogWriter{}, dummyErrorHandler, "dropsonde-origin")
+			sink1 := sinks.NewContainerMetricSink(target, 1*time.Second, time.Second, &spyHealthRegistrar{})
 
 			groupedSinks.RegisterAppSink(inputChan, sink1)
 
@@ -380,9 +272,8 @@ func (fake fakeAddr) String() string {
 }
 
 type fakeSink struct {
-	sinkId         string
-	appId          string
-	shouldRxErrors bool
+	sinkId string
+	appId  string
 }
 
 func (f *fakeSink) AppID() string {
@@ -390,10 +281,6 @@ func (f *fakeSink) AppID() string {
 }
 
 func (f *fakeSink) Run(<-chan *events.Envelope) {
-}
-
-func (f *fakeSink) ShouldReceiveErrors() bool {
-	return f.shouldRxErrors
 }
 
 func (f *fakeSink) Identifier() string {
@@ -407,3 +294,12 @@ func (f *fakeSink) GetInstrumentationMetric() sinks.Metric {
 type spyMetricBatcher struct{}
 
 func (s *spyMetricBatcher) BatchIncrementCounter(name string) {}
+
+type spyHealthRegistrar struct {
+}
+
+func (s *spyHealthRegistrar) Inc(name string) {
+}
+
+func (s *spyHealthRegistrar) Dec(name string) {
+}

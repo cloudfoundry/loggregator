@@ -72,27 +72,6 @@ func (group *GroupedSinks) Broadcast(appId string, msg *events.Envelope) {
 	}
 }
 
-func (group *GroupedSinks) BroadcastError(appId string, msg *events.Envelope) {
-	group.RLock()
-	defer group.RUnlock()
-
-	sinksForApp, ok := group.apps[appId]
-	if ok && sinksForApp != nil {
-		sinksForApp.BroadcastError(msg)
-	}
-}
-
-func (group *GroupedSinks) DrainFor(appId, drainMetaData string) Sink {
-	group.RLock()
-	defer group.RUnlock()
-
-	sinksForApp, ok := group.apps[appId]
-	if !ok || sinksForApp == nil {
-		return nil
-	}
-	return sinksForApp.Sink(drainMetaData)
-}
-
 func (group *GroupedSinks) DumpFor(appId string) *DumpSink {
 	group.RLock()
 	defer group.RUnlock()

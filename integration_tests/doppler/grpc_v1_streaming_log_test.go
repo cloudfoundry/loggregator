@@ -16,10 +16,8 @@ import (
 var _ = Describe("GRPC Streaming Logs", func() {
 	Context("with a subscription established", func() {
 		It("responds to a subscription request", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))

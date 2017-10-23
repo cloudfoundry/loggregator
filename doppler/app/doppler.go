@@ -11,17 +11,13 @@ import (
 	"code.cloudfoundry.org/loggregator/doppler/internal/server/v1"
 	"code.cloudfoundry.org/loggregator/doppler/internal/server/v2"
 	"code.cloudfoundry.org/loggregator/doppler/internal/sinks"
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/workpool"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/storeadapter"
-	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -47,8 +43,6 @@ func NewLegacyDoppler(c *Config) *Doppler {
 
 // NewDoppler creates a new Doppler with the given options. Each provided
 // DopplerOption will manipulate the Doppler behavior.
-// NOTE: This construction path does not allow for Syslog drains or announcing
-// via etcd.
 func NewDoppler(grpc GRPC, opts ...DopplerOption) *Doppler {
 	d := &Doppler{
 		c: &Config{
@@ -58,13 +52,10 @@ func NewDoppler(grpc GRPC, opts ...DopplerOption) *Doppler {
 				UDPAddress:  "127.0.0.1:3457",
 				GRPCAddress: "127.0.0.1:3458",
 			},
-			HealthAddr:                   "localhost:14825",
-			MaxRetainedLogMessages:       100,
-			MessageDrainBufferSize:       10000,
-			SinkInactivityTimeoutSeconds: 3600,
-			ContainerMetricTTLSeconds:    120,
-			DisableAnnounce:              true,
-			DisableSyslogDrains:          true,
+			HealthAddr:                "localhost:14825",
+			MaxRetainedLogMessages:    100,
+			MessageDrainBufferSize:    10000,
+			ContainerMetricTTLSeconds: 120,
 		},
 	}
 
@@ -128,14 +119,10 @@ func (d *Doppler) Start() {
 	//------------------------------
 	sinkManager := sinks.NewSinkManager(
 		d.c.MaxRetainedLogMessages,
-		d.c.SinkSkipCertVerify,
-		sinks.NewBlackListManager(d.c.BlackListIps),
 		d.c.MessageDrainBufferSize,
 		"DopplerServer",
 		time.Duration(d.c.SinkInactivityTimeoutSeconds)*time.Second,
-		time.Duration(d.c.SinkIOTimeoutSeconds)*time.Second,
 		time.Duration(d.c.ContainerMetricTTLSeconds)*time.Second,
-		time.Duration(d.c.SinkDialTimeoutSeconds)*time.Second,
 		metricBatcher,
 		metricClient,
 		healthRegistrar,
@@ -230,35 +217,8 @@ func (d *Doppler) Start() {
 	d.addrs.GRPC = d.server.Addr()
 
 	//------------------------------
-	// Service Discovery and Syslog Drains (etcd)
-	//------------------------------
-	var storeAdapter storeadapter.StoreAdapter
-	if !d.c.DisableAnnounce || !d.c.DisableSyslogDrains {
-		storeAdapter = connectToEtcd(d.c)
-	}
-	appStoreWatcher, newAppServiceChan, deletedAppServiceChan := sinks.NewAppServiceStoreWatcher(
-		storeAdapter,
-		sinks.NewAppServiceCache(),
-	)
-	if !d.c.DisableAnnounce {
-		serviceConfig := &dopplerservice.Config{
-			Index:        d.c.Index,
-			JobName:      d.c.JobName,
-			Zone:         d.c.Zone,
-			OutgoingPort: d.c.OutgoingPort,
-		}
-		dopplerservice.Announce(d.c.IP, HeartbeatInterval, serviceConfig, storeAdapter)
-		dopplerservice.AnnounceLegacy(d.c.IP, HeartbeatInterval, serviceConfig, storeAdapter)
-	}
-	if !d.c.DisableSyslogDrains {
-		go appStoreWatcher.Run()
-	}
-
-	//------------------------------
 	// Start
 	//------------------------------
-	go sinkManager.Start(newAppServiceChan, deletedAppServiceChan)
-
 	messageRouter := sinks.NewMessageRouter(sinkManager, v1Router)
 	go messageRouter.Start(v1Buf)
 
@@ -333,30 +293,6 @@ func initV2Metrics(c *Config) *metricemitter.Client {
 	}
 
 	return metricClient
-}
-
-func connectToEtcd(c *Config) storeadapter.StoreAdapter {
-	workPool, err := workpool.NewWorkPool(c.EtcdMaxConcurrentRequests)
-	if err != nil {
-		panic(err)
-	}
-	options := &etcdstoreadapter.ETCDOptions{
-		ClusterUrls: c.EtcdUrls,
-	}
-	if c.EtcdRequireTLS {
-		options.IsSSL = true
-		options.CertFile = c.EtcdTLSClientConfig.CertFile
-		options.KeyFile = c.EtcdTLSClientConfig.KeyFile
-		options.CAFile = c.EtcdTLSClientConfig.CAFile
-	}
-	etcdStoreAdapter, err := etcdstoreadapter.New(options, workPool)
-	if err != nil {
-		panic(err)
-	}
-	if err = etcdStoreAdapter.Connect(); err != nil {
-		panic(err)
-	}
-	return etcdStoreAdapter
 }
 
 func initHealthRegistrar(r prometheus.Registerer) *healthendpoint.Registrar {

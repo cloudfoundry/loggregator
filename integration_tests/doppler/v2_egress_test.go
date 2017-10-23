@@ -15,10 +15,8 @@ import (
 var _ = Describe("V2 Egress", func() {
 	Context("emitting into v1 Ingress", func() {
 		It("receives envelope batches", func() {
-			etcdCleanup, etcdClientURL := testservers.StartTestEtcd()
-			defer etcdCleanup()
 			dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(
@@ -64,7 +62,6 @@ var _ = Describe("V2 Egress", func() {
 
 	Context("emitting into v2 Ingress", func() {
 		var (
-			etcdCleanup    func()
 			dopplerCleanup func()
 			ingressCleanup func()
 			egressCleanup  func()
@@ -74,12 +71,10 @@ var _ = Describe("V2 Egress", func() {
 		)
 
 		BeforeEach(func() {
-			var etcdClientURL string
 			var dopplerPorts testservers.DopplerPorts
 
-			etcdCleanup, etcdClientURL = testservers.StartTestEtcd()
 			dopplerCleanup, dopplerPorts = testservers.StartDoppler(
-				testservers.BuildDopplerConfig(etcdClientURL, 0, 0),
+				testservers.BuildDopplerConfig(0, 0),
 			)
 			ingressCleanup, ingressClient = dopplerIngressV2Client(
 				fmt.Sprintf("localhost:%d", dopplerPorts.GRPC),
@@ -93,7 +88,6 @@ var _ = Describe("V2 Egress", func() {
 			egressCleanup()
 			ingressCleanup()
 			dopplerCleanup()
-			etcdCleanup()
 		})
 
 		It("receives envelope batches", func() {

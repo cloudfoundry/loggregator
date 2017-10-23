@@ -12,14 +12,12 @@ import (
 
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/profiler"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/auth"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
 
-	"code.cloudfoundry.org/workpool"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/envelope_sender"
@@ -30,8 +28,6 @@ import (
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/dropsonde/runtime_stats"
-	"github.com/cloudfoundry/storeadapter"
-	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -55,7 +51,7 @@ type TrafficController struct {
 // finder provides service discovery of Doppler processes
 type finder interface {
 	Start()
-	Next() dopplerservice.Event
+	Next() plumbing.Event
 }
 
 func NewTrafficController(
@@ -143,27 +139,9 @@ func (t *TrafficController) Start() {
 		log.Fatalf("Could not use GRPC creds for server: %s", err)
 	}
 
-	var f finder
-	switch {
-	case len(t.conf.DopplerAddrs) > 0:
-		f = plumbing.NewStaticFinder(t.conf.DopplerAddrs)
-	default:
-		etcdAdapter := t.defaultStoreAdapterProvider(t.conf)
-		err = etcdAdapter.Connect()
-		if err != nil {
-			log.Panicf("Unable to connect to ETCD: %s", err)
-		}
-
-		f = dopplerservice.NewFinder(
-			etcdAdapter,
-			int(t.conf.DopplerPort),
-			int(t.conf.GRPC.Port),
-			[]string{"ws"},
-			"",
-		)
-	}
-
+	f := plumbing.NewStaticFinder(t.conf.DopplerAddrs)
 	f.Start()
+
 	kp := keepalive.ClientParameters{
 		Time:                15 * time.Second,
 		Timeout:             20 * time.Second,
@@ -259,25 +237,4 @@ func (t *TrafficController) initializeMetrics(origin, destination string) (*metr
 	go runtime_stats.NewRuntimeStats(dropsonde.DefaultEmitter, 10*time.Second).Run(nil)
 	http.DefaultTransport = dropsonde.InstrumentedRoundTripper(http.DefaultTransport)
 	return batcher, err
-}
-
-func (t *TrafficController) defaultStoreAdapterProvider(conf *Config) storeadapter.StoreAdapter {
-	workPool, err := workpool.NewWorkPool(conf.EtcdMaxConcurrentRequests)
-	if err != nil {
-		log.Panic(err)
-	}
-	options := &etcdstoreadapter.ETCDOptions{
-		ClusterUrls: conf.EtcdUrls,
-	}
-	if conf.EtcdRequireTLS {
-		options.IsSSL = true
-		options.CertFile = conf.EtcdTLSClientConfig.CertFile
-		options.KeyFile = conf.EtcdTLSClientConfig.KeyFile
-		options.CAFile = conf.EtcdTLSClientConfig.CAFile
-	}
-	etcdStoreAdapter, err := etcdstoreadapter.New(options, workPool)
-	if err != nil {
-		log.Panic(err)
-	}
-	return etcdStoreAdapter
 }

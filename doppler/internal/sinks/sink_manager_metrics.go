@@ -51,8 +51,6 @@ func (s *SinkManagerMetrics) Inc(sink Sink) {
 	switch sink.(type) {
 	case *DumpSink:
 		atomic.AddInt32(&s.dumpSinks, 1)
-	case *SyslogSink:
-		atomic.AddInt32(&s.syslogSinks, 1)
 	case *ContainerMetricSink:
 		atomic.AddInt32(&s.containerMetrics, 1)
 	}
@@ -62,8 +60,6 @@ func (s *SinkManagerMetrics) Dec(sink Sink) {
 	switch sink.(type) {
 	case *DumpSink:
 		atomic.AddInt32(&s.dumpSinks, -1)
-	case *SyslogSink:
-		atomic.AddInt32(&s.syslogSinks, -1)
 	case *ContainerMetricSink:
 		atomic.AddInt32(&s.containerMetrics, -1)
 	}

@@ -9,7 +9,6 @@ type Sink interface {
 	AppID() string
 	Run(<-chan *events.Envelope)
 	Identifier() string
-	ShouldReceiveErrors() bool
 }
 
 type Metric struct {

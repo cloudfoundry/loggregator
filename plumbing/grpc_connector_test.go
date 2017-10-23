@@ -7,7 +7,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 
-	"code.cloudfoundry.org/loggregator/dopplerservice"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
@@ -95,7 +94,7 @@ var _ = Describe("GRPCConnector", func() {
 				)
 
 				BeforeEach(func() {
-					event := dopplerservice.Event{
+					event := plumbing.Event{
 						GRPCDopplers: createGrpcURIs(listeners),
 					}
 
@@ -158,7 +157,7 @@ var _ = Describe("GRPCConnector", func() {
 				})
 
 				Context("when another doppler comes online", func() {
-					var secondEvent dopplerservice.Event
+					var secondEvent plumbing.Event
 
 					BeforeEach(func() {
 						Eventually(mockDopplerServerA.BatchSubscribeCalled).Should(HaveLen(1))
@@ -169,7 +168,7 @@ var _ = Describe("GRPCConnector", func() {
 						listeners = append(listeners, lisC)
 						grpcServers = append(grpcServers, serverC)
 
-						secondEvent = dopplerservice.Event{
+						secondEvent = plumbing.Event{
 							GRPCDopplers: createGrpcURIs(listeners),
 						}
 						mockFinder.NextOutput.Ret0 <- secondEvent
@@ -182,7 +181,7 @@ var _ = Describe("GRPCConnector", func() {
 				})
 
 				Context("when a doppler is removed permanently", func() {
-					var secondEvent dopplerservice.Event
+					var secondEvent plumbing.Event
 
 					BeforeEach(func() {
 						senderA := captureSubscribeSender(mockDopplerServerA)
@@ -192,7 +191,7 @@ var _ = Describe("GRPCConnector", func() {
 						Expect(err).ToNot(HaveOccurred())
 						Eventually(data).Should(Receive(Equal([]byte("some-data-a"))))
 
-						secondEvent = dopplerservice.Event{
+						secondEvent = plumbing.Event{
 							GRPCDopplers: createGrpcURIs(listeners[1:]),
 						}
 						mockFinder.NextOutput.Ret0 <- secondEvent
@@ -225,13 +224,13 @@ var _ = Describe("GRPCConnector", func() {
 
 				Context("when finder service falsely reports doppler going away", func() {
 					var (
-						secondEvent dopplerservice.Event
+						secondEvent plumbing.Event
 						senderA     plumbing.Doppler_BatchSubscribeServer
 					)
 					BeforeEach(func() {
 						senderA = captureSubscribeSender(mockDopplerServerA)
 
-						secondEvent = dopplerservice.Event{
+						secondEvent = plumbing.Event{
 							GRPCDopplers: createGrpcURIs(nil),
 						}
 
@@ -259,11 +258,11 @@ var _ = Describe("GRPCConnector", func() {
 
 					Context("finder event readvertises the doppler", func() {
 						var (
-							thirdEvent dopplerservice.Event
+							thirdEvent plumbing.Event
 						)
 
 						BeforeEach(func() {
-							thirdEvent = dopplerservice.Event{
+							thirdEvent = plumbing.Event{
 								GRPCDopplers: createGrpcURIs(listeners),
 							}
 
@@ -310,10 +309,10 @@ var _ = Describe("GRPCConnector", func() {
 			})
 
 			Context("when a doppler comes online before stream has established", func() {
-				var event dopplerservice.Event
+				var event plumbing.Event
 
 				BeforeEach(func() {
-					event = dopplerservice.Event{
+					event = plumbing.Event{
 						GRPCDopplers: createGrpcURIs(listeners),
 					}
 
@@ -333,11 +332,11 @@ var _ = Describe("GRPCConnector", func() {
 
 			Context("when new doppler is not available right away", func() {
 				var (
-					event dopplerservice.Event
+					event plumbing.Event
 				)
 
 				BeforeEach(func() {
-					event = dopplerservice.Event{
+					event = plumbing.Event{
 						GRPCDopplers: createGrpcURIs(listeners),
 					}
 
@@ -358,14 +357,14 @@ var _ = Describe("GRPCConnector", func() {
 
 			Context("when an active doppler closes after reading", func() {
 				var (
-					event   dopplerservice.Event
+					event   plumbing.Event
 					data    <-chan []byte
 					ready   <-chan struct{}
 					senderA plumbing.Doppler_BatchSubscribeServer
 				)
 
 				BeforeEach(func() {
-					event = dopplerservice.Event{
+					event = plumbing.Event{
 						GRPCDopplers: createGrpcURIs(listeners),
 					}
 
@@ -432,7 +431,7 @@ var _ = Describe("GRPCConnector", func() {
 					dopplerA = NewMockDopplerServer(testMetricA, testRecentLogA)
 					dopplerB = NewMockDopplerServer(testMetricB, testRecentLogB)
 
-					event := dopplerservice.Event{
+					event := plumbing.Event{
 						GRPCDopplers: []string{
 							dopplerA.addr.String(),
 							dopplerB.addr.String(),
@@ -466,7 +465,7 @@ var _ = Describe("GRPCConnector", func() {
 					dopplerA = NewMockDopplerServer(testMetricA, testRecentLogA)
 					dopplerB = NewMockDopplerServer(nil, nil)
 
-					event := dopplerservice.Event{
+					event := plumbing.Event{
 						GRPCDopplers: []string{
 							dopplerA.addr.String(),
 							dopplerB.addr.String(),

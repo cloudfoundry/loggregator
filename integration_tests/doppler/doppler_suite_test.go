@@ -15,12 +15,10 @@ import (
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
-	"code.cloudfoundry.org/workpool"
 
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -308,17 +306,6 @@ func startEncryptedTCPServer(syslogDrainAddress string) (*tcpServer, error) {
 	server.start()
 
 	return server, nil
-}
-
-func etcdAdapter(url string) *etcdstoreadapter.ETCDStoreAdapter {
-	pool, err := workpool.NewWorkPool(10)
-	Expect(err).NotTo(HaveOccurred())
-	options := &etcdstoreadapter.ETCDOptions{
-		ClusterUrls: []string{url},
-	}
-	etcdAdapter, err := etcdstoreadapter.New(options, pool)
-	Expect(err).ToNot(HaveOccurred())
-	return etcdAdapter
 }
 
 func buildV1PrimerLogMessage() []byte {

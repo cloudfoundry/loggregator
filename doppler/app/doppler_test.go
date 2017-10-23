@@ -29,8 +29,6 @@ var _ = Describe("Doppler", func() {
 				MetricBatchIntervalMilliseconds: 1000,
 				SinkInactivityTimeoutSeconds:    3600,
 				ContainerMetricTTLSeconds:       120,
-				DisableAnnounce:                 true,
-				DisableSyslogDrains:             true,
 			}
 
 			doppler := app.NewLegacyDoppler(config)
