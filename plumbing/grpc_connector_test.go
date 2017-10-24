@@ -503,7 +503,7 @@ var _ = Describe("GRPCConnector", func() {
 					Eventually(f).Should(ConsistOf([][]byte{testMetricA}))
 
 					var envelope *v2.Envelope
-					for _, e := range metricClient.GetEnvelopes("query_timeout") {
+					for _, e := range metricClient.GetEnvelopes("query_error") {
 						if e.DeprecatedTags["query"].GetText() == "container_metrics" {
 							envelope = e
 						}
@@ -512,7 +512,7 @@ var _ = Describe("GRPCConnector", func() {
 					Expect(envelope.GetCounter().GetDelta()).To(Equal(uint64(1)))
 				})
 
-				It("emits a metric when container metrics times out", func() {
+				It("emits a metric when recent logs times out", func() {
 					f := func() [][]byte {
 						c, _ := context.WithTimeout(ctx, 250*time.Millisecond)
 						return connector.RecentLogs(c, "test-app-id")
@@ -520,7 +520,7 @@ var _ = Describe("GRPCConnector", func() {
 					Eventually(f).Should(ConsistOf([][]byte{testRecentLogA}))
 
 					var envelope *v2.Envelope
-					for _, e := range metricClient.GetEnvelopes("query_timeout") {
+					for _, e := range metricClient.GetEnvelopes("query_error") {
 						if e.DeprecatedTags["query"].GetText() == "recent_logs" {
 							envelope = e
 						}
