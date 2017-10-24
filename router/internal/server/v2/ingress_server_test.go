@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	"code.cloudfoundry.org/loggregator/diodes"
-	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	. "github.com/onsi/ginkgo"

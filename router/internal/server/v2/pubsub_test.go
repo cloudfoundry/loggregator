@@ -1,8 +1,8 @@
 package v2_test
 
 import (
-	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"

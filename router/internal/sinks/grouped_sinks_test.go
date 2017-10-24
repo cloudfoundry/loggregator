@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
-	"code.cloudfoundry.org/loggregator/router/internal/sinks"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
+	"code.cloudfoundry.org/loggregator/router/internal/sinks"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"

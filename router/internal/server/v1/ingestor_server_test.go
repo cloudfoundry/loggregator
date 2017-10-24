@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc"
 
 	"code.cloudfoundry.org/loggregator/diodes"
-	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
+	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/sonde-go/events"
 
