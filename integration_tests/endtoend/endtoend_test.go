@@ -12,8 +12,8 @@ import (
 
 var _ = Describe("End to end tests", func() {
 	It("sends messages from metron through doppler and traffic controller", func() {
-		dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-			testservers.BuildDopplerConfig(0, 0),
+		dopplerCleanup, dopplerPorts := testservers.StartRouter(
+			testservers.BuildRouterConfig(0, 0),
 		)
 		defer dopplerCleanup()
 		metronCleanup, metronPorts := testservers.StartMetron(

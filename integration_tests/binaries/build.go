@@ -11,7 +11,7 @@ import (
 
 type BuildPaths struct {
 	Metron            string `json:"metron"`
-	Doppler           string `json:"doppler"`
+	Router            string `json:"router"`
 	TrafficController string `json:"traffic_controller"`
 }
 
@@ -25,7 +25,7 @@ func (bp *BuildPaths) Unmarshal(text []byte) error {
 
 func (bp BuildPaths) SetEnv() {
 	os.Setenv("METRON_BUILD_PATH", bp.Metron)
-	os.Setenv("DOPPLER_BUILD_PATH", bp.Doppler)
+	os.Setenv("ROUTER_BUILD_PATH", bp.Router)
 	os.Setenv("TRAFFIC_CONTROLLER_BUILD_PATH", bp.TrafficController)
 }
 
@@ -37,7 +37,7 @@ func Build() (BuildPaths, chan error) {
 	if os.Getenv("SKIP_BUILD") != "" {
 		fmt.Println("Skipping building of binaries")
 		bp.Metron = os.Getenv("METRON_BUILD_PATH")
-		bp.Doppler = os.Getenv("DOPPLER_BUILD_PATH")
+		bp.Router = os.Getenv("ROUTER_BUILD_PATH")
 		bp.TrafficController = os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
 		return bp, errors
 	}
@@ -62,14 +62,14 @@ func Build() (BuildPaths, chan error) {
 
 	go func() {
 		defer wg.Done()
-		dopplerPath, err := gexec.Build("code.cloudfoundry.org/loggregator/doppler", "-race")
+		routerPath, err := gexec.Build("code.cloudfoundry.org/loggregator/router", "-race")
 		if err != nil {
 			errors <- err
 			return
 		}
 		mu.Lock()
 		defer mu.Unlock()
-		bp.Doppler = dopplerPath
+		bp.Router = routerPath
 	}()
 
 	go func() {

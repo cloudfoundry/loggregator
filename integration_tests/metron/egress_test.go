@@ -18,8 +18,8 @@ import (
 
 var _ = Describe("Metron", func() {
 	It("writes downstream via gRPC", func() {
-		dopplerCleanup, dopplerPorts := testservers.StartDoppler(
-			testservers.BuildDopplerConfig(0, 0),
+		dopplerCleanup, dopplerPorts := testservers.StartRouter(
+			testservers.BuildRouterConfig(0, 0),
 		)
 		defer dopplerCleanup()
 		metronCleanup, metronPorts := testservers.StartMetron(
