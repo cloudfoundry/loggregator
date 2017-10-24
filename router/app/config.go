@@ -10,7 +10,7 @@ import (
 
 const HeartbeatInterval = 10 * time.Second
 
-type MetronConfig struct {
+type Agent struct {
 	UDPAddress  string
 	GRPCAddress string
 }
@@ -34,9 +34,9 @@ type Config struct {
 	GRPC                            GRPC
 	UnmarshallerCount               int
 
-	PPROFPort    uint32
-	HealthAddr   string
-	MetronConfig MetronConfig
+	PPROFPort  uint32
+	HealthAddr string
+	Agent      Agent
 }
 
 func (c *Config) validate() (err error) {
@@ -45,15 +45,15 @@ func (c *Config) validate() (err error) {
 	}
 
 	if len(c.GRPC.CAFile) == 0 {
-		return errors.New("invalid doppler config, no GRPC.CAFile provided")
+		return errors.New("invalid router config, no GRPC.CAFile provided")
 	}
 
 	if len(c.GRPC.CertFile) == 0 {
-		return errors.New("invalid doppler config, no GRPC.CertFile provided")
+		return errors.New("invalid router config, no GRPC.CertFile provided")
 	}
 
 	if len(c.GRPC.KeyFile) == 0 {
-		return errors.New("invalid doppler config, no GRPC.KeyFile provided")
+		return errors.New("invalid router config, no GRPC.KeyFile provided")
 	}
 
 	return nil

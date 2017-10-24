@@ -12,7 +12,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-func BuildRouterConfig(metronUDPPort, metronGRPCPort int) app.Config {
+func BuildRouterConfig(agentUDPPort, agentGRPCPort int) app.Config {
 	return app.Config{
 		GRPC: app.GRPC{
 			CertFile: Cert("doppler.crt"),
@@ -21,9 +21,9 @@ func BuildRouterConfig(metronUDPPort, metronGRPCPort int) app.Config {
 		},
 		HealthAddr: "localhost:0",
 
-		MetronConfig: app.MetronConfig{
-			UDPAddress:  fmt.Sprintf("127.0.0.1:%d", metronUDPPort),
-			GRPCAddress: fmt.Sprintf("127.0.0.1:%d", metronGRPCPort),
+		Agent: app.Agent{
+			UDPAddress:  fmt.Sprintf("127.0.0.1:%d", agentUDPPort),
+			GRPCAddress: fmt.Sprintf("127.0.0.1:%d", agentGRPCPort),
 		},
 
 		MetricBatchIntervalMilliseconds: 10,

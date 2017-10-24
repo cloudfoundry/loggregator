@@ -2,7 +2,7 @@
     "JobName": "trafficcontroller",
     "Index": "3",
     "OutgoingDropsondePort": 49629,
-    "DopplerPort": 49627,
+    "RouterPort": 49627,
     "IncomingPort": 49631,
     "SkipCertVerify": true,
     "Zone": "z1",
@@ -10,7 +10,7 @@
     "ApiHost": "http://127.0.0.1:49632",
     "SystemDomain": "vcap.me",
 
-    "MetronPort": 49625,
+    "AgentPort": 49625,
     "UaaHost": "http://127.0.0.1:49628",
     "UaaClient": "bob",
     "UaaClientSecret": "yourUncle",

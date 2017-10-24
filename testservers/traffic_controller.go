@@ -12,10 +12,10 @@ import (
 	tcConf "code.cloudfoundry.org/loggregator/trafficcontroller/app"
 )
 
-func BuildTrafficControllerConf(dopplerGRPCPort, metronPort int) tcConf.Config {
+func BuildTrafficControllerConf(dopplerGRPCPort, agentPort int) tcConf.Config {
 	return tcConf.Config{
-		IP:           "127.0.0.1",
-		DopplerAddrs: []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
+		IP:          "127.0.0.1",
+		RouterAddrs: []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
 
 		GRPC: tcConf.GRPC{
 			Port:     uint16(dopplerGRPCPort),
@@ -23,8 +23,8 @@ func BuildTrafficControllerConf(dopplerGRPCPort, metronPort int) tcConf.Config {
 			KeyFile:  Cert("trafficcontroller.key"),
 			CAFile:   Cert("loggregator-ca.crt"),
 		},
-		MetronConfig: tcConf.MetronConfig{
-			UDPAddress: fmt.Sprintf("localhost:%d", metronPort),
+		Agent: tcConf.Agent{
+			UDPAddress: fmt.Sprintf("localhost:%d", agentPort),
 		},
 		HealthAddr: "localhost:0",
 
@@ -52,7 +52,7 @@ type TrafficControllerPorts struct {
 }
 
 func StartTrafficController(conf tcConf.Config) (cleanup func(), tp TrafficControllerPorts) {
-	By("making sure trafficcontroller was build")
+	By("making sure trafficcontroller was built")
 	tcPath := os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
 	Expect(tcPath).ToNot(BeEmpty())
 

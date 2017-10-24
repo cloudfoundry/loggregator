@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-// MetronConfig holds configuration for communication to a metron agent.
-type MetronConfig struct {
+// Agent holds configuration for communication to a logging/metric agent.
+type Agent struct {
 	UDPAddress  string
 	GRPCAddress string
 }
 
-// GRPC holds TLS configuration for gRPC communcation to doppler and metron.
-// Port is the Port to dial for communcation with doppler.
+// GRPC holds TLS configuration for gRPC communcation to router and agent.
+// Port is the Port to dial for communcation with router.
 type GRPC struct {
 	Port     uint16
 	CAFile   string
@@ -37,10 +37,10 @@ type Config struct {
 	IP                    string
 	ApiHost               string
 	CCTLSClientConfig     CCTLSClientConfig
-	DopplerPort           uint32
-	DopplerAddrs          []string
+	RouterPort            uint32
+	RouterAddrs           []string
 	OutgoingDropsondePort uint32
-	MetronConfig          MetronConfig
+	Agent                 Agent
 	GRPC                  GRPC
 	SystemDomain          string
 	SkipCertVerify        bool
@@ -111,15 +111,15 @@ func (c *Config) validate() error {
 	}
 
 	if len(c.GRPC.CAFile) == 0 {
-		return errors.New("invalid doppler config, no GRPC.CAFile provided")
+		return errors.New("invalid router config, no GRPC.CAFile provided")
 	}
 
 	if len(c.GRPC.CertFile) == 0 {
-		return errors.New("invalid doppler config, no GRPC.CertFile provided")
+		return errors.New("invalid router config, no GRPC.CertFile provided")
 	}
 
 	if len(c.GRPC.KeyFile) == 0 {
-		return errors.New("invalid doppler config, no GRPC.KeyFile provided")
+		return errors.New("invalid router config, no GRPC.KeyFile provided")
 	}
 
 	if c.UaaClientSecret == "" {

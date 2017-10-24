@@ -11,27 +11,27 @@ import (
 )
 
 var _ = Describe("End to end tests", func() {
-	It("sends messages from metron through doppler and traffic controller", func() {
+	It("sends messages from agent through doppler and traffic controller", func() {
 		dopplerCleanup, dopplerPorts := testservers.StartRouter(
 			testservers.BuildRouterConfig(0, 0),
 		)
 		defer dopplerCleanup()
-		metronCleanup, metronPorts := testservers.StartMetron(
-			testservers.BuildMetronConfig("localhost", dopplerPorts.GRPC),
+		agentCleanup, agentPorts := testservers.StartAgent(
+			testservers.BuildAgentConfig("localhost", dopplerPorts.GRPC),
 		)
-		defer metronCleanup()
+		defer agentCleanup()
 		trafficcontrollerCleanup, tcPorts := testservers.StartTrafficController(
 			testservers.BuildTrafficControllerConf(
 				dopplerPorts.GRPC,
-				metronPorts.UDP,
+				agentPorts.UDP,
 			),
 		)
 		defer trafficcontrollerCleanup()
 
 		const writeRatePerSecond = 10
-		metronStreamWriter := endtoend.NewMetronStreamWriter(metronPorts.UDP)
+		agentStreamWriter := endtoend.NewAgentStreamWriter(agentPorts.UDP)
 		generator := endtoend.NewLogMessageGenerator("custom-app-id")
-		writeStrategy := endtoend.NewConstantWriteStrategy(generator, metronStreamWriter, writeRatePerSecond)
+		writeStrategy := endtoend.NewConstantWriteStrategy(generator, agentStreamWriter, writeRatePerSecond)
 
 		firehoseReader := endtoend.NewFirehoseReader(tcPorts.WS)
 		ex := endtoend.NewExperiment(firehoseReader)

@@ -49,7 +49,7 @@ func main() {
 
 	// metric-documentation-v2: setup function
 	metricClient, err := metricemitter.NewClient(
-		conf.MetronConfig.GRPCAddress,
+		conf.Agent.GRPCAddress,
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(credentials)),
 		metricemitter.WithOrigin("loggregator.trafficcontroller"),
 		metricemitter.WithPulseInterval(conf.MetricEmitterDuration),

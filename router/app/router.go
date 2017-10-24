@@ -48,7 +48,7 @@ func NewRouter(grpc GRPC, opts ...RouterOption) *Router {
 		c: &Config{
 			GRPC: grpc,
 			MetricBatchIntervalMilliseconds: 5000,
-			MetronConfig: MetronConfig{
+			Agent: Agent{
 				UDPAddress:  "127.0.0.1:3457",
 				GRPCAddress: "127.0.0.1:3458",
 			},
@@ -96,7 +96,7 @@ func (d *Router) Start() {
 	//------------------------------
 	metricBatcher := initV1Metrics(
 		d.c.MetricBatchIntervalMilliseconds,
-		d.c.MetronConfig.UDPAddress,
+		d.c.Agent.UDPAddress,
 	)
 
 	//------------------------------
@@ -283,7 +283,7 @@ func initV2Metrics(c *Config) *metricemitter.Client {
 
 	// metric-documentation-v2: setup function
 	metricClient, err := metricemitter.NewClient(
-		c.MetronConfig.GRPCAddress,
+		c.Agent.GRPCAddress,
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(credentials)),
 		metricemitter.WithOrigin("loggregator.doppler"),
 		metricemitter.WithPulseInterval(batchInterval),

@@ -16,7 +16,7 @@ type FirehoseReader struct {
 
 	TestMetricCount             float64
 	NonTestMetricCount          float64
-	MetronSentMessageCount      float64
+	AgentSentMessageCount       float64
 	DopplerReceivedMessageCount float64
 	DopplerSentMessageCount     float64
 
@@ -44,8 +44,8 @@ func (r *FirehoseReader) Read() {
 			r.NonTestMetricCount += 1
 		}
 
-		if metronSentMessageCount(msg) {
-			r.MetronSentMessageCount = float64(msg.CounterEvent.GetTotal())
+		if agentSentMessageCount(msg) {
+			r.AgentSentMessageCount = float64(msg.CounterEvent.GetTotal())
 		}
 
 		if dopplerReceivedMessageCount(msg) {
@@ -82,7 +82,7 @@ func testMetric(msg *events.Envelope) bool {
 	return msg.GetEventType() == events.Envelope_ValueMetric && msg.ValueMetric.GetName() == "fake-metric-name"
 }
 
-func metronSentMessageCount(msg *events.Envelope) bool {
+func agentSentMessageCount(msg *events.Envelope) bool {
 	return msg.GetEventType() == events.Envelope_CounterEvent && msg.CounterEvent.GetName() == "DopplerForwarder.sentMessages" && msg.GetOrigin() == "MetronAgent"
 }
 

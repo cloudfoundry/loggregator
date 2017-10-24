@@ -10,7 +10,7 @@ import (
 )
 
 type BuildPaths struct {
-	Metron            string `json:"metron"`
+	Agent             string `json:"agent"`
 	Router            string `json:"router"`
 	TrafficController string `json:"traffic_controller"`
 }
@@ -24,7 +24,7 @@ func (bp *BuildPaths) Unmarshal(text []byte) error {
 }
 
 func (bp BuildPaths) SetEnv() {
-	os.Setenv("METRON_BUILD_PATH", bp.Metron)
+	os.Setenv("AGENT_BUILD_PATH", bp.Agent)
 	os.Setenv("ROUTER_BUILD_PATH", bp.Router)
 	os.Setenv("TRAFFIC_CONTROLLER_BUILD_PATH", bp.TrafficController)
 }
@@ -36,7 +36,7 @@ func Build() (BuildPaths, chan error) {
 
 	if os.Getenv("SKIP_BUILD") != "" {
 		fmt.Println("Skipping building of binaries")
-		bp.Metron = os.Getenv("METRON_BUILD_PATH")
+		bp.Agent = os.Getenv("AGENT_BUILD_PATH")
 		bp.Router = os.Getenv("ROUTER_BUILD_PATH")
 		bp.TrafficController = os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
 		return bp, errors
@@ -50,14 +50,14 @@ func Build() (BuildPaths, chan error) {
 
 	go func() {
 		defer wg.Done()
-		metronPath, err := gexec.Build("code.cloudfoundry.org/loggregator/metron", "-race")
+		agentPath, err := gexec.Build("code.cloudfoundry.org/loggregator/agent", "-race")
 		if err != nil {
 			errors <- err
 			return
 		}
 		mu.Lock()
 		defer mu.Unlock()
-		bp.Metron = metronPath
+		bp.Agent = agentPath
 	}()
 
 	go func() {

@@ -19,7 +19,7 @@ var _ = Describe("Router", func() {
 
 			config := &app.Config{
 				GRPC: grpc,
-				MetronConfig: app.MetronConfig{
+				Agent: app.Agent{
 					UDPAddress:  "127.0.0.1:3457",
 					GRPCAddress: "127.0.0.1:3458",
 				},

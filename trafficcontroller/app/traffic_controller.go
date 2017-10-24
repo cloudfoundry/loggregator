@@ -73,7 +73,7 @@ func NewTrafficController(
 func (t *TrafficController) Start() {
 	log.Print("Startup: Setting up the loggregator traffic controller")
 
-	batcher, err := t.initializeMetrics("LoggregatorTrafficController", t.conf.MetronConfig.UDPAddress)
+	batcher, err := t.initializeMetrics("LoggregatorTrafficController", t.conf.Agent.UDPAddress)
 	if err != nil {
 		log.Printf("Error initializing dropsonde: %s", err)
 	}
@@ -139,7 +139,7 @@ func (t *TrafficController) Start() {
 		log.Fatalf("Could not use GRPC creds for server: %s", err)
 	}
 
-	f := plumbing.NewStaticFinder(t.conf.DopplerAddrs)
+	f := plumbing.NewStaticFinder(t.conf.RouterAddrs)
 	f.Start()
 
 	kp := keepalive.ClientParameters{
