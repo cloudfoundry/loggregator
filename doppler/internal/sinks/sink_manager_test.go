@@ -8,8 +8,6 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/factories"
-	fakeMS "github.com/cloudfoundry/dropsonde/metric_sender/fake"
-	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
@@ -19,13 +17,10 @@ import (
 
 var _ = Describe("SinkManager", func() {
 	var (
-		fakeMetricSender *fakeMS.FakeMetricSender
-		sinkManager      *sinks.SinkManager
+		sinkManager *sinks.SinkManager
 	)
 
 	BeforeEach(func() {
-		fakeMetricSender = fakeMS.NewFakeMetricSender()
-		metrics.Initialize(fakeMetricSender, nil)
 		fakeMetricSender.Reset()
 
 		health := newSpyHealthRegistrar()

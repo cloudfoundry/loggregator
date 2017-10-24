@@ -150,7 +150,7 @@ var _ = Describe("Containermetric", func() {
 		wg, done := continuouslySend(inputChan, metric)
 		defer wg.Wait()
 		defer close(done)
-		Consistently(containerMetricRunnerDone, 1).ShouldNot(BeClosed())
+		Consistently(containerMetricRunnerDone).ShouldNot(BeClosed())
 	})
 
 	It("increments and decrements the container metric count", func() {

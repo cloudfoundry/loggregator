@@ -4,12 +4,9 @@ import (
 	"io/ioutil"
 	"log"
 	"testing"
-	"time"
 
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
-	"github.com/cloudfoundry/dropsonde/metric_sender"
 	fakeMS "github.com/cloudfoundry/dropsonde/metric_sender/fake"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,9 +30,6 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 }, func(encodedBuiltArtifacts []byte) {
 	fakeEventEmitter = fake.NewFakeEventEmitter("doppler")
 	fakeMetricSender = fakeMS.NewFakeMetricSender()
-	metrics.Initialize(fakeMetricSender, nil)
 
-	sender := metric_sender.NewMetricSender(fakeEventEmitter)
-	batcher := metricbatcher.New(sender, 100*time.Millisecond)
-	metrics.Initialize(sender, batcher)
+	metrics.Initialize(fakeMetricSender, nil)
 }, 10)
