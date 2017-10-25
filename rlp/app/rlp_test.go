@@ -66,10 +66,14 @@ var _ = Describe("Start", func() {
 
 	It("receives container metrics via egress query client", func() {
 		doppler, _, dopplerLis := setupDoppler()
-		doppler.ContainerMetricsOutput.Err <- nil
-		doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
-			Payload: [][]byte{buildContainerMetric()},
-		}
+		go func() {
+			for {
+				doppler.ContainerMetricsOutput.Err <- nil
+				doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
+					Payload: [][]byte{buildContainerMetric()},
+				}
+			}
+		}()
 
 		egressAddr, _ := setupRLP(dopplerLis, "localhost:0")
 		egressClient, cleanup := setupRLPQueryClient(egressAddr)
@@ -77,7 +81,7 @@ var _ = Describe("Start", func() {
 
 		var resp *v2.QueryResponse
 		f := func() error {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 			defer cancel()
 
 			var err error
@@ -87,7 +91,7 @@ var _ = Describe("Start", func() {
 
 			return err
 		}
-		Eventually(f, 10).Should(Succeed())
+		Eventually(f, 5).Should(Succeed())
 
 		Expect(resp.Envelopes).To(HaveLen(1))
 		Expect(dopplerLis.Close()).To(Succeed())
