@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
 	"code.cloudfoundry.org/loggregator/router/app"
 
 	. "github.com/onsi/ginkgo"
@@ -46,11 +47,9 @@ func StartRouter(conf app.Config) (cleanup func(), rp RouterPorts) {
 	routerPath := os.Getenv("ROUTER_BUILD_PATH")
 	Expect(routerPath).ToNot(BeEmpty())
 
-	filename, err := writeConfigToFile("router-config", conf)
-	Expect(err).ToNot(HaveOccurred())
-
 	By("starting router")
-	routerCommand := exec.Command(routerPath, "--config", filename)
+	routerCommand := exec.Command(routerPath)
+	routerCommand.Env = envstruct.ToEnv(&conf)
 
 	routerSession, err := gexec.Start(
 		routerCommand,
@@ -65,7 +64,6 @@ func StartRouter(conf app.Config) (cleanup func(), rp RouterPorts) {
 	rp.Health = waitForPortBinding("health", routerSession.Err)
 
 	cleanup = func() {
-		os.Remove(filename)
 		routerSession.Kill().Wait()
 	}
 

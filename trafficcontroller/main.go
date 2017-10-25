@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/x509"
-	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,22 +18,10 @@ import (
 
 func main() {
 	grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
-	disableAccessControl := flag.Bool(
-		"disableAccessControl",
-		false,
-		"always all access to app logs",
-	)
-	configFile := flag.String(
-		"config",
-		"config/loggregator_trafficcontroller.json",
-		"Location of the loggregator trafficcontroller config json file",
-	)
 
-	flag.Parse()
-
-	conf, err := app.ParseConfig(*configFile)
+	conf, err := app.LoadConfig()
 	if err != nil {
-		log.Panicf("Unable to parse config: %s", err)
+		log.Panicf("Unable to load config: %s", err)
 	}
 
 	credentials, err := plumbing.NewClientCredentials(
@@ -52,7 +39,7 @@ func main() {
 		conf.Agent.GRPCAddress,
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(credentials)),
 		metricemitter.WithOrigin("loggregator.trafficcontroller"),
-		metricemitter.WithPulseInterval(conf.MetricEmitterDuration),
+		metricemitter.WithPulseInterval(conf.MetricEmitterInterval),
 	)
 	if err != nil {
 		log.Fatalf("Couldn't connect to metric emitter: %s", err)
@@ -60,7 +47,7 @@ func main() {
 
 	tc := app.NewTrafficController(
 		conf,
-		*disableAccessControl,
+		conf.DisableAccessControl,
 		metricClient,
 		uaaHTTPClient(conf),
 		ccHTTPClient(conf),

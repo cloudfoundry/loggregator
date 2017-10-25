@@ -1,104 +1,74 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
-	"os"
 	"time"
+
+	envstruct "code.cloudfoundry.org/go-envstruct"
 )
 
-// Agent holds configuration for communication to a logging/metric agent.
+// Agent stores configuration for communication to a logging/metric agent.
 type Agent struct {
-	UDPAddress  string
-	GRPCAddress string
+	UDPAddress  string `env:"AGENT_UDP_ADDRESS"`
+	GRPCAddress string `env:"AGENT_GRPC_ADDRESS"`
 }
 
-// GRPC holds TLS configuration for gRPC communcation to router and agent.
-// Port is the Port to dial for communcation with router.
+// GRPC stores TLS configuration for gRPC communcation to router and agent.
 type GRPC struct {
-	Port     uint16
-	CAFile   string
-	CertFile string
-	KeyFile  string
+	CAFile   string `env:"ROUTER_CA_FILE"`
+	CertFile string `env:"ROUTER_CERT_FILE"`
+	KeyFile  string `env:"ROUTER_KEY_FILE"`
 }
 
-// CCTLSClientConfig holds TLS cofiguration for communication with cloud
+// CCTLSClientConfig stores TLS cofiguration for communication with cloud
 // controller.
 type CCTLSClientConfig struct {
-	CertFile   string
-	KeyFile    string
-	CAFile     string
-	ServerName string
+	CertFile   string `env:"CC_CERT_FILE"`
+	KeyFile    string `env:"CC_KEY_FILE"`
+	CAFile     string `env:"CC_CA_FILE"`
+	ServerName string `env:"CC_SERVER_NAME"`
 }
 
-// Config holds all Configuration options for trafficcontroller.
+// Config stores all Configuration options for trafficcontroller.
 type Config struct {
-	IP                    string
-	ApiHost               string
+	IP                    string        `env:"TRAFFIC_CONTROLLER_IP"`
+	ApiHost               string        `env:"TRAFFIC_CONTROLLER_API_HOST"`
+	OutgoingDropsondePort uint32        `env:"TRAFFIC_CONTROLLER_OUTGOING_DROPSONDE_PORT"`
+	SystemDomain          string        `env:"TRAFFIC_CONTROLLER_SYSTEM_DOMAIN"`
+	SkipCertVerify        bool          `env:"TRAFFIC_CONTROLLER_SKIP_CERT_VERIFY"`
+	UaaHost               string        `env:"TRAFFIC_CONTROLLER_UAA_HOST"`
+	UaaClient             string        `env:"TRAFFIC_CONTROLLER_UAA_CLIENT"`
+	UaaClientSecret       string        `env:"TRAFFIC_CONTROLLER_UAA_CLIENT_SECRET"`
+	UaaCACert             string        `env:"TRAFFIC_CONTROLLER_UAA_CA_CERT"`
+	SecurityEventLog      string        `env:"TRAFFIC_CONTROLLER_SECURITY_EVENT_LOG"`
+	PProfPort             uint32        `env:"TRAFFIC_CONTROLLER_PPROF_PORT"`
+	MetricEmitterInterval time.Duration `env:"TRAFFIC_CONTROLLER_METRIC_EMITTER_INTERVAL"`
+	HealthAddr            string        `env:"TRAFFIC_CONTROLLER_HEALTH_ADDR"`
+	DisableAccessControl  bool          `env:"TRAFFIC_CONTROLLER_DISABLE_ACCESS_CONTROL"`
+	RouterAddrs           []string      `env:"ROUTER_ADDRS"`
 	CCTLSClientConfig     CCTLSClientConfig
-	RouterPort            uint32
-	RouterAddrs           []string
-	OutgoingDropsondePort uint32
 	Agent                 Agent
 	GRPC                  GRPC
-	SystemDomain          string
-	SkipCertVerify        bool
-	UaaHost               string
-	UaaClient             string
-	UaaClientSecret       string
-	UaaCACert             string
-	SecurityEventLog      string
-	PPROFPort             uint32
-	MetricEmitterInterval string
-	MetricEmitterDuration time.Duration `json:"-"`
-	HealthAddr            string
 }
 
-// ParseConfig reads ands and parses the given filepath to a JSON file.
-func ParseConfig(configFile string) (*Config, error) {
-	file, err := os.Open(configFile)
+// LoadConfig reads from the environment to create a Config.
+func LoadConfig() (*Config, error) {
+	config := Config{
+		MetricEmitterInterval: time.Minute,
+		HealthAddr:            "localhost:14825",
+	}
+
+	err := envstruct.Load(&config)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
-	return Parse(file)
-}
-
-// Parse returns a Config struct that has been unmarshalled from the given
-// io.Reader. Before the Config struct is returned, defaults are set and
-// validation is performed.
-func Parse(r io.Reader) (*Config, error) {
-	config := &Config{}
-
-	err := json.NewDecoder(r).Decode(config)
-	if err != nil {
-		return nil, err
-	}
-
-	config.setDefaults()
 
 	err = config.validate()
 	if err != nil {
 		return nil, err
 	}
-	return config, nil
-}
 
-func (c *Config) setDefaults() {
-	if c.GRPC.Port == 0 {
-		c.GRPC.Port = 8082
-	}
-
-	duration, err := time.ParseDuration(c.MetricEmitterInterval)
-	if err != nil {
-		c.MetricEmitterDuration = time.Minute
-	} else {
-		c.MetricEmitterDuration = duration
-	}
-	if len(c.HealthAddr) == 0 {
-		c.HealthAddr = "localhost:14825"
-	}
+	return &config, nil
 }
 
 func (c *Config) validate() error {

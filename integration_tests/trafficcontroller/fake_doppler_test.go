@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
+	"code.cloudfoundry.org/loggregator/testservers"
 
 	"golang.org/x/net/context"
 
@@ -47,9 +48,9 @@ func (fakeDoppler *FakeDoppler) Start() error {
 		return err
 	}
 	tlsConfig, err := plumbing.NewServerMutualTLSConfig(
-		"../fixtures/server.crt",
-		"../fixtures/server.key",
-		"../fixtures/loggregator-ca.crt",
+		testservers.Cert("doppler.crt"),
+		testservers.Cert("doppler.key"),
+		testservers.Cert("loggregator-ca.crt"),
 	)
 	if err != nil {
 		return err

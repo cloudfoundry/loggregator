@@ -1,42 +1,61 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"os"
-	"time"
+
+	envstruct "code.cloudfoundry.org/go-envstruct"
 )
 
-const HeartbeatInterval = 10 * time.Second
-
+// Agent stores the configuration for connecting to the Agent over UDP or
+// gRPC.
 type Agent struct {
-	UDPAddress  string
-	GRPCAddress string
+	UDPAddress  string `env:"AGENT_UDP_ADDRESS"`
+	GRPCAddress string `env:"AGENT_GRPC_ADDRESS"`
 }
 
+// GRPC stores the configuration for the router as a server using a PORT
+// with mTLS certs and as a client also using mTSL certs for emitting metrics.
 type GRPC struct {
-	Port         uint16
-	CertFile     string
-	KeyFile      string
-	CAFile       string
-	CipherSuites []string
+	Port         uint16   `env:"ROUTER_PORT"`
+	CertFile     string   `env:"ROUTER_CERT_FILE"`
+	KeyFile      string   `env:"ROUTER_KEY_FILE"`
+	CAFile       string   `env:"ROUTER_CA_FILE"`
+	CipherSuites []string `env:"ROUTER_CIPHER_SUITES"`
 }
 
+// Config stores all configurations options for the Router.
 type Config struct {
-	MaxRetainedLogMessages       uint32
-	MessageDrainBufferSize       uint
-	ContainerMetricTTLSeconds    int
-	SinkInactivityTimeoutSeconds int
-
-	MetricBatchIntervalMilliseconds uint
-	WebsocketHost                   string
+	MaxRetainedLogMessages          uint32 `env:"ROUTER_MAX_RETAINED_LOG_MESSAGES"`
+	MessageDrainBufferSize          uint   `env:"ROUTER_MESSAGE_DRAIN_BUFFER_SIZE"`
+	ContainerMetricTTLSeconds       int    `env:"ROUTER_CONTAINER_METRIC_TTL_SECONDS"`
+	SinkInactivityTimeoutSeconds    int    `env:"ROUTER_SINK_INACTIVITY_TIMEOUT_SECONDS"`
+	MetricBatchIntervalMilliseconds uint   `env:"ROUTER_METRIC_BATCH_INTERVAL_MILLISECONDS"`
+	UnmarshallerCount               int    `env:"ROUTER_UNMARSHALLER_COUNT"`
+	PProfPort                       uint32 `env:"ROUTER_PPROF_PORT"`
+	HealthAddr                      string `env:"ROUTER_HEALTH_ADDR"`
+	Agent                           Agent
 	GRPC                            GRPC
-	UnmarshallerCount               int
+}
 
-	PPROFPort  uint32
-	HealthAddr string
-	Agent      Agent
+// LoadConfig reads from the environment to create a Config.
+func LoadConfig() (*Config, error) {
+	config := Config{
+		MetricBatchIntervalMilliseconds: 5000,
+		UnmarshallerCount:               1,
+		HealthAddr:                      "localhost:14825",
+	}
+
+	err := envstruct.Load(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = config.validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
 
 func (c *Config) validate() (err error) {
@@ -57,50 +76,4 @@ func (c *Config) validate() (err error) {
 	}
 
 	return nil
-}
-
-func ParseConfig(configFile string) (*Config, error) {
-	file, err := os.Open(configFile)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	return Parse(b)
-}
-
-func Parse(confData []byte) (*Config, error) {
-	config := &Config{}
-
-	err := json.Unmarshal(confData, config)
-	if err != nil {
-		return nil, err
-	}
-
-	err = config.validate()
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: These probably belong in the Config literal, above.
-	// However, in the interests of not breaking things, we're
-	// leaving them for further team discussion.
-	if config.MetricBatchIntervalMilliseconds == 0 {
-		config.MetricBatchIntervalMilliseconds = 5000
-	}
-
-	if config.UnmarshallerCount == 0 {
-		config.UnmarshallerCount = 1
-	}
-
-	if config.HealthAddr == "" {
-		config.HealthAddr = "localhost:14825"
-	}
-
-	return config, nil
 }

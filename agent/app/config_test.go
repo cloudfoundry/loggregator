@@ -1,7 +1,7 @@
 package app_test
 
 import (
-	"strings"
+	"os"
 
 	"code.cloudfoundry.org/loggregator/agent/app"
 	. "github.com/onsi/ginkgo"
@@ -10,22 +10,22 @@ import (
 
 var _ = Describe("Config", func() {
 	It("IDN encodes RouterAddrWithAZ", func() {
-		c, err := app.Parse(strings.NewReader(`{
-                "RouterAddr": "router-addr",
-                "RouterAddrWithAZ": "jedinečné.router-addr:1234"
-        }`))
-		Expect(err).ToNot(HaveOccurred())
+		os.Setenv("ROUTER_ADDR", "router-addr")
+		os.Setenv("ROUTER_ADDR_WITH_AZ", "jedinečné.router-addr:1234")
 
+		c, err := app.LoadConfig()
+
+		Expect(err).ToNot(HaveOccurred())
 		Expect(c.RouterAddrWithAZ).To(Equal("xn--jedinen-hya63a.router-addr:1234"))
 	})
 
 	It("strips @ from RouterAddrWithAZ to be DNS compatable", func() {
-		c, err := app.Parse(strings.NewReader(`{
-                "RouterAddr": "router-addr",
-                "RouterAddrWithAZ": "jedi@nečné.router-addr:1234"
-        }`))
-		Expect(err).ToNot(HaveOccurred())
+		os.Setenv("ROUTER_ADDR", "router-addr")
+		os.Setenv("ROUTER_ADDR_WITH_AZ", "jedi@nečné.router-addr:1234")
 
+		c, err := app.LoadConfig()
+
+		Expect(err).ToNot(HaveOccurred())
 		Expect(c.RouterAddrWithAZ).ToNot(ContainSubstring("@"))
 	})
 })

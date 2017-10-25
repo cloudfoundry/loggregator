@@ -191,7 +191,7 @@ func (t *TrafficController) Start() {
 
 	// We start the profiler last so that we can definitively claim that we're ready for
 	// connections by the time we're listening on the PPROFPort.
-	p := profiler.New(t.conf.PPROFPort)
+	p := profiler.New(t.conf.PProfPort)
 	go p.Start()
 
 	killChan := make(chan os.Signal)

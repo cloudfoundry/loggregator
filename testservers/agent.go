@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
 	"code.cloudfoundry.org/loggregator/agent/app"
 
 	. "github.com/onsi/ginkgo"
@@ -51,11 +52,9 @@ func StartAgent(conf app.Config) (cleanup func(), mp AgentPorts) {
 	agentPath := os.Getenv("AGENT_BUILD_PATH")
 	Expect(agentPath).ToNot(BeEmpty())
 
-	filename, err := writeConfigToFile("agent-config", conf)
-	Expect(err).ToNot(HaveOccurred())
-
 	By("starting agent")
-	agentCommand := exec.Command(agentPath, "--config", filename)
+	agentCommand := exec.Command(agentPath)
+	agentCommand.Env = envstruct.ToEnv(&conf)
 	agentSession, err := gexec.Start(
 		agentCommand,
 		gexec.NewPrefixedWriter(color("o", "agent", green, magenta), GinkgoWriter),
@@ -70,7 +69,6 @@ func StartAgent(conf app.Config) (cleanup func(), mp AgentPorts) {
 	mp.PProf = waitForPortBinding("pprof", agentSession.Err)
 
 	cleanup = func() {
-		os.Remove(filename)
 		agentSession.Kill().Wait()
 	}
 	return cleanup, mp

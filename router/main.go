@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -16,14 +15,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
 
-	configFile := flag.String(
-		"config",
-		"config/doppler.json",
-		"Location of the doppler config json file",
-	)
-	flag.Parse()
-
-	conf, err := app.ParseConfig(*configFile)
+	conf, err := app.LoadConfig()
 	if err != nil {
 		log.Fatalf("Unable to parse config: %s", err)
 	}
@@ -31,6 +23,6 @@ func main() {
 	r := app.NewLegacyRouter(conf)
 	r.Start()
 
-	p := profiler.New(conf.PPROFPort)
+	p := profiler.New(conf.PProfPort)
 	p.Start()
 }

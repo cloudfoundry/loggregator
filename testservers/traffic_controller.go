@@ -9,38 +9,37 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
 	tcConf "code.cloudfoundry.org/loggregator/trafficcontroller/app"
 )
 
 func BuildTrafficControllerConf(dopplerGRPCPort, agentPort int) tcConf.Config {
 	return tcConf.Config{
-		IP:          "127.0.0.1",
-		RouterAddrs: []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
-
-		GRPC: tcConf.GRPC{
-			Port:     uint16(dopplerGRPCPort),
-			CertFile: Cert("trafficcontroller.crt"),
-			KeyFile:  Cert("trafficcontroller.key"),
-			CAFile:   Cert("loggregator-ca.crt"),
-		},
-		Agent: tcConf.Agent{
-			UDPAddress: fmt.Sprintf("localhost:%d", agentPort),
-		},
-		HealthAddr: "localhost:0",
-
-		SystemDomain:   "vcap.me",
-		SkipCertVerify: true,
-
-		ApiHost:         "http://127.0.0.1:65530",
-		UaaHost:         "http://127.0.0.1:65531",
-		UaaCACert:       Cert("loggregator-ca.crt"),
-		UaaClient:       "bob",
-		UaaClientSecret: "yourUncle",
+		IP:                    "127.0.0.1",
+		RouterAddrs:           []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
+		HealthAddr:            "localhost:11111",
+		SystemDomain:          "vcap.me",
+		SkipCertVerify:        true,
+		ApiHost:               "http://127.0.0.1:65530",
+		UaaHost:               "http://127.0.0.1:65531",
+		UaaCACert:             Cert("loggregator-ca.crt"),
+		UaaClient:             "bob",
+		UaaClientSecret:       "yourUncle",
+		DisableAccessControl:  true,
+		OutgoingDropsondePort: 4566,
 		CCTLSClientConfig: tcConf.CCTLSClientConfig{
 			CertFile:   Cert("trafficcontroller.crt"),
 			KeyFile:    Cert("trafficcontroller.key"),
 			CAFile:     Cert("loggregator-ca.crt"),
 			ServerName: "cloud-controller",
+		},
+		Agent: tcConf.Agent{
+			UDPAddress: fmt.Sprintf("localhost:%d", agentPort),
+		},
+		GRPC: tcConf.GRPC{
+			CertFile: Cert("trafficcontroller.crt"),
+			KeyFile:  Cert("trafficcontroller.key"),
+			CAFile:   Cert("loggregator-ca.crt"),
 		},
 	}
 }
@@ -56,11 +55,9 @@ func StartTrafficController(conf tcConf.Config) (cleanup func(), tp TrafficContr
 	tcPath := os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
 	Expect(tcPath).ToNot(BeEmpty())
 
-	filename, err := writeConfigToFile("trafficcontroller-config", conf)
-	Expect(err).ToNot(HaveOccurred())
-
 	By("starting trafficcontroller")
-	tcCommand := exec.Command(tcPath, "--disableAccessControl", "--config", filename)
+	tcCommand := exec.Command(tcPath)
+	tcCommand.Env = envstruct.ToEnv(&conf)
 	tcSession, err := gexec.Start(
 		tcCommand,
 		gexec.NewPrefixedWriter(color("o", "tc", green, cyan), GinkgoWriter),
@@ -74,7 +71,6 @@ func StartTrafficController(conf tcConf.Config) (cleanup func(), tp TrafficContr
 	tp.PProf = waitForPortBinding("pprof", tcSession.Err)
 
 	cleanup = func() {
-		os.Remove(filename)
 		tcSession.Kill().Wait()
 	}
 	return cleanup, tp

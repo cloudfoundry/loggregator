@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"testing"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
+	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/grpclog"
@@ -28,7 +30,6 @@ var (
 	trafficControllerSession  *gexec.Session
 	localIPAddress            string
 	fakeDoppler               *FakeDoppler
-	configFile                string
 )
 
 func TestIntegrationTest(t *testing.T) {
@@ -49,19 +50,21 @@ var _ = BeforeSuite(func() {
 	localIPAddress = "127.0.0.1"
 })
 
-var _ = BeforeEach(func() {
-	configFile = "fixtures/trafficcontroller.json"
-})
-
 var _ = JustBeforeEach(func() {
-	trafficControllerCommand := exec.Command(trafficControllerExecPath, "--config", configFile)
+	cfg := testservers.BuildTrafficControllerConf(1236, 37474)
+	trafficControllerCommand := exec.Command(trafficControllerExecPath)
+	trafficControllerCommand.Env = envstruct.ToEnv(&cfg)
 
 	var err error
 	trafficControllerSession, err = gexec.Start(trafficControllerCommand, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for TC
-	trafficControllerDropsondeEndpoint := fmt.Sprintf("http://%s:%d", localIPAddress, TRAFFIC_CONTROLLER_DROPSONDE_PORT)
+	trafficControllerDropsondeEndpoint := fmt.Sprintf(
+		"http://%s:%d",
+		localIPAddress,
+		cfg.OutgoingDropsondePort,
+	)
 	Eventually(func() error {
 		resp, err := http.Get(trafficControllerDropsondeEndpoint)
 		if err == nil {
