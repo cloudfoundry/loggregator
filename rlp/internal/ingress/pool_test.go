@@ -64,7 +64,8 @@ var _ = Describe("Pool", func() {
 				pool.Close(lis1.Addr().String())
 				lis1.Close()
 
-				Eventually(accepter1, 5).Should(HaveLen(0))
+				// Drain the channel
+				Eventually(accepter1, 5).ShouldNot(Receive())
 				Consistently(accepter1).Should(HaveLen(0))
 			})
 		})
