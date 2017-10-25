@@ -207,12 +207,12 @@ var _ = Describe("Start", func() {
 			doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
 				Payload: [][]byte{buildContainerMetric()},
 			}
-			setupRLP(dopplerLis, "localhost:8080")
+			setupRLP(dopplerLis, "localhost:22222")
 
 			var err error
 			var resp *http.Response
 			Eventually(func() error {
-				resp, err = http.Get(fmt.Sprintf("http://localhost:8080/health"))
+				resp, err = http.Get(fmt.Sprintf("http://localhost:22222/health"))
 				return err
 			}).Should(Succeed())
 			defer func() {

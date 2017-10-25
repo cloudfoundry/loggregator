@@ -12,7 +12,7 @@ import (
 var _ = Describe("TrafficController Health Endpoint", func() {
 
 	It("returns health metrics", func() {
-		resp, err := http.Get(fmt.Sprintf("http://%s:8080/health", localIPAddress))
+		resp, err := http.Get(fmt.Sprintf("http://%s:11111/health", localIPAddress))
 		Expect(err).ToNot(HaveOccurred())
 		defer resp.Body.Close()
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
