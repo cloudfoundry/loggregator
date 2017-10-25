@@ -509,7 +509,7 @@ var _ = Describe("GRPCConnector", func() {
 						}
 					}
 					Expect(envelope).ToNot(BeNil())
-					Expect(envelope.GetCounter().GetDelta()).To(Equal(uint64(1)))
+					Expect(envelope.GetCounter().GetDelta()).To(BeNumerically(">=", 1))
 				})
 
 				It("emits a metric when recent logs times out", func() {
@@ -526,7 +526,7 @@ var _ = Describe("GRPCConnector", func() {
 						}
 					}
 					Expect(envelope).ToNot(BeNil())
-					Expect(envelope.GetCounter().GetDelta()).To(Equal(uint64(1)))
+					Expect(envelope.GetCounter().GetDelta()).To(BeNumerically(">=", 1))
 				})
 			})
 		})
