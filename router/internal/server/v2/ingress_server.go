@@ -77,11 +77,6 @@ func (i IngressServer) BatchSender(s plumbing.DopplerIngress_BatchSenderServer) 
 
 				i.v1Buf.Set(v1e)
 
-				// metric-documentation-v1: (listeners.totalReceivedMessageCount)
-				// Total number of messages received by doppler.
-				i.batcher.BatchCounter("listeners.totalReceivedMessageCount").
-					Increment()
-
 				// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
 				// envelopes from Metron on Doppler's v2 gRPC server
 				i.ingressMetric.Increment(1)
