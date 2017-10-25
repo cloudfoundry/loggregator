@@ -87,7 +87,7 @@ var _ = Describe("Start", func() {
 
 			return err
 		}
-		Eventually(f).Should(Succeed())
+		Eventually(f, 10).Should(Succeed())
 
 		Expect(resp.Envelopes).To(HaveLen(1))
 		Expect(dopplerLis.Close()).To(Succeed())
@@ -146,7 +146,7 @@ var _ = Describe("Start", func() {
 					SourceId: "some-id",
 				})
 				return err
-			}, 5).ShouldNot(HaveOccurred())
+			}, 10).ShouldNot(HaveOccurred())
 
 			rlp.Stop()
 
