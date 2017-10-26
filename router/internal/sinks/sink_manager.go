@@ -12,23 +12,21 @@ import (
 // SinkManager manages the lifecycle of a syslog sink. It also provides an
 // in memory store of recent logs and container metrics.
 type SinkManager struct {
-	messageDrainBufferSize uint
-	dropsondeOrigin        string
-	metrics                *SinkManagerMetrics
-	recentLogCount         uint32
-	doneChannel            chan struct{}
-	errorChannel           chan *events.Envelope
-	sinks                  *GroupedSinks
-	sinkTimeout            time.Duration
-	metricTTL              time.Duration
-	health                 HealthRegistrar
-	stopOnce               sync.Once
+	dropsondeOrigin string
+	metrics         *SinkManagerMetrics
+	recentLogCount  uint32
+	doneChannel     chan struct{}
+	errorChannel    chan *events.Envelope
+	sinks           *GroupedSinks
+	sinkTimeout     time.Duration
+	metricTTL       time.Duration
+	health          HealthRegistrar
+	stopOnce        sync.Once
 }
 
 // NewSinkManager creates a SinkManager.
 func NewSinkManager(
 	maxRetainedLogMessages uint32,
-	messageDrainBufferSize uint,
 	dropsondeOrigin string,
 	sinkTimeout time.Duration,
 	metricTTL time.Duration,
@@ -37,16 +35,15 @@ func NewSinkManager(
 	health HealthRegistrar,
 ) *SinkManager {
 	return &SinkManager{
-		doneChannel:            make(chan struct{}),
-		errorChannel:           make(chan *events.Envelope, 100),
-		sinks:                  NewGroupedSinks(metricBatcher, metricClient),
-		recentLogCount:         maxRetainedLogMessages,
-		metrics:                NewSinkManagerMetrics(),
-		messageDrainBufferSize: messageDrainBufferSize,
-		dropsondeOrigin:        dropsondeOrigin,
-		sinkTimeout:            sinkTimeout,
-		metricTTL:              metricTTL,
-		health:                 health,
+		doneChannel:     make(chan struct{}),
+		errorChannel:    make(chan *events.Envelope, 100),
+		sinks:           NewGroupedSinks(metricBatcher, metricClient),
+		recentLogCount:  maxRetainedLogMessages,
+		metrics:         NewSinkManagerMetrics(),
+		dropsondeOrigin: dropsondeOrigin,
+		sinkTimeout:     sinkTimeout,
+		metricTTL:       metricTTL,
+		health:          health,
 	}
 }
 

@@ -26,7 +26,6 @@ var _ = Describe("SinkManager", func() {
 		health := newSpyHealthRegistrar()
 		sinkManager = sinks.NewSinkManager(
 			1,
-			100,
 			"dropsonde-origin",
 			1*time.Second,
 			1*time.Second,

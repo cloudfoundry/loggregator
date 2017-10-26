@@ -25,7 +25,6 @@ var _ = Describe("Router", func() {
 				},
 				HealthAddr:                      ":0",
 				MaxRetainedLogMessages:          100,
-				MessageDrainBufferSize:          10000,
 				MetricBatchIntervalMilliseconds: 1000,
 				SinkInactivityTimeoutSeconds:    3600,
 				ContainerMetricTTLSeconds:       120,

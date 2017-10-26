@@ -54,7 +54,6 @@ func NewRouter(grpc GRPC, opts ...RouterOption) *Router {
 			},
 			HealthAddr:                "localhost:14825",
 			MaxRetainedLogMessages:    100,
-			MessageDrainBufferSize:    10000,
 			ContainerMetricTTLSeconds: 120,
 		},
 	}
@@ -119,7 +118,6 @@ func (d *Router) Start() {
 	//------------------------------
 	sinkManager := sinks.NewSinkManager(
 		d.c.MaxRetainedLogMessages,
-		d.c.MessageDrainBufferSize,
 		"DopplerServer",
 		time.Duration(d.c.SinkInactivityTimeoutSeconds)*time.Second,
 		time.Duration(d.c.ContainerMetricTTLSeconds)*time.Second,

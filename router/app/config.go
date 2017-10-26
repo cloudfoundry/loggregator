@@ -26,11 +26,9 @@ type GRPC struct {
 // Config stores all configurations options for the Router.
 type Config struct {
 	MaxRetainedLogMessages          uint32 `env:"ROUTER_MAX_RETAINED_LOG_MESSAGES"`
-	MessageDrainBufferSize          uint   `env:"ROUTER_MESSAGE_DRAIN_BUFFER_SIZE"`
 	ContainerMetricTTLSeconds       int    `env:"ROUTER_CONTAINER_METRIC_TTL_SECONDS"`
 	SinkInactivityTimeoutSeconds    int    `env:"ROUTER_SINK_INACTIVITY_TIMEOUT_SECONDS"`
 	MetricBatchIntervalMilliseconds uint   `env:"ROUTER_METRIC_BATCH_INTERVAL_MILLISECONDS"`
-	UnmarshallerCount               int    `env:"ROUTER_UNMARSHALLER_COUNT"`
 	PProfPort                       uint32 `env:"ROUTER_PPROF_PORT"`
 	HealthAddr                      string `env:"ROUTER_HEALTH_ADDR"`
 	Agent                           Agent
@@ -41,7 +39,6 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	config := Config{
 		MetricBatchIntervalMilliseconds: 5000,
-		UnmarshallerCount:               1,
 		HealthAddr:                      "localhost:14825",
 	}
 
