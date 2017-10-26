@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
+	"code.cloudfoundry.org/loggregator/testservers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,11 +20,33 @@ import (
 
 var _ = Describe("TrafficController for dropsonde messages", func() {
 	var dropsondeEndpoint string
+	var wsPort int
 
 	BeforeEach(func() {
+		cfg := testservers.BuildTrafficControllerConf(1236, 37474)
+
+		var tcPorts testservers.TrafficControllerPorts
+		tcCleanupFunc, tcPorts = testservers.StartTrafficController(cfg)
+
+		wsPort = tcPorts.WS
+
+		// wait for TC
+		trafficControllerDropsondeEndpoint := fmt.Sprintf(
+			"http://%s:%d",
+			localIPAddress,
+			tcPorts.WS,
+		)
+		Eventually(func() error {
+			resp, err := http.Get(trafficControllerDropsondeEndpoint)
+			if err == nil {
+				resp.Body.Close()
+			}
+			return err
+		}, 10).Should(Succeed())
+
 		fakeDoppler = NewFakeDoppler()
 		go fakeDoppler.Start()
-		dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, TRAFFIC_CONTROLLER_DROPSONDE_PORT)
+		dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
 	})
 
 	AfterEach(func() {
@@ -178,7 +201,16 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 
 	Context("SetCookie", func() {
 		It("sets the desired cookie on the response", func() {
-			response, err := http.PostForm(fmt.Sprintf("http://%s:%d/set-cookie", localIPAddress, TRAFFIC_CONTROLLER_DROPSONDE_PORT), url.Values{"CookieName": {"authorization"}, "CookieValue": {url.QueryEscape("bearer iAmAnAdmin")}})
+			response, err := http.PostForm(
+				fmt.Sprintf("http://%s:%d/set-cookie",
+					localIPAddress,
+					wsPort,
+				),
+				url.Values{
+					"CookieName":  {"authorization"},
+					"CookieValue": {url.QueryEscape("bearer iAmAnAdmin")},
+				},
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(response.Cookies()).NotTo(BeNil())

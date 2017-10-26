@@ -1,14 +1,11 @@
 package trafficcontroller_test
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"os/exec"
+	"os"
 	"testing"
 
-	envstruct "code.cloudfoundry.org/go-envstruct"
-	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/grpclog"
@@ -19,17 +16,16 @@ import (
 )
 
 const (
-	APP_ID                            = "1234"
-	AUTH_TOKEN                        = "bearer iAmAnAdmin"
-	SUBSCRIPTION_ID                   = "firehose-subscription-1"
-	TRAFFIC_CONTROLLER_DROPSONDE_PORT = 4566
+	APP_ID          = "1234"
+	AUTH_TOKEN      = "bearer iAmAnAdmin"
+	SUBSCRIPTION_ID = "firehose-subscription-1"
 )
 
 var (
-	trafficControllerExecPath string
-	trafficControllerSession  *gexec.Session
-	localIPAddress            string
-	fakeDoppler               *FakeDoppler
+	localIPAddress                    string
+	fakeDoppler                       *FakeDoppler
+	tcCleanupFunc                     func()
+	TRAFFIC_CONTROLLER_DROPSONDE_PORT int
 )
 
 func TestIntegrationTest(t *testing.T) {
@@ -44,38 +40,15 @@ var _ = BeforeSuite(func() {
 	setupFakeUaaServer()
 
 	var err error
-	trafficControllerExecPath, err = gexec.Build("code.cloudfoundry.org/loggregator/trafficcontroller", "-race")
+	trafficControllerExecPath, err := gexec.Build("code.cloudfoundry.org/loggregator/trafficcontroller", "-race")
 	Expect(err).ToNot(HaveOccurred())
+	os.Setenv("TRAFFIC_CONTROLLER_BUILD_PATH", trafficControllerExecPath)
 
 	localIPAddress = "127.0.0.1"
 })
 
-var _ = JustBeforeEach(func() {
-	cfg := testservers.BuildTrafficControllerConf(1236, 37474, 11111)
-	trafficControllerCommand := exec.Command(trafficControllerExecPath)
-	trafficControllerCommand.Env = envstruct.ToEnv(&cfg)
-
-	var err error
-	trafficControllerSession, err = gexec.Start(trafficControllerCommand, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-
-	// wait for TC
-	trafficControllerDropsondeEndpoint := fmt.Sprintf(
-		"http://%s:%d",
-		localIPAddress,
-		cfg.OutgoingDropsondePort,
-	)
-	Eventually(func() error {
-		resp, err := http.Get(trafficControllerDropsondeEndpoint)
-		if err == nil {
-			resp.Body.Close()
-		}
-		return err
-	}, 10).Should(Succeed())
-})
-
 var _ = AfterEach(func() {
-	trafficControllerSession.Kill().Wait()
+	tcCleanupFunc()
 })
 
 var _ = AfterSuite(func() {

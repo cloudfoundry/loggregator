@@ -5,14 +5,33 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"code.cloudfoundry.org/loggregator/testservers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("TrafficController Health Endpoint", func() {
-
 	It("returns health metrics", func() {
-		resp, err := http.Get(fmt.Sprintf("http://%s:11111/health", localIPAddress))
+		cfg := testservers.BuildTrafficControllerConf(1236, 37474)
+
+		var tcPorts testservers.TrafficControllerPorts
+		tcCleanupFunc, tcPorts = testservers.StartTrafficController(cfg)
+
+		// wait for TC
+		trafficControllerDropsondeEndpoint := fmt.Sprintf(
+			"http://%s:%d",
+			localIPAddress,
+			tcPorts.WS,
+		)
+		Eventually(func() error {
+			resp, err := http.Get(trafficControllerDropsondeEndpoint)
+			if err == nil {
+				resp.Body.Close()
+			}
+			return err
+		}, 10).Should(Succeed())
+
+		resp, err := http.Get(fmt.Sprintf("http://%s:%d/health", localIPAddress, tcPorts.Health))
 		Expect(err).ToNot(HaveOccurred())
 		defer resp.Body.Close()
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))

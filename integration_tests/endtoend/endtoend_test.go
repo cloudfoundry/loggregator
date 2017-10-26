@@ -24,7 +24,6 @@ var _ = Describe("End to end tests", func() {
 			testservers.BuildTrafficControllerConf(
 				dopplerPorts.GRPC,
 				agentPorts.UDP,
-				0,
 			),
 		)
 		defer trafficcontrollerCleanup()

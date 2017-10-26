@@ -13,11 +13,11 @@ import (
 	tcConf "code.cloudfoundry.org/loggregator/trafficcontroller/app"
 )
 
-func BuildTrafficControllerConf(dopplerGRPCPort, agentPort, healthPort int) tcConf.Config {
+func BuildTrafficControllerConf(dopplerGRPCPort, agentPort int) tcConf.Config {
 	return tcConf.Config{
 		IP:                    "127.0.0.1",
 		RouterAddrs:           []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
-		HealthAddr:            fmt.Sprintf("localhost:%d", healthPort),
+		HealthAddr:            "localhost:0",
 		SystemDomain:          "vcap.me",
 		SkipCertVerify:        true,
 		ApiHost:               "http://127.0.0.1:65530",
@@ -26,7 +26,7 @@ func BuildTrafficControllerConf(dopplerGRPCPort, agentPort, healthPort int) tcCo
 		UaaClient:             "bob",
 		UaaClientSecret:       "yourUncle",
 		DisableAccessControl:  true,
-		OutgoingDropsondePort: 4566,
+		OutgoingDropsondePort: 0,
 		CCTLSClientConfig: tcConf.CCTLSClientConfig{
 			CertFile:   Cert("trafficcontroller.crt"),
 			KeyFile:    Cert("trafficcontroller.key"),
