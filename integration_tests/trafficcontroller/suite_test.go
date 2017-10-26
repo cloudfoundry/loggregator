@@ -51,7 +51,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = JustBeforeEach(func() {
-	cfg := testservers.BuildTrafficControllerConf(1236, 37474)
+	cfg := testservers.BuildTrafficControllerConf(1236, 37474, 11111)
 	trafficControllerCommand := exec.Command(trafficControllerExecPath)
 	trafficControllerCommand.Env = envstruct.ToEnv(&cfg)
 
