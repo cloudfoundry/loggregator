@@ -32,37 +32,31 @@ type Router struct {
 	addrs          Addrs
 }
 
-// NewLegacyRouter creates a new Router with the given config.
-// Using the config for construction is deprecated and will be removed once
-// syslog and etcd are removed.
-func NewLegacyRouter(c *Config) *Router {
-	return &Router{
-		c: c,
-	}
-}
-
 // NewRouter creates a new Router with the given options. Each provided
 // RouterOption will manipulate the Router behavior.
 func NewRouter(grpc GRPC, opts ...RouterOption) *Router {
-	d := &Router{
+	r := &Router{
 		c: &Config{
 			GRPC: grpc,
-			MetricBatchIntervalMilliseconds: 5000,
+
+			MaxRetainedLogMessages:       100,
+			ContainerMetricTTLSeconds:    120,
+			SinkInactivityTimeoutSeconds: 3600,
+
+			HealthAddr: "localhost:14825",
 			Agent: Agent{
 				UDPAddress:  "127.0.0.1:3457",
 				GRPCAddress: "127.0.0.1:3458",
 			},
-			HealthAddr:                "localhost:14825",
-			MaxRetainedLogMessages:    100,
-			ContainerMetricTTLSeconds: 120,
+			MetricBatchIntervalMilliseconds: 5000,
 		},
 	}
 
 	for _, o := range opts {
-		o(d)
+		o(r)
 	}
 
-	return d
+	return r
 }
 
 // RouterOption is used to configure a new Router.
@@ -70,20 +64,34 @@ type RouterOption func(*Router)
 
 // WithMetricReporting returns a RouterOption that enables Router to emit
 // metrics about itself.
-// This option is experimental.
-func WithMetricReporting() RouterOption {
-	return func(d *Router) {
-		panic("Not yet implemented")
+func WithMetricReporting(
+	pprofPort uint32,
+	healthAddr string,
+	agent Agent,
+	metricBatchIntervalMilliseconds uint,
+) RouterOption {
+	return func(r *Router) {
+		r.c.PProfPort = pprofPort
+		r.c.HealthAddr = healthAddr
+		r.c.Agent = agent
+		r.c.MetricBatchIntervalMilliseconds = metricBatchIntervalMilliseconds
 	}
 }
 
 // WithPersistence turns on recent logs and container metric storage.
-// This option is experimental.
-func WithPersistence() RouterOption {
-	return func(d *Router) {
-		panic("Not yet implemented")
+func WithPersistence(
+	maxRetainedLogMessages uint32,
+	containerMetricTTLSeconds int,
+	sinkInactivityTimeoutSeconds int,
+) RouterOption {
+	return func(r *Router) {
+		r.c.MaxRetainedLogMessages = maxRetainedLogMessages
+		r.c.ContainerMetricTTLSeconds = containerMetricTTLSeconds
+		r.c.SinkInactivityTimeoutSeconds = sinkInactivityTimeoutSeconds
 	}
 }
+
+//
 
 // Start enables the Router to start receiving envelope, accepting
 // subscriptions and routing data.

@@ -25,14 +25,18 @@ type GRPC struct {
 
 // Config stores all configurations options for the Router.
 type Config struct {
-	MaxRetainedLogMessages          uint32 `env:"ROUTER_MAX_RETAINED_LOG_MESSAGES"`
-	ContainerMetricTTLSeconds       int    `env:"ROUTER_CONTAINER_METRIC_TTL_SECONDS"`
-	SinkInactivityTimeoutSeconds    int    `env:"ROUTER_SINK_INACTIVITY_TIMEOUT_SECONDS"`
-	MetricBatchIntervalMilliseconds uint   `env:"ROUTER_METRIC_BATCH_INTERVAL_MILLISECONDS"`
+	GRPC GRPC
+
+	// persistence
+	MaxRetainedLogMessages       uint32 `env:"ROUTER_MAX_RETAINED_LOG_MESSAGES"`
+	ContainerMetricTTLSeconds    int    `env:"ROUTER_CONTAINER_METRIC_TTL_SECONDS"`
+	SinkInactivityTimeoutSeconds int    `env:"ROUTER_SINK_INACTIVITY_TIMEOUT_SECONDS"`
+
+	// health
 	PProfPort                       uint32 `env:"ROUTER_PPROF_PORT"`
 	HealthAddr                      string `env:"ROUTER_HEALTH_ADDR"`
 	Agent                           Agent
-	GRPC                            GRPC
+	MetricBatchIntervalMilliseconds uint `env:"ROUTER_METRIC_BATCH_INTERVAL_MILLISECONDS"`
 }
 
 // LoadConfig reads from the environment to create a Config.

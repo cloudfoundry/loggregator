@@ -17,20 +17,7 @@ var _ = Describe("Router", func() {
 				KeyFile:  testservers.Cert("doppler.key"),
 			}
 
-			config := &app.Config{
-				GRPC: grpc,
-				Agent: app.Agent{
-					UDPAddress:  "127.0.0.1:3457",
-					GRPCAddress: "127.0.0.1:3458",
-				},
-				HealthAddr:                      ":0",
-				MaxRetainedLogMessages:          100,
-				MetricBatchIntervalMilliseconds: 1000,
-				SinkInactivityTimeoutSeconds:    3600,
-				ContainerMetricTTLSeconds:       120,
-			}
-
-			r := app.NewLegacyRouter(config)
+			r := app.NewRouter(grpc)
 			r.Start()
 
 			addrs := r.Addrs()

@@ -20,7 +20,20 @@ func main() {
 		log.Fatalf("Unable to parse config: %s", err)
 	}
 
-	r := app.NewLegacyRouter(conf)
+	r := app.NewRouter(
+		conf.GRPC,
+		app.WithPersistence(
+			conf.MaxRetainedLogMessages,
+			conf.ContainerMetricTTLSeconds,
+			conf.SinkInactivityTimeoutSeconds,
+		),
+		app.WithMetricReporting(
+			conf.PProfPort,
+			conf.HealthAddr,
+			conf.Agent,
+			conf.MetricBatchIntervalMilliseconds,
+		),
+	)
 	r.Start()
 
 	p := profiler.New(conf.PProfPort)
