@@ -341,7 +341,3 @@ func (c *channelSink) Received() []*events.Envelope {
 }
 
 func (c *channelSink) Identifier() string { return c.identifier }
-
-func (c *channelSink) GetInstrumentationMetric() sinks.Metric {
-	return sinks.Metric{Name: "numberOfMessagesLost", Value: 25}
-}

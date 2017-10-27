@@ -287,10 +287,6 @@ func (f *fakeSink) Identifier() string {
 	return f.sinkId
 }
 
-func (f *fakeSink) GetInstrumentationMetric() sinks.Metric {
-	return sinks.Metric{}
-}
-
 type spyMetricBatcher struct{}
 
 func (s *spyMetricBatcher) BatchIncrementCounter(name string) {}

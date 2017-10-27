@@ -7,6 +7,12 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
+type Sink interface {
+	AppID() string
+	Run(<-chan *events.Envelope)
+	Identifier() string
+}
+
 type SinkWrapper struct {
 	InputChan chan<- *events.Envelope
 	Sink      Sink
