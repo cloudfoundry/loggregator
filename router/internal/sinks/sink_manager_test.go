@@ -124,7 +124,7 @@ var _ = Describe("SinkManager", func() {
 			sinkManager.RegisterSink(sink1)
 
 			Eventually(sink1.Received).Should(HaveLen(1))
-			Expect(sink1.Received()[0]).To(Equal(expectedMessage))
+			Expect(sink1.Received()[0], 2).To(Equal(expectedMessage))
 		})
 
 		It("buffers a messages when a sink is consuming slowly", func() {
