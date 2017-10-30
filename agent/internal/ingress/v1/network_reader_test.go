@@ -6,9 +6,7 @@ import (
 	"sync"
 
 	ingress "code.cloudfoundry.org/loggregator/agent/internal/ingress/v1"
-
-	"github.com/cloudfoundry/dropsonde/metric_sender/fake"
-	"github.com/cloudfoundry/dropsonde/metrics"
+	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -29,32 +27,27 @@ func randomPort() int {
 
 var _ = Describe("NetworkReader", func() {
 	var (
-		reader           *ingress.NetworkReader
-		readerStopped    chan struct{}
-		writer           MockByteArrayWriter
-		port             int
-		address          string
-		fakeMetricSender *fake.FakeMetricSender
+		reader        *ingress.NetworkReader
+		readerStopped chan struct{}
+		writer        MockByteArrayWriter
+		port          int
+		address       string
+		metricClient  *testhelper.SpyMetricClient
 	)
 
 	BeforeEach(func() {
 		port = randomPort() + GinkgoParallelNode()
 		address = net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
 		writer = MockByteArrayWriter{}
+		metricClient = testhelper.NewMetricClient()
 		var err error
-		reader, err = ingress.NewNetworkReader(address, &writer)
+		reader, err = ingress.NewNetworkReader(address, &writer, metricClient)
 		Expect(err).NotTo(HaveOccurred())
 		readerStopped = make(chan struct{})
 	})
 
 	Context("with a reader running", func() {
-		var mockBatcher *mockMetricBatcher
-
 		BeforeEach(func() {
-			fakeMetricSender = fake.NewFakeMetricSender()
-			mockBatcher = newMockMetricBatcher()
-			metrics.Initialize(fakeMetricSender, mockBatcher)
-
 			go reader.StartWriting()
 			go func() {
 				reader.StartReading()
@@ -82,6 +75,7 @@ var _ = Describe("NetworkReader", func() {
 			Eventually(f).ShouldNot(BeZero())
 			data := string(writer.Data()[0])
 			Expect(data).To(Equal(expectedData))
+			Expect(metricClient.GetDelta("ingress")).ToNot(BeZero())
 		})
 	})
 })

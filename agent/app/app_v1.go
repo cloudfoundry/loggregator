@@ -7,14 +7,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/dropsonde/runtime_stats"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
-
 	"code.cloudfoundry.org/loggregator/agent/internal/clientpool"
 	clientpoolv1 "code.cloudfoundry.org/loggregator/agent/internal/clientpool/v1"
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v1"
@@ -22,6 +14,13 @@ import (
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
+	"github.com/cloudfoundry/dropsonde/metric_sender"
+	"github.com/cloudfoundry/dropsonde/metricbatcher"
+	"github.com/cloudfoundry/dropsonde/metrics"
+	"github.com/cloudfoundry/dropsonde/runtime_stats"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 )
 
 type AppV1 struct {
@@ -87,7 +86,11 @@ func (a *AppV1) Start() {
 
 	dropsondeUnmarshaller := ingress.NewUnMarshaller(aggregator, batcher)
 	agentAddress := fmt.Sprintf("127.0.0.1:%d", a.config.IncomingUDPPort)
-	networkReader, err := ingress.NewNetworkReader(agentAddress, dropsondeUnmarshaller)
+	networkReader, err := ingress.NewNetworkReader(
+		agentAddress,
+		dropsondeUnmarshaller,
+		a.metricClient,
+	)
 	if err != nil {
 		log.Panic(fmt.Errorf("Failed to listen on %s: %s", agentAddress, err))
 	}

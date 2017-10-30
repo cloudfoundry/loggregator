@@ -4,40 +4,47 @@ import (
 	"log"
 	"net"
 
-	"code.cloudfoundry.org/loggregator/diodes"
-
 	gendiodes "code.cloudfoundry.org/go-diodes"
-
-	"github.com/cloudfoundry/dropsonde/metrics"
+	"code.cloudfoundry.org/loggregator/diodes"
+	"code.cloudfoundry.org/loggregator/metricemitter"
 )
 
 type ByteArrayWriter interface {
 	Write(message []byte)
 }
 
-type NetworkReader struct {
-	connection net.PacketConn
-	writer     ByteArrayWriter
+// MetricClient creates new CounterMetrics to be emitted periodically.
+type MetricClient interface {
+	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
+}
 
+type NetworkReader struct {
+	connection  net.PacketConn
+	writer      ByteArrayWriter
+	rxMsgCount  *metricemitter.Counter
 	contextName string
 	buffer      *diodes.OneToOne
 }
 
-func NewNetworkReader(address string, writer ByteArrayWriter) (*NetworkReader, error) {
+func NewNetworkReader(
+	address string,
+	writer ByteArrayWriter,
+	m MetricClient,
+) (*NetworkReader, error) {
 	connection, err := net.ListenPacket("udp4", address)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("udp bound to: %s", connection.LocalAddr())
+	rxErrCount := m.NewCounter("dropped")
 
 	return &NetworkReader{
 		connection: connection,
+		rxMsgCount: m.NewCounter("ingress"),
 		writer:     writer,
 		buffer: diodes.NewOneToOne(10000, gendiodes.AlertFunc(func(missed int) {
 			log.Printf("network reader dropped messages %d", missed)
-			// metric-documentation-v1: (udp.receiveErrorCount) Number of dropped messages
-			// inbound to agent over the v1 (UDP) API
-			metrics.BatchAddCounter("udp.receiveErrorCount", uint64(missed))
+			rxErrCount.Increment(uint64(missed))
 		})),
 	}, nil
 }
@@ -60,12 +67,7 @@ func (nr *NetworkReader) StartReading() {
 func (nr *NetworkReader) StartWriting() {
 	for {
 		data := nr.buffer.Next()
-		// metric-documentation-v1: (dropsondeAgentListener.receivedMessageCount) Number of
-		// received messages inbound to agent over the v1 (UDP) API
-		metrics.BatchIncrementCounter("dropsondeAgentListener.receivedMessageCount")
-		// metric-documentation-v1: (dropsondeAgentListener.receivedByteCount) Number of
-		// received bytes inbound to agent over the v1 (UDP) API
-		metrics.BatchAddCounter("dropsondeAgentListener.receivedByteCount", uint64(len(data)))
+		nr.rxMsgCount.Increment(1)
 		nr.writer.Write(data)
 	}
 }
