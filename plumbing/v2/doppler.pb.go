@@ -34,6 +34,7 @@ It has these top-level messages:
 	Event
 	IngressResponse
 	BatchSenderResponse
+	SendResponse
 */
 package loggregator_v2
 

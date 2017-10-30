@@ -1,6 +1,7 @@
 package v2_test
 
 import (
+	"context"
 	"errors"
 	"io"
 
@@ -16,15 +17,15 @@ import (
 
 var _ = Describe("Receiver", func() {
 	var (
-		rx *ingress.Receiver
-
-		spySetter *SpySetter
+		rx           *ingress.Receiver
+		spySetter    *SpySetter
+		metricClient *testhelper.SpyMetricClient
 	)
 
 	BeforeEach(func() {
 		spySetter = NewSpySetter()
-
-		rx = ingress.NewReceiver(spySetter, testhelper.NewMetricClient())
+		metricClient = testhelper.NewMetricClient()
+		rx = ingress.NewReceiver(spySetter, metricClient)
 	})
 
 	Describe("Sender()", func() {
@@ -66,6 +67,26 @@ var _ = Describe("Receiver", func() {
 
 			Expect(err).To(HaveOccurred())
 		})
+
+		It("increments the ingress metric", func() {
+			e := &v2.Envelope{
+				SourceId: "some-id",
+			}
+
+			spySender.recvResponses <- SenderRecvResponse{
+				envelope: e,
+			}
+			spySender.recvResponses <- SenderRecvResponse{
+				envelope: e,
+			}
+			spySender.recvResponses <- SenderRecvResponse{
+				err: io.EOF,
+			}
+
+			rx.Sender(spySender)
+
+			Expect(metricClient.GetDelta("ingress")).To(Equal(uint64(2)))
+		})
 	})
 
 	Describe("BatchSender()", func() {
@@ -102,6 +123,55 @@ var _ = Describe("Receiver", func() {
 			err := rx.BatchSender(spyBatchSender)
 
 			Expect(err).To(HaveOccurred())
+		})
+
+		It("increments the ingress metric", func() {
+			e := &v2.Envelope{
+				SourceId: "some-id",
+			}
+
+			spyBatchSender.recvResponses <- BatchSenderRecvResponse{
+				envelopes: []*v2.Envelope{e, e, e, e, e},
+			}
+			spyBatchSender.recvResponses <- BatchSenderRecvResponse{
+				err: io.EOF,
+			}
+
+			rx.BatchSender(spyBatchSender)
+
+			Expect(spySetter.envelopes).Should(HaveLen(5))
+
+			Expect(metricClient.GetDelta("ingress")).To(Equal(uint64(5)))
+		})
+	})
+
+	Describe("Send()", func() {
+		It("calls set on the setter with the given envelopes", func() {
+			e1 := &v2.Envelope{
+				SourceId: "some-id-1",
+			}
+			e2 := &v2.Envelope{
+				SourceId: "some-id-2",
+			}
+
+			rx.Send(context.Background(), &v2.EnvelopeBatch{
+				Batch: []*v2.Envelope{e1, e2},
+			})
+
+			Expect(spySetter.envelopes).To(Receive(Equal(e1)))
+			Expect(spySetter.envelopes).To(Receive(Equal(e2)))
+		})
+
+		It("increments the ingress metric", func() {
+			e := &v2.Envelope{
+				SourceId: "some-id",
+			}
+
+			rx.Send(context.Background(), &v2.EnvelopeBatch{
+				Batch: []*v2.Envelope{e},
+			})
+
+			Expect(metricClient.GetDelta("ingress")).To(Equal(uint64(1)))
 		})
 	})
 })
