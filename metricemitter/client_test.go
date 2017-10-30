@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
-
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
-
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	. "github.com/onsi/ginkgo"
@@ -253,6 +252,10 @@ func (s *SpyIngressServer) Sender(sender v2.Ingress_SenderServer) error {
 
 func (s *SpyIngressServer) BatchSender(sender v2.Ingress_BatchSenderServer) error {
 	return nil
+}
+
+func (s *SpyIngressServer) Send(context.Context, *v2.EnvelopeBatch) (*v2.SendResponse, error) {
+	return nil, nil
 }
 
 func (s *SpyIngressServer) stop() {
