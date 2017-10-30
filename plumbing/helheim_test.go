@@ -52,42 +52,6 @@ func (m *mockFinder) Next() plumbing.Event {
 	return <-m.NextOutput.Ret0
 }
 
-type mockMetaMetricBatcher struct {
-	BatchCounterCalled chan bool
-	BatchCounterInput  struct {
-		Name chan string
-	}
-	BatchCounterOutput struct {
-		Ret0 chan metricbatcher.BatchCounterChainer
-	}
-	BatchAddCounterCalled chan bool
-	BatchAddCounterInput  struct {
-		Name  chan string
-		Delta chan uint64
-	}
-}
-
-func newMockMetaMetricBatcher() *mockMetaMetricBatcher {
-	m := &mockMetaMetricBatcher{}
-	m.BatchCounterCalled = make(chan bool, 100)
-	m.BatchCounterInput.Name = make(chan string, 100)
-	m.BatchCounterOutput.Ret0 = make(chan metricbatcher.BatchCounterChainer, 100)
-	m.BatchAddCounterCalled = make(chan bool, 100)
-	m.BatchAddCounterInput.Name = make(chan string, 100)
-	m.BatchAddCounterInput.Delta = make(chan uint64, 100)
-	return m
-}
-func (m *mockMetaMetricBatcher) BatchCounter(name string) metricbatcher.BatchCounterChainer {
-	m.BatchCounterCalled <- true
-	m.BatchCounterInput.Name <- name
-	return <-m.BatchCounterOutput.Ret0
-}
-func (m *mockMetaMetricBatcher) BatchAddCounter(name string, delta uint64) {
-	m.BatchAddCounterCalled <- true
-	m.BatchAddCounterInput.Name <- name
-	m.BatchAddCounterInput.Delta <- delta
-}
-
 type mockReceiver struct {
 	RecvCalled chan bool
 	RecvOutput struct {

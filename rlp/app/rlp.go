@@ -172,11 +172,9 @@ func (r *RLP) setupIngress() {
 	r.v1IngressPool = plumbing.NewPool(2, r.ingressDialOpts...)
 	r.v2IngressPool = ingress.NewPool(20, r.ingressDialOpts...)
 
-	batcher := &ingress.NullMetricBatcher{} // TODO: Add real metrics
-
 	// V1
 	// TODO: Delete once all v1 concerns are removed from RLP
-	v1Connector := plumbing.NewGRPCConnector(1000, r.v1IngressPool, r.v1Finder, batcher, r.metricClient)
+	v1Connector := plumbing.NewGRPCConnector(1000, r.v1IngressPool, r.v1Finder, r.metricClient)
 	converter := ingress.NewConverter()
 	r.querier = ingress.NewQuerier(converter, v1Connector)
 

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -18,16 +17,6 @@ import (
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/auth"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
 
-	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/envelope_sender"
-	"github.com/cloudfoundry/dropsonde/envelopes"
-	"github.com/cloudfoundry/dropsonde/log_sender"
-	"github.com/cloudfoundry/dropsonde/logs"
-	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -72,11 +61,6 @@ func NewTrafficController(
 
 func (t *TrafficController) Start() {
 	log.Print("Startup: Setting up the loggregator traffic controller")
-
-	batcher, err := t.initializeMetrics("LoggregatorTrafficController", t.conf.Agent.UDPAddress)
-	if err != nil {
-		log.Printf("Error initializing dropsonde: %s", err)
-	}
 
 	logAuthorizer := auth.NewLogAccessAuthorizer(
 		t.ccHTTPClient,
@@ -148,7 +132,7 @@ func (t *TrafficController) Start() {
 		PermitWithoutStream: true,
 	}
 	pool := plumbing.NewPool(20, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(kp))
-	grpcConnector := plumbing.NewGRPCConnector(1000, pool, f, batcher, t.metricClient)
+	grpcConnector := plumbing.NewGRPCConnector(1000, pool, f, t.metricClient)
 
 	dopplerHandler := http.Handler(
 		proxy.NewDopplerProxy(
@@ -198,43 +182,4 @@ func (t *TrafficController) Start() {
 	signal.Notify(killChan, os.Interrupt)
 	<-killChan
 	log.Print("Shutting down")
-}
-
-func (t *TrafficController) setupDefaultEmitter(origin, destination string) error {
-	if origin == "" {
-		return errors.New("Cannot initialize metrics with an empty origin")
-	}
-
-	if destination == "" {
-		return errors.New("Cannot initialize metrics with an empty destination")
-	}
-
-	udpEmitter, err := emitter.NewUdpEmitter(destination)
-	if err != nil {
-		return fmt.Errorf("Failed to initialize dropsonde: %v", err.Error())
-	}
-
-	dropsonde.DefaultEmitter = emitter.NewEventEmitter(udpEmitter, origin)
-	return nil
-}
-
-func (t *TrafficController) initializeMetrics(origin, destination string) (*metricbatcher.MetricBatcher, error) {
-	err := t.setupDefaultEmitter(origin, destination)
-	if err != nil {
-		// Legacy holdover.  We would prefer to panic, rather than just throwing our metrics
-		// away and pretending we're running fine, but for now, we just don't want to break
-		// anything.
-		dropsonde.DefaultEmitter = &dropsonde.NullEventEmitter{}
-	}
-
-	// Copied from dropsonde.initialize(), since we stopped using
-	// dropsonde.Initialize but needed it to continue operating the same.
-	sender := metric_sender.NewMetricSender(dropsonde.DefaultEmitter)
-	batcher := metricbatcher.New(sender, time.Second)
-	metrics.Initialize(sender, batcher)
-	logs.Initialize(log_sender.NewLogSender(dropsonde.DefaultEmitter))
-	envelopes.Initialize(envelope_sender.NewEnvelopeSender(dropsonde.DefaultEmitter))
-	go runtime_stats.NewRuntimeStats(dropsonde.DefaultEmitter, 10*time.Second).Run(nil)
-	http.DefaultTransport = dropsonde.InstrumentedRoundTripper(http.DefaultTransport)
-	return batcher, err
 }

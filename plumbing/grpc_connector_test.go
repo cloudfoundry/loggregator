@@ -10,7 +10,6 @@ import (
 	"code.cloudfoundry.org/loggregator/plumbing"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
-	"github.com/apoydence/eachers/testhelpers"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -30,8 +29,6 @@ var _ = Describe("GRPCConnector", func() {
 		mockDopplerServerB *mockDopplerServer
 		mockFinder         *mockFinder
 
-		mockBatcher  *mockMetaMetricBatcher
-		mockChainer  *mockBatchCounterChainer
 		metricClient *testhelper.SpyMetricClient
 	)
 
@@ -41,9 +38,6 @@ var _ = Describe("GRPCConnector", func() {
 		mockFinder = newMockFinder()
 
 		pool := plumbing.NewPool(2, grpc.WithInsecure())
-
-		mockBatcher = newMockMetaMetricBatcher()
-		mockChainer = newMockBatchCounterChainer()
 
 		lisA, serverA := startGRPCServer(mockDopplerServerA, ":0")
 		lisB, serverB := startGRPCServer(mockDopplerServerB, ":0")
@@ -57,10 +51,7 @@ var _ = Describe("GRPCConnector", func() {
 			},
 		}
 		metricClient = testhelper.NewMetricClient()
-		connector = plumbing.NewGRPCConnector(5, pool, mockFinder, mockBatcher, metricClient)
-
-		testhelpers.AlwaysReturn(mockBatcher.BatchCounterOutput, mockChainer)
-		testhelpers.AlwaysReturn(mockChainer.SetTagOutput, mockChainer)
+		connector = plumbing.NewGRPCConnector(5, pool, mockFinder, metricClient)
 	})
 
 	AfterEach(func() {
@@ -126,17 +117,6 @@ var _ = Describe("GRPCConnector", func() {
 					})
 					Expect(err).ToNot(HaveOccurred())
 					Eventually(data).Should(Receive(Equal([]byte("some-data-b"))))
-				})
-
-				It("increments a batch count", func() {
-					senderA := captureSubscribeSender(mockDopplerServerA)
-
-					err := senderA.Send(&plumbing.BatchResponse{
-						Payload: [][]byte{[]byte("some-data-a")},
-					})
-					Expect(err).ToNot(HaveOccurred())
-
-					Eventually(mockChainer.AddCalled).Should(BeCalled())
 				})
 
 				It("does not close the doppler connection when a client exits", func() {

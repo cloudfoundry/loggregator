@@ -10,7 +10,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
 
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"golang.org/x/net/context"
 )
 
@@ -37,11 +36,6 @@ type Finder interface {
 	Next() Event
 }
 
-type MetaMetricBatcher interface {
-	BatchCounter(name string) metricbatcher.BatchCounterChainer
-	BatchAddCounter(name string, delta uint64)
-}
-
 // GRPCConnector establishes GRPC connections to dopplers and allows calls to
 // Firehose, Stream, etc to be reduced down to a single Receiver.
 type GRPCConnector struct {
@@ -52,7 +46,6 @@ type GRPCConnector struct {
 	finder         Finder
 	consumerStates []unsafe.Pointer
 	bufferSize     int
-	batcher        MetaMetricBatcher
 
 	ingressMetric         *metricemitter.Counter
 	recentLogsError       *metricemitter.Counter
@@ -69,7 +62,6 @@ func NewGRPCConnector(
 	bufferSize int,
 	pool DopplerPool,
 	f Finder,
-	batcher MetaMetricBatcher,
 	m MetricClient,
 ) *GRPCConnector {
 	ingressMetric := m.NewCounter("ingress",
@@ -95,7 +87,6 @@ func NewGRPCConnector(
 		bufferSize:            bufferSize,
 		pool:                  pool,
 		finder:                f,
-		batcher:               batcher,
 		consumerStates:        make([]unsafe.Pointer, maxConnections),
 		ingressMetric:         ingressMetric,
 		recentLogsError:       recentLogsError,
@@ -178,7 +169,6 @@ func (c *GRPCConnector) Subscribe(ctx context.Context, req *SubscriptionRequest)
 		errs:     make(chan error, 1),
 		ctx:      ctx,
 		req:      req,
-		batcher:  c.batcher,
 		dopplers: make(map[string]bool),
 	}
 
@@ -196,7 +186,7 @@ func (c *GRPCConnector) Subscribe(ctx context.Context, req *SubscriptionRequest)
 	defer c.mu.RUnlock()
 	log.Printf("Connecting to %d dopplers", len(c.clients))
 	for _, client := range c.clients {
-		go c.consumeSubscription(cs, client, c.batcher)
+		go c.consumeSubscription(cs, client)
 	}
 	return cs.Recv, nil
 }
@@ -228,7 +218,7 @@ func (c *GRPCConnector) handleFinderEvent(uris []string) {
 			if cs != nil &&
 				(*consumerState)(cs) != nil &&
 				atomic.LoadInt64(&(*consumerState)(cs).dead) == 0 {
-				go c.consumeSubscription((*consumerState)(cs), client, c.batcher)
+				go c.consumeSubscription((*consumerState)(cs), client)
 			}
 		}
 	}
@@ -277,7 +267,7 @@ func (c *GRPCConnector) close(client *dopplerClientInfo) {
 	}
 }
 
-func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *dopplerClientInfo, batcher MetaMetricBatcher) {
+func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *dopplerClientInfo) {
 	if !cs.tryAddDoppler(dopplerClient.uri) {
 		return
 	}
@@ -346,12 +336,6 @@ func (c *GRPCConnector) readStream(s Doppler_BatchSubscribeClient, cs *consumerS
 			}
 		}
 
-		// metric-documentation-v1: (listeners.receivedEnvelopes) Number of v1
-		// envelopes received over gRPC from Dopplers.
-		c.batcher.BatchCounter("listeners.receivedEnvelopes").
-			SetTag("protocol", "grpc").
-			Add(uint64(len(resp.Payload)))
-
 		// metric-documentation-v2: (ingress) Number of v1 envelopes received over
 		// gRPC from Dopplers.
 		c.ingressMetric.Increment(uint64(len(resp.Payload)))
@@ -394,7 +378,6 @@ type consumerState struct {
 	errs      chan error
 	missed    int
 	maxMissed int
-	batcher   MetaMetricBatcher
 	dead      int64
 
 	mu       sync.Mutex
