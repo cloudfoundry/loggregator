@@ -2,11 +2,8 @@ package app_test
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"sync"
 	"time"
 
@@ -203,33 +200,6 @@ var _ = Describe("Start", func() {
 			Eventually(done).Should(BeClosed())
 		})
 
-	})
-
-	Describe("health endpoint", func() {
-		It("returns health metrics", func() {
-			doppler, _, dopplerLis := setupDoppler()
-			doppler.ContainerMetricsOutput.Err <- nil
-			doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
-				Payload: [][]byte{buildContainerMetric()},
-			}
-			setupRLP(dopplerLis, "localhost:22222")
-
-			var err error
-			var resp *http.Response
-			Eventually(func() error {
-				resp, err = http.Get(fmt.Sprintf("http://localhost:22222/health"))
-				return err
-			}).Should(Succeed())
-			defer func() {
-				Expect(resp.Body.Close()).To(Succeed())
-			}()
-
-			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			body, err := ioutil.ReadAll(resp.Body)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(body).To(ContainSubstring("subscriptionCount"))
-			Expect(dopplerLis.Close()).To(Succeed())
-		})
 	})
 })
 
