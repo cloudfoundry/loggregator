@@ -87,7 +87,7 @@ func (a *AppV1) Start() {
 
 	dropsondeUnmarshaller := ingress.NewUnMarshaller(aggregator, batcher)
 	agentAddress := fmt.Sprintf("127.0.0.1:%d", a.config.IncomingUDPPort)
-	networkReader, err := ingress.New(agentAddress, "dropsondeAgentListener", dropsondeUnmarshaller)
+	networkReader, err := ingress.NewNetworkReader(agentAddress, dropsondeUnmarshaller)
 	if err != nil {
 		log.Panic(fmt.Errorf("Failed to listen on %s: %s", agentAddress, err))
 	}

@@ -42,7 +42,7 @@ var _ = Describe("NetworkReader", func() {
 		address = net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
 		writer = MockByteArrayWriter{}
 		var err error
-		reader, err = ingress.New(address, "networkReader", &writer)
+		reader, err = ingress.NewNetworkReader(address, &writer)
 		Expect(err).NotTo(HaveOccurred())
 		readerStopped = make(chan struct{})
 	})

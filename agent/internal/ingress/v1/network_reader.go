@@ -23,7 +23,7 @@ type NetworkReader struct {
 	buffer      *diodes.OneToOne
 }
 
-func New(address string, name string, writer ByteArrayWriter) (*NetworkReader, error) {
+func NewNetworkReader(address string, writer ByteArrayWriter) (*NetworkReader, error) {
 	connection, err := net.ListenPacket("udp4", address)
 	if err != nil {
 		return nil, err
@@ -31,9 +31,8 @@ func New(address string, name string, writer ByteArrayWriter) (*NetworkReader, e
 	log.Printf("udp bound to: %s", connection.LocalAddr())
 
 	return &NetworkReader{
-		connection:  connection,
-		contextName: name,
-		writer:      writer,
+		connection: connection,
+		writer:     writer,
 		buffer: diodes.NewOneToOne(10000, gendiodes.AlertFunc(func(missed int) {
 			log.Printf("network reader dropped messages %d", missed)
 			// metric-documentation-v1: (udp.receiveErrorCount) Number of dropped messages
@@ -59,17 +58,14 @@ func (nr *NetworkReader) StartReading() {
 }
 
 func (nr *NetworkReader) StartWriting() {
-	receivedMessageCountName := nr.contextName + ".receivedMessageCount"
-	receivedByteCountName := nr.contextName + ".receivedByteCount"
-
 	for {
 		data := nr.buffer.Next()
 		// metric-documentation-v1: (dropsondeAgentListener.receivedMessageCount) Number of
 		// received messages inbound to agent over the v1 (UDP) API
-		metrics.BatchIncrementCounter(receivedMessageCountName)
+		metrics.BatchIncrementCounter("dropsondeAgentListener.receivedMessageCount")
 		// metric-documentation-v1: (dropsondeAgentListener.receivedByteCount) Number of
 		// received bytes inbound to agent over the v1 (UDP) API
-		metrics.BatchAddCounter(receivedByteCountName, uint64(len(data)))
+		metrics.BatchAddCounter("dropsondeAgentListener.receivedByteCount", uint64(len(data)))
 		nr.writer.Write(data)
 	}
 }
