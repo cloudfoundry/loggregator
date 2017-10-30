@@ -26,7 +26,7 @@ type DataSetter interface {
 type EgressServer struct {
 	subscriber    Subscriber
 	health        HealthRegistrar
-	batchInverval time.Duration
+	batchInterval time.Duration
 	batchSize     uint
 }
 
@@ -34,13 +34,13 @@ type EgressServer struct {
 func NewEgressServer(
 	s Subscriber,
 	h HealthRegistrar,
-	batchInverval time.Duration,
+	batchInterval time.Duration,
 	batchSize uint,
 ) *EgressServer {
 	return &EgressServer{
 		subscriber:    s,
 		health:        h,
-		batchInverval: batchInverval,
+		batchInterval: batchInterval,
 		batchSize:     batchSize,
 	}
 }
@@ -74,7 +74,7 @@ func (s *EgressServer) BatchedReceiver(
 	errStream := make(chan error, 1)
 	batcher := batching.NewV2EnvelopeBatcher(
 		int(s.batchSize),
-		s.batchInverval,
+		s.batchInterval,
 		&batchWriter{sender: sender, errStream: errStream},
 	)
 

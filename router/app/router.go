@@ -172,7 +172,7 @@ func (d *Router) Start() {
 		sinkManager,
 		metricClient,
 		healthRegistrar,
-		time.Second,
+		100*time.Millisecond,
 		100,
 	)
 	v2Ingress := v2.NewIngressServer(
@@ -186,7 +186,7 @@ func (d *Router) Start() {
 	v2Egress := v2.NewEgressServer(
 		v2PubSub,
 		healthRegistrar,
-		time.Second,
+		100*time.Millisecond,
 		100,
 	)
 

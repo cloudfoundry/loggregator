@@ -59,9 +59,10 @@ var _ = Describe("Start", func() {
 		f := func() int {
 			batch, err := egressStream.Recv()
 			Expect(err).ToNot(HaveOccurred())
+			Expect(batch).ToNot(BeNil())
 			return len(batch.GetBatch())
 		}
-		Eventually(f, 2).Should(Equal(100))
+		Eventually(f, 2).Should(BeNumerically(">", 10))
 	}, 10)
 
 	It("receives container metrics via egress query client", func() {

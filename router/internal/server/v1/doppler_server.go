@@ -68,7 +68,7 @@ func NewDopplerServer(
 	envelopeStore EnvelopeStore,
 	metricClient MetricClient,
 	health HealthRegistrar,
-	batchInverval time.Duration,
+	batchInterval time.Duration,
 	batchSize uint,
 ) *DopplerServer {
 	// metric-documentation-v2: (loggregator.doppler.egress) Number of
@@ -83,7 +83,7 @@ func NewDopplerServer(
 		envelopeStore: envelopeStore,
 		egressMetric:  egressMetric,
 		health:        health,
-		batchInterval: batchInverval,
+		batchInterval: batchInterval,
 		batchSize:     batchSize,
 	}
 

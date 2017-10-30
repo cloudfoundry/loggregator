@@ -197,7 +197,7 @@ func (r *RLP) setupEgress() {
 	r.egressServer = grpc.NewServer(r.egressServerOpts...)
 	v2.RegisterEgressServer(
 		r.egressServer,
-		egress.NewServer(r.v2Connector, r.metricClient, r.health, r.ctx, 100, time.Second),
+		egress.NewServer(r.v2Connector, r.metricClient, r.health, r.ctx, 100, 100*time.Millisecond),
 	)
 	v2.RegisterEgressQueryServer(r.egressServer, egress.NewQueryServer(r.querier))
 }
