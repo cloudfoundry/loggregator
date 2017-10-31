@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
@@ -35,10 +34,6 @@ func (m *MessageAggregator) Write(envelope *events.Envelope) {
 }
 
 func (m *MessageAggregator) handleCounter(envelope *events.Envelope) *events.Envelope {
-	// metric-documentation-v1: (MessageAggregator.counterEventReceived) Total number of
-	// counter events received by the message aggregator.
-	metrics.BatchIncrementCounter("MessageAggregator.counterEventReceived")
-
 	countID := counterID{
 		name:     envelope.GetCounterEvent().GetName(),
 		origin:   envelope.GetOrigin(),

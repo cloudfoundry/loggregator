@@ -5,12 +5,9 @@ import (
 
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v1"
 
-	"github.com/cloudfoundry/dropsonde/metric_sender/fake"
-	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
-	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -170,32 +167,6 @@ var _ = Describe("MessageAggregator", func() {
 
 			Expect(mockWriter.Events[2].GetOrigin()).To(Equal("fake-origin-4"))
 			expectCorrectCounterNameDeltaAndTotal(mockWriter.Events[2], "counter1", 4, 8)
-		})
-	})
-
-	Context("metrics", func() {
-		var (
-			fakeSender  *fake.FakeMetricSender
-			mockBatcher *mockMetricBatcher
-		)
-
-		BeforeEach(func() {
-			fakeSender = fake.NewFakeMetricSender()
-			mockBatcher = newMockMetricBatcher()
-			metrics.Initialize(fakeSender, mockBatcher)
-		})
-
-		It("emits a counter for counter events", func() {
-			messageAggregator.Write(createCounterMessage("counter1", "fake-origin-1", nil))
-			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
-				With("MessageAggregator.counterEventReceived"),
-			))
-
-			// since we're counting counters, let's make sure we're not adding their deltas
-			messageAggregator.Write(createCounterMessage("counter1", "fake-origin-1", nil))
-			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
-				With("MessageAggregator.counterEventReceived"),
-			))
 		})
 	})
 })

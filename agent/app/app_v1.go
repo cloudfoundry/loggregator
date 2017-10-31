@@ -104,7 +104,7 @@ func (a *AppV1) initializeV1DopplerPool() *egress.EventMarshaller {
 	return marshaller
 }
 
-func (a *AppV1) setupGRPC() egress.BatchChainByteWriter {
+func (a *AppV1) setupGRPC() *clientpoolv1.ClientPool {
 	if a.creds == nil {
 		return nil
 	}
@@ -154,6 +154,5 @@ func (a *AppV1) setupGRPC() egress.BatchChainByteWriter {
 		))
 	}
 
-	pool := clientpoolv1.New(connManagers...)
-	return egress.NewGRPCWrapper(pool)
+	return clientpoolv1.New(connManagers...)
 }
