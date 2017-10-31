@@ -1,6 +1,8 @@
 package endtoend_test
 
 import (
+	"time"
+
 	"code.cloudfoundry.org/loggregator/integration_tests/endtoend"
 	"code.cloudfoundry.org/loggregator/testservers"
 
@@ -31,7 +33,7 @@ var _ = Describe("End to end tests", func() {
 		go func() {
 			agentStreamWriter := endtoend.NewAgentStreamWriter(agentPorts.UDP)
 			generator := endtoend.NewLogMessageGenerator("custom-app-id")
-			for {
+			for range time.Tick(time.Millisecond) {
 				agentStreamWriter.Write(generator.Generate())
 				firehoseReader.Read()
 			}
