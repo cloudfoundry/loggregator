@@ -69,10 +69,10 @@ func (a *AppV1) Start() {
 	}
 
 	statsStopChan := make(chan struct{})
-	batcher, eventWriter := a.initializeMetrics(statsStopChan)
+	eventWriter := a.initializeMetrics(statsStopChan)
 
 	log.Print("Startup: Setting up the agent")
-	marshaller := a.initializeV1DopplerPool(batcher)
+	marshaller := a.initializeV1DopplerPool()
 
 	messageTagger := egress.NewTagger(
 		a.config.Deployment,
@@ -100,7 +100,7 @@ func (a *AppV1) Start() {
 	networkReader.StartWriting()
 }
 
-func (a *AppV1) initializeMetrics(stopChan chan struct{}) (*metricbatcher.MetricBatcher, *egress.EventWriter) {
+func (a *AppV1) initializeMetrics(stopChan chan struct{}) *egress.EventWriter {
 	eventWriter := egress.New("MetronAgent")
 	metricSender := metric_sender.NewMetricSender(eventWriter)
 	metricBatcher := metricbatcher.New(metricSender, time.Duration(a.config.MetricBatchIntervalMilliseconds)*time.Millisecond)
@@ -108,13 +108,13 @@ func (a *AppV1) initializeMetrics(stopChan chan struct{}) (*metricbatcher.Metric
 
 	stats := runtime_stats.NewRuntimeStats(eventWriter, time.Duration(a.config.RuntimeStatsIntervalMilliseconds)*time.Millisecond)
 	go stats.Run(stopChan)
-	return metricBatcher, eventWriter
+	return eventWriter
 }
 
-func (a *AppV1) initializeV1DopplerPool(batcher *metricbatcher.MetricBatcher) *egress.EventMarshaller {
+func (a *AppV1) initializeV1DopplerPool() *egress.EventMarshaller {
 	pool := a.setupGRPC()
 
-	marshaller := egress.NewMarshaller(batcher)
+	marshaller := egress.NewMarshaller(a.metricClient)
 	marshaller.SetWriter(pool)
 
 	return marshaller

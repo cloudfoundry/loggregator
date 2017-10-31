@@ -2,13 +2,12 @@ package v1_test
 
 import (
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v1"
+	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
 	. "github.com/apoydence/eachers"
-	"github.com/apoydence/eachers/testhelpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -16,21 +15,17 @@ import (
 var _ = Describe("EventMarshaller", func() {
 	var (
 		marshaller      *egress.EventMarshaller
-		mockBatcher     *mockEventBatcher
 		mockChainWriter *mockBatchChainByteWriter
-		mockChainer     *mockBatchCounterChainer
+		metricClient    *testhelper.SpyMetricClient
 	)
 
 	BeforeEach(func() {
-		mockBatcher = newMockEventBatcher()
 		mockChainWriter = newMockBatchChainByteWriter()
-		mockChainer = newMockBatchCounterChainer()
-		testhelpers.AlwaysReturn(mockBatcher.BatchCounterOutput, mockChainer)
-		testhelpers.AlwaysReturn(mockChainer.SetTagOutput, mockChainer)
+		metricClient = testhelper.NewMetricClient()
 	})
 
 	JustBeforeEach(func() {
-		marshaller = egress.NewMarshaller(mockBatcher)
+		marshaller = egress.NewMarshaller(metricClient)
 		marshaller.SetWriter(mockChainWriter)
 	})
 
@@ -62,13 +57,6 @@ var _ = Describe("EventMarshaller", func() {
 				close(mockChainWriter.WriteOutput.Err)
 			})
 
-			It("counts marshal errors", func() {
-				marshaller.Write(envelope)
-				Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
-					With("dropsondeMarshaller.marshalErrors"),
-				))
-			})
-
 			It("doesn't write the bytes", func() {
 				marshaller.Write(envelope)
 				Consistently(mockChainWriter.WriteCalled).ShouldNot(Receive())
@@ -88,15 +76,8 @@ var _ = Describe("EventMarshaller", func() {
 				marshaller.Write(envelope)
 				expected, err := proto.Marshal(envelope)
 				Expect(err).ToNot(HaveOccurred())
-				Eventually(mockBatcher.BatchCounterInput).Should(BeCalled(
-					With("dropsondeMarshaller.sentEnvelopes"),
-				))
-				Eventually(mockChainer.SetTagInput).Should(BeCalled(
-					With("event_type", "LogMessage"),
-				))
-				Eventually(mockChainWriter.WriteInput).Should(BeCalled(
-					With(expected, []metricbatcher.BatchCounterChainer{mockChainer}),
-				))
+				Expect(mockChainWriter.WriteInput.Message).To(Receive(Equal(expected)))
+				Expect(metricClient.GetDelta("egress")).To(Equal(uint64(1)))
 			})
 		})
 	})

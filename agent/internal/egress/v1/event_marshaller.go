@@ -4,12 +4,18 @@ import (
 	"log"
 	"sync"
 
+	"code.cloudfoundry.org/loggregator/metricemitter"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
 
 //go:generate hel --type BatchChainByteWriter --output mock_writer_test.go
+
+// MetricClient creates new CounterMetrics to be emitted periodically.
+type MetricClient interface {
+	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
+}
 
 // BatchChainByteWriter is a byte writer than can accept a series
 // of metricbatcher.BatchCounterChainer values.  It should add any
@@ -19,23 +25,17 @@ type BatchChainByteWriter interface {
 	Write(message []byte, chainers ...metricbatcher.BatchCounterChainer) (err error)
 }
 
-//go:generate hel --type EventBatcher --output mock_event_batcher_test.go
-
-type EventBatcher interface {
-	BatchCounter(name string) (chainer metricbatcher.BatchCounterChainer)
-	BatchIncrementCounter(name string)
-}
-
 type EventMarshaller struct {
-	batcher    EventBatcher
-	byteWriter BatchChainByteWriter
-	bwLock     sync.RWMutex
+	egressCounter *metricemitter.Counter
+	byteWriter    BatchChainByteWriter
+	bwLock        sync.RWMutex
 }
 
-func NewMarshaller(batcher EventBatcher) *EventMarshaller {
+func NewMarshaller(mc MetricClient) *EventMarshaller {
 	return &EventMarshaller{
-		batcher: batcher,
+		egressCounter: mc.NewCounter("egress"),
 	}
+
 }
 
 func (m *EventMarshaller) SetWriter(byteWriter BatchChainByteWriter) {
@@ -60,16 +60,9 @@ func (m *EventMarshaller) Write(envelope *events.Envelope) {
 	envelopeBytes, err := proto.Marshal(envelope)
 	if err != nil {
 		log.Printf("marshalling error: %v", err)
-		// metric-documentation-v1: (dropsondeMarshaller.marshalErrors) Number of envelopes
-		// that failed to marshal on agent v1 egress
-		m.batcher.BatchIncrementCounter("dropsondeMarshaller.marshalErrors")
 		return
 	}
 
-	// metric-documentation-v1: (dropsondeMarshaller.sentEnvelopes) Number of envelopes sent
-	// by the agent v1 egress
-	chainer := m.batcher.BatchCounter("dropsondeMarshaller.sentEnvelopes").
-		SetTag("event_type", envelope.GetEventType().String())
-
-	writer.Write(envelopeBytes, chainer)
+	writer.Write(envelopeBytes)
+	m.egressCounter.Increment(1)
 }
