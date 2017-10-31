@@ -6,11 +6,9 @@ import (
 	"math/rand"
 	"time"
 
-	"google.golang.org/grpc/grpclog"
-
-	"code.cloudfoundry.org/loggregator/profiler"
-
 	"code.cloudfoundry.org/loggregator/agent/app"
+	"code.cloudfoundry.org/loggregator/profiler"
+	"google.golang.org/grpc/grpclog"
 )
 
 func main() {

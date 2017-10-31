@@ -7,18 +7,15 @@ import (
 	"net"
 	"time"
 
-	"code.cloudfoundry.org/loggregator/diodes"
-	"code.cloudfoundry.org/loggregator/healthendpoint"
-	"code.cloudfoundry.org/loggregator/metricemitter"
-	"code.cloudfoundry.org/loggregator/plumbing"
-
 	gendiodes "code.cloudfoundry.org/go-diodes"
-
 	"code.cloudfoundry.org/loggregator/agent/internal/clientpool"
 	clientpoolv2 "code.cloudfoundry.org/loggregator/agent/internal/clientpool/v2"
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v2"
 	ingress "code.cloudfoundry.org/loggregator/agent/internal/ingress/v2"
-
+	"code.cloudfoundry.org/loggregator/diodes"
+	"code.cloudfoundry.org/loggregator/healthendpoint"
+	"code.cloudfoundry.org/loggregator/metricemitter"
+	"code.cloudfoundry.org/loggregator/plumbing"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
