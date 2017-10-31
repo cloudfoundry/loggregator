@@ -35,6 +35,11 @@ var _ = Describe("End to end tests", func() {
 			generator := endtoend.NewLogMessageGenerator("custom-app-id")
 			for range time.Tick(time.Millisecond) {
 				agentStreamWriter.Write(generator.Generate())
+			}
+		}()
+
+		go func() {
+			for {
 				firehoseReader.Read()
 			}
 		}()
