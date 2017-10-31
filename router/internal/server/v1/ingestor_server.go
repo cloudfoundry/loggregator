@@ -8,22 +8,18 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/diodes"
+	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
 
 type IngestorServer struct {
-	v1Buf   *diodes.ManyToOneEnvelope
-	v2Buf   *diodes.ManyToOneEnvelopeV2
-	batcher Batcher
-	health  HealthRegistrar
-}
-
-type Batcher interface {
-	BatchCounter(name string) metricbatcher.BatchCounterChainer
+	v1Buf         *diodes.ManyToOneEnvelope
+	v2Buf         *diodes.ManyToOneEnvelopeV2
+	ingressMetric *metricemitter.Counter
+	health        HealthRegistrar
 }
 
 type IngestorGRPCServer interface {
@@ -33,15 +29,18 @@ type IngestorGRPCServer interface {
 func NewIngestorServer(
 	v1Buf *diodes.ManyToOneEnvelope,
 	v2Buf *diodes.ManyToOneEnvelopeV2,
-	batcher Batcher,
+	metricClient MetricClient,
 	health HealthRegistrar,
 ) *IngestorServer {
+	ingressMetric := metricClient.NewCounter("ingress",
+		metricemitter.WithVersion(2, 0),
+	)
 
 	return &IngestorServer{
-		v1Buf:   v1Buf,
-		v2Buf:   v2Buf,
-		batcher: batcher,
-		health:  health,
+		v1Buf:         v1Buf,
+		v2Buf:         v2Buf,
+		ingressMetric: ingressMetric,
+		health:        health,
 	}
 }
 
@@ -72,21 +71,12 @@ func (i *IngestorServer) Pusher(pusher plumbing.DopplerIngestor_PusherServer) er
 			log.Printf("Received bad envelope: %s", err)
 			continue
 		}
-		// metric-documentation-v1: (listeners.receivedEnvelopes) Number of received
-		// envelopes in v1 ingress server
-		i.batcher.BatchCounter("listeners.receivedEnvelopes").
-			SetTag("protocol", "grpc").
-			SetTag("event_type", env.GetEventType().String()).
-			Increment()
 
 		v2e := conversion.ToV2(env, true)
 		i.v1Buf.Set(env)
 		i.v2Buf.Set(v2e)
 
-		// metric-documentation-v1: (listeners.totalReceivedMessageCount) Total
-		// number of messages received by doppler.
-		i.batcher.BatchCounter("listeners.totalReceivedMessageCount").
-			Increment()
+		i.ingressMetric.Increment(1)
 	}
 	return nil
 }

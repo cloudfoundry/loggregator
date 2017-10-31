@@ -7,16 +7,17 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
-// MetricClient creates new CounterMetrics to be emitted periodically.
+// MetricClient creates new Counter and Gauge metrics to be emitted periodically.
 type MetricClient interface {
 	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
+	NewGauge(name, unit string, opts ...metricemitter.MetricOption) *metricemitter.Gauge
 }
 
 type MetricBatcher interface {
 	BatchIncrementCounter(name string)
 }
 
-func NewGroupedSinks(b MetricBatcher, mc MetricClient) *GroupedSinks {
+func NewGroupedSinks(mc MetricClient) *GroupedSinks {
 	droppedMetric := mc.NewCounter("sinks.dropped",
 		metricemitter.WithVersion(2, 0),
 	)
@@ -26,7 +27,6 @@ func NewGroupedSinks(b MetricBatcher, mc MetricClient) *GroupedSinks {
 
 	return &GroupedSinks{
 		apps:          make(map[string]*AppGroup),
-		batcher:       b,
 		droppedMetric: droppedMetric,
 		errorMetric:   errorMetric,
 	}
@@ -36,7 +36,6 @@ type GroupedSinks struct {
 	sync.RWMutex
 
 	apps          map[string]*AppGroup
-	batcher       MetricBatcher
 	droppedMetric *metricemitter.Counter
 	errorMetric   *metricemitter.Counter
 }
@@ -53,7 +52,6 @@ func (group *GroupedSinks) RegisterAppSink(in chan<- *events.Envelope, sink Sink
 	sinksForApp, ok := group.apps[appId]
 	if !ok || sinksForApp == nil {
 		sinksForApp = NewAppGroup(
-			group.batcher,
 			group.droppedMetric,
 			group.errorMetric,
 		)

@@ -5,44 +5,39 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudfoundry/dropsonde/envelope_extensions"
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
 // SinkManager provides an in memory store of recent logs and container metrics.
 type SinkManager struct {
-	dropsondeOrigin string
-	metrics         *SinkManagerMetrics
-	recentLogCount  uint32
-	doneChannel     chan struct{}
-	errorChannel    chan *events.Envelope
-	sinks           *GroupedSinks
-	sinkTimeout     time.Duration
-	metricTTL       time.Duration
-	health          HealthRegistrar
-	stopOnce        sync.Once
+	metrics        *SinkManagerMetrics
+	recentLogCount uint32
+	doneChannel    chan struct{}
+	errorChannel   chan *events.Envelope
+	sinks          *GroupedSinks
+	sinkTimeout    time.Duration
+	metricTTL      time.Duration
+	health         HealthRegistrar
+	stopOnce       sync.Once
 }
 
 // NewSinkManager creates a SinkManager.
 func NewSinkManager(
 	maxRetainedLogMessages uint32,
-	dropsondeOrigin string,
 	sinkTimeout time.Duration,
 	metricTTL time.Duration,
-	metricBatcher MetricBatcher,
 	metricClient MetricClient,
 	health HealthRegistrar,
 ) *SinkManager {
 	return &SinkManager{
-		doneChannel:     make(chan struct{}),
-		errorChannel:    make(chan *events.Envelope, 100),
-		sinks:           NewGroupedSinks(metricBatcher, metricClient),
-		recentLogCount:  maxRetainedLogMessages,
-		metrics:         NewSinkManagerMetrics(),
-		dropsondeOrigin: dropsondeOrigin,
-		sinkTimeout:     sinkTimeout,
-		metricTTL:       metricTTL,
-		health:          health,
+		doneChannel:    make(chan struct{}),
+		errorChannel:   make(chan *events.Envelope, 100),
+		sinks:          NewGroupedSinks(metricClient),
+		recentLogCount: maxRetainedLogMessages,
+		metrics:        NewSinkManagerMetrics(metricClient),
+		sinkTimeout:    sinkTimeout,
+		metricTTL:      metricTTL,
+		health:         health,
 	}
 }
 
@@ -50,7 +45,6 @@ func NewSinkManager(
 func (sm *SinkManager) Stop() {
 	sm.stopOnce.Do(func() {
 		close(sm.doneChannel)
-		sm.metrics.Stop()
 		sm.sinks.DeleteAll()
 	})
 }
@@ -90,7 +84,6 @@ func (sm *SinkManager) RegisterSink(sink Sink) bool {
 // FIXME This method should be private. Nothing calls it except for private
 // functions in this file.
 func (sm *SinkManager) UnregisterSink(sink Sink) {
-
 	ok := sm.sinks.CloseAndDelete(sink)
 	if !ok {
 		return
@@ -125,7 +118,7 @@ func (sm *SinkManager) listenForErrorMessages() {
 			if !ok {
 				return
 			}
-			appID := envelope_extensions.GetAppId(errorMessage)
+			appID := getAppId(errorMessage)
 			log.Println("Sink error for %s: %s", appID, errorMessage)
 		}
 	}

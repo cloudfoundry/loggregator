@@ -9,7 +9,6 @@ import (
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -35,7 +34,6 @@ var _ = Describe("IngressServer", func() {
 		ingestor = v2.NewIngressServer(
 			v1Buf,
 			v2Buf,
-			SpyBatcher{},
 			testhelper.NewMetricClient(),
 			healthRegistrar,
 		)
@@ -145,17 +143,6 @@ var _ = Describe("IngressServer", func() {
 		})
 	})
 })
-
-type SpyBatcher struct {
-	metricbatcher.BatchCounterChainer
-}
-
-func (s SpyBatcher) BatchCounter(string) metricbatcher.BatchCounterChainer {
-	return s
-}
-
-func (s SpyBatcher) Increment() {
-}
 
 type SpyHealthRegistrar struct {
 	mu     sync.Mutex

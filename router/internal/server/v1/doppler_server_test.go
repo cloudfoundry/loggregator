@@ -7,18 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"code.cloudfoundry.org/loggregator/metricemitter"
+	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
-	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
-	"github.com/cloudfoundry/dropsonde/emitter/fake"
-	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/sonde-go/events"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -30,8 +26,10 @@ var _ = Describe("v1 doppler server", func() {
 		mockCleanup     func()
 		cleanupCalled   chan struct{}
 		mockDataDumper  *spyDataDumper
-		metricClient    *testhelper.SpyMetricClient
 		healthRegistrar *SpyHealthRegistrar
+
+		metricClient        *testhelper.SpyMetricClient
+		subscriptionsMetric *metricemitter.Gauge
 
 		batchInterval time.Duration
 		batchSize     = uint(100)
@@ -41,16 +39,7 @@ var _ = Describe("v1 doppler server", func() {
 		dopplerClient plumbing.DopplerClient
 
 		subscribeRequest *plumbing.SubscriptionRequest
-
-		fakeEmitter *fake.FakeEventEmitter
 	)
-
-	BeforeSuite(func() {
-		fakeEmitter = fake.NewFakeEventEmitter("doppler")
-		sender := metric_sender.NewMetricSender(fakeEmitter)
-		batcher := metricbatcher.New(sender, 200*time.Millisecond)
-		metrics.Initialize(sender, batcher)
-	})
 
 	BeforeEach(func() {
 		mockRegistrar = newSpyRegistrar()
@@ -58,9 +47,11 @@ var _ = Describe("v1 doppler server", func() {
 		mockCleanup = buildCleanup(cleanupCalled)
 		mockRegistrar.cleanup = mockCleanup
 		mockDataDumper = newSpyDataDumper()
-		metricClient = testhelper.NewMetricClient()
 		healthRegistrar = newSpyHealthRegistrar()
 		batchInterval = 50 * time.Millisecond
+
+		metricClient = testhelper.NewMetricClient()
+		subscriptionsMetric = metricClient.NewGauge("subs", "subscriptions")
 	})
 
 	AfterEach(func() {
@@ -74,9 +65,9 @@ var _ = Describe("v1 doppler server", func() {
 				mockRegistrar,
 				mockDataDumper,
 				batchInterval,
-				fakeEmitter,
 				healthRegistrar,
 				metricClient,
+				subscriptionsMetric,
 			)
 		})
 
@@ -125,17 +116,18 @@ var _ = Describe("v1 doppler server", func() {
 			})
 
 			It("emits a metric for the number of subscriptions", func() {
-				dopplerClient.Subscribe(context.TODO(), subscribeRequest)
-				expected := fake.Message{
-					Origin: "doppler",
-					Event: &events.ValueMetric{
-						Name:  proto.String("grpcManager.subscriptions"),
-						Value: proto.Float64(1),
-						Unit:  proto.String("subscriptions"),
-					},
-				}
+				_, err := dopplerClient.Subscribe(context.TODO(), subscribeRequest)
+				Expect(err).ToNot(HaveOccurred())
 
-				Eventually(fakeEmitter.GetMessages, 2).Should(ContainElement(expected))
+				Eventually(func() float64 {
+					return subscriptionsMetric.GetValue()
+				}).Should(Equal(1.0))
+
+				connCloser.Close()
+
+				Eventually(func() float64 {
+					return subscriptionsMetric.GetValue()
+				}).Should(Equal(0.0))
 			})
 
 			It("increments and decrements the subscription count", func() {
@@ -178,10 +170,11 @@ var _ = Describe("v1 doppler server", func() {
 					mockRegistrar,
 					mockDataDumper,
 					batchInterval,
-					fakeEmitter,
 					healthRegistrar,
 					metricClient,
+					subscriptionsMetric,
 				)
+
 			})
 
 			It("registers subscription", func() {
@@ -217,10 +210,11 @@ var _ = Describe("v1 doppler server", func() {
 					mockRegistrar,
 					mockDataDumper,
 					batchInterval,
-					fakeEmitter,
 					healthRegistrar,
 					metricClient,
+					subscriptionsMetric,
 				)
+
 			})
 
 			It("emits a metric for number of envelopes egressed", func() {
@@ -239,17 +233,18 @@ var _ = Describe("v1 doppler server", func() {
 			})
 
 			It("emits a metric for the number of subscriptions", func() {
-				dopplerClient.BatchSubscribe(context.TODO(), subscribeRequest)
-				expected := fake.Message{
-					Origin: "doppler",
-					Event: &events.ValueMetric{
-						Name:  proto.String("grpcManager.subscriptions"),
-						Value: proto.Float64(1),
-						Unit:  proto.String("subscriptions"),
-					},
-				}
+				_, err := dopplerClient.BatchSubscribe(context.TODO(), subscribeRequest)
+				Expect(err).ToNot(HaveOccurred())
 
-				Eventually(fakeEmitter.GetMessages, 2).Should(ContainElement(expected))
+				Eventually(func() float64 {
+					return subscriptionsMetric.GetValue()
+				}).Should(Equal(1.0))
+
+				connCloser.Close()
+
+				Eventually(func() float64 {
+					return subscriptionsMetric.GetValue()
+				}).Should(Equal(0.0))
 			})
 
 			It("increments and decrements the subscription count", func() {
@@ -275,10 +270,11 @@ var _ = Describe("v1 doppler server", func() {
 						mockRegistrar,
 						mockDataDumper,
 						batchInterval,
-						fakeEmitter,
 						healthRegistrar,
 						metricClient,
+						subscriptionsMetric,
 					)
+
 				})
 
 				It("sends data from the setter client", func() {
@@ -304,10 +300,11 @@ var _ = Describe("v1 doppler server", func() {
 						mockRegistrar,
 						mockDataDumper,
 						time.Hour,
-						fakeEmitter,
 						healthRegistrar,
 						metricClient,
+						subscriptionsMetric,
 					)
+
 				})
 
 				It("sends data from the setter client", func() {
@@ -337,10 +334,11 @@ var _ = Describe("v1 doppler server", func() {
 				mockRegistrar,
 				mockDataDumper,
 				batchInterval,
-				fakeEmitter,
 				healthRegistrar,
 				metricClient,
+				subscriptionsMetric,
 			)
+
 		})
 
 		It("returns container metrics from its data dumper", func() {
@@ -380,10 +378,11 @@ var _ = Describe("v1 doppler server", func() {
 				mockRegistrar,
 				mockDataDumper,
 				batchInterval,
-				fakeEmitter,
 				healthRegistrar,
 				metricClient,
+				subscriptionsMetric,
 			)
+
 		})
 
 		It("returns recent logs from its data dumper", func() {
@@ -420,9 +419,9 @@ func dopplerSetup(
 	mockRegistrar *spyRegistrar,
 	mockDataDumper *spyDataDumper,
 	batchInterval time.Duration,
-	fakeEmitter *fake.FakeEventEmitter,
 	healthRegistrar *SpyHealthRegistrar,
 	metricClient *testhelper.SpyMetricClient,
+	subscriptionsMetric *metricemitter.Gauge,
 ) (
 	plumbing.DopplerClient,
 	*plumbing.SubscriptionRequest,
@@ -433,6 +432,7 @@ func dopplerSetup(
 		mockRegistrar,
 		mockDataDumper,
 		metricClient,
+		subscriptionsMetric,
 		healthRegistrar,
 		batchInterval,
 		100,
@@ -445,7 +445,6 @@ func dopplerSetup(
 		Filter: &plumbing.Filter{},
 	}
 
-	fakeEmitter.Reset()
 	return dopplerClient, subscribeRequest, listener, connCloser
 }
 

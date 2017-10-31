@@ -22,19 +22,16 @@ type AppGroup struct {
 	mu       sync.RWMutex
 	wrappers map[string]*SinkWrapper
 
-	batcher       MetricBatcher
 	droppedMetric *metricemitter.Counter
 	errorMetric   *metricemitter.Counter
 }
 
 func NewAppGroup(
-	batcher MetricBatcher,
 	droppedMetric *metricemitter.Counter,
 	errorMetric *metricemitter.Counter,
 ) *AppGroup {
 	return &AppGroup{
 		wrappers:      make(map[string]*SinkWrapper),
-		batcher:       batcher,
 		droppedMetric: droppedMetric,
 		errorMetric:   errorMetric,
 	}
@@ -153,10 +150,6 @@ func (g *AppGroup) BroadcastMessage(msg *events.Envelope) {
 		select {
 		case wrapper.InputChan <- msg:
 		default:
-			// metric-documentation-v1: (sinks.dropped) Number of envelopes dropped
-			// while inserting envelope into sink.
-			g.batcher.BatchIncrementCounter("sinks.dropped")
-
 			// metric-documentation-v2: (loggregator.doppler.sinks.dropped)
 			// Number of envelopes dropped while inserting envelope into sink.
 			g.droppedMetric.Increment(1)

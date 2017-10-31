@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 
 	. "github.com/onsi/ginkgo"
@@ -27,7 +25,7 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "hi", "appId", "App"), "origin")
+		logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, "hi", "appId", "App"), "origin")
 		inputChan <- logMessage
 
 		close(inputChan)
@@ -50,9 +48,9 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
+		logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
 		inputChan <- logMessage
 
 		close(inputChan)
@@ -78,7 +76,7 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "hi", "appId", "App"), "origin")
+		logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, "hi", "appId", "App"), "origin")
 
 		for i := uint32(0); i < bufferSize+1; i++ {
 			inputChan <- logMessage
@@ -101,11 +99,11 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
+		logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "3", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "3", "appId", "App"), "origin")
 		inputChan <- logMessage
 
 		close(inputChan)
@@ -130,11 +128,11 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
+		logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "3", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "3", "appId", "App"), "origin")
 		inputChan <- logMessage
 
 		close(inputChan)
@@ -163,11 +161,11 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
+		logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, "1", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "2", "appId", "App"), "origin")
 		inputChan <- logMessage
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "3", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "3", "appId", "App"), "origin")
 		inputChan <- logMessage
 
 		close(inputChan)
@@ -186,7 +184,7 @@ var _ = Describe("Dump Sink", func() {
 			close(dumpRunnerDone)
 		}()
 
-		logMessage, _ = emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "4", "appId", "App"), "origin")
+		logMessage, _ = wrap(newLogMessage(events.LogMessage_OUT, "4", "appId", "App"), "origin")
 		inputChan <- logMessage
 
 		Eventually(func() string {
@@ -211,7 +209,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 0; i < 100; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -232,7 +230,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 100; i < 200; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -263,7 +261,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 0; i < 1000; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -284,7 +282,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 1000; i < 2000; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -314,7 +312,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 0; i < 100; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -336,7 +334,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 100; i < 200; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -356,7 +354,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 200; i < 300; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -381,7 +379,7 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		for i := 0; i < 10; i++ {
-			logMessage, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
+			logMessage, _ := wrap(newLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "appId", "App"), "origin")
 			inputChan <- logMessage
 		}
 
@@ -436,7 +434,7 @@ var _ = Describe("Dump Sink", func() {
 		dumpRunnerDone := make(chan struct{})
 		inputChan := make(chan *events.Envelope)
 
-		logMessage, _ := emitter.Wrap(&events.LogMessage{}, "origin")
+		logMessage, _ := wrap(&events.LogMessage{}, "origin")
 		constantlySend(inputChan, logMessage, 2*inactivityDuration)
 
 		go func() {
@@ -460,11 +458,11 @@ var _ = Describe("Dump Sink", func() {
 		}()
 
 		var env *events.Envelope
-		env, _ = emitter.Wrap(&events.LogMessage{}, "origin") // should keep this one
+		env, _ = wrap(&events.LogMessage{}, "origin") // should keep this one
 		inputChan <- env
-		env, _ = emitter.Wrap(&events.HttpStartStop{}, "origin")
+		env, _ = wrap(&events.HttpStartStop{}, "origin")
 		inputChan <- env
-		env, _ = emitter.Wrap(&events.ValueMetric{}, "origin")
+		env, _ = wrap(&events.ValueMetric{}, "origin")
 		inputChan <- env
 
 		close(inputChan)

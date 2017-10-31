@@ -6,8 +6,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 
 	. "github.com/onsi/ginkgo"
@@ -20,7 +18,6 @@ var _ = Describe("GroupedSink", func() {
 
 	BeforeEach(func() {
 		groupedSinks = sinks.NewGroupedSinks(
-			&spyMetricBatcher{},
 			testhelper.NewMetricClient(),
 		)
 		inputChan = make(chan *events.Envelope, 10)
@@ -33,7 +30,7 @@ var _ = Describe("GroupedSink", func() {
 				appSinkInputChan := make(chan *events.Envelope, 10)
 				groupedSinks.RegisterAppSink(appSinkInputChan, appSink)
 
-				msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "test message", "123", "App"), "origin")
+				msg, _ := wrap(newLogMessage(events.LogMessage_OUT, "test message", "123", "App"), "origin")
 				groupedSinks.Broadcast("123", msg)
 
 				Eventually(appSinkInputChan).Should(Receive(Equal(msg)))
@@ -51,7 +48,7 @@ var _ = Describe("GroupedSink", func() {
 			appSink = sinks.NewDumpSink(appId, 5, time.Hour, &spyHealthRegistrar{})
 			groupedSinks.RegisterAppSink(inputChan, appSink)
 
-			msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
+			msg, _ := wrap(newLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
 			groupedSinks.Broadcast(appId, msg)
 
 			Eventually(inputChan).Should(Receive(Equal(msg)))
@@ -60,7 +57,7 @@ var _ = Describe("GroupedSink", func() {
 
 		It("does not block when sending to an appId that has no sinks", func(done Done) {
 			appId := "NonExistantApp"
-			msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
+			msg, _ := wrap(newLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
 			groupedSinks.Broadcast(appId, msg)
 			close(done)
 		})
@@ -74,7 +71,7 @@ var _ = Describe("GroupedSink", func() {
 			c := make(chan struct{})
 			go func() {
 				defer close(c)
-				msg, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
+				msg, _ := wrap(newLogMessage(events.LogMessage_OUT, "test message", appId, "App"), "origin")
 				groupedSinks.Broadcast(appId, msg)
 			}()
 

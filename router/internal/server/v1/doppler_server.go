@@ -9,14 +9,9 @@ import (
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
-)
-
-const (
-	metricsInterval = time.Second
 )
 
 type HealthRegistrar interface {
@@ -43,13 +38,13 @@ type EnvelopeStore interface {
 // DopplerServer is the GRPC server component that accepts requests for firehose
 // streams, application streams, container metrics, and recent logs.
 type DopplerServer struct {
-	registrar        Registrar
-	envelopeStore    EnvelopeStore
-	numSubscriptions int64
-	egressMetric     *metricemitter.Counter
-	health           HealthRegistrar
-	batchInterval    time.Duration
-	batchSize        uint
+	registrar           Registrar
+	envelopeStore       EnvelopeStore
+	egressMetric        *metricemitter.Counter
+	subscriptionsMetric *metricemitter.Gauge
+	health              HealthRegistrar
+	batchInterval       time.Duration
+	batchSize           uint
 }
 
 type sender interface {
@@ -67,35 +62,34 @@ func NewDopplerServer(
 	registrar Registrar,
 	envelopeStore EnvelopeStore,
 	metricClient MetricClient,
+	subscriptionsMetric *metricemitter.Gauge,
 	health HealthRegistrar,
 	batchInterval time.Duration,
 	batchSize uint,
 ) *DopplerServer {
 	// metric-documentation-v2: (loggregator.doppler.egress) Number of
-	// v1 envelopes read from a diode to be sent to subscriptions.
-	egressMetric := metricClient.NewCounter(
-		"egress",
+	// envelopes read from a diode to be sent to subscriptions.
+	egressMetric := metricClient.NewCounter("egress",
 		metricemitter.WithVersion(2, 0),
 	)
 
 	m := &DopplerServer{
-		registrar:     registrar,
-		envelopeStore: envelopeStore,
-		egressMetric:  egressMetric,
-		health:        health,
-		batchInterval: batchInterval,
-		batchSize:     batchSize,
+		registrar:           registrar,
+		envelopeStore:       envelopeStore,
+		egressMetric:        egressMetric,
+		subscriptionsMetric: subscriptionsMetric,
+		health:              health,
+		batchInterval:       batchInterval,
+		batchSize:           batchSize,
 	}
-
-	go m.emitMetrics()
 
 	return m
 }
 
 // Subscribe is called by GRPC on stream requests.
 func (m *DopplerServer) Subscribe(req *plumbing.SubscriptionRequest, sender plumbing.Doppler_SubscribeServer) error {
-	atomic.AddInt64(&m.numSubscriptions, 1)
-	defer atomic.AddInt64(&m.numSubscriptions, -1)
+	m.subscriptionsMetric.Increment(1.0)
+	defer m.subscriptionsMetric.Decrement(1.0)
 	m.health.Inc("subscriptionCount")
 	defer m.health.Dec("subscriptionCount")
 
@@ -104,8 +98,8 @@ func (m *DopplerServer) Subscribe(req *plumbing.SubscriptionRequest, sender plum
 
 // BatchSubscribe is called by GRPC on stream batch requests.
 func (m *DopplerServer) BatchSubscribe(req *plumbing.SubscriptionRequest, sender plumbing.Doppler_BatchSubscribeServer) error {
-	atomic.AddInt64(&m.numSubscriptions, 1)
-	defer atomic.AddInt64(&m.numSubscriptions, -1)
+	m.subscriptionsMetric.Increment(1.0)
+	defer m.subscriptionsMetric.Decrement(1.0)
 	m.health.Inc("subscriptionCount")
 	defer m.health.Dec("subscriptionCount")
 
@@ -126,14 +120,6 @@ func (m *DopplerServer) RecentLogs(ctx context.Context, req *plumbing.RecentLogs
 	return &plumbing.RecentLogsResponse{
 		Payload: marshalEnvelopes(envelopes),
 	}, nil
-}
-
-func (m *DopplerServer) emitMetrics() {
-	for range time.Tick(metricsInterval) {
-		// metrics:v1 (grpcManager.subscriptions) Number of v1 egress gRPC
-		// subscriptions
-		metrics.SendValue("grpcManager.subscriptions", float64(atomic.LoadInt64(&m.numSubscriptions)), "subscriptions")
-	}
 }
 
 func marshalEnvelopes(envelopes []*events.Envelope) [][]byte {
@@ -188,6 +174,7 @@ func (b *batchWriter) Write(batch [][]byte) {
 	err := b.sender.Send(&plumbing.BatchResponse{Payload: batch})
 	if err != nil {
 		b.errStream <- err
+		return
 	}
 	b.egressMetric.Increment(uint64(len(batch)))
 }
@@ -223,8 +210,6 @@ func (m *DopplerServer) sendBatchData(req *plumbing.SubscriptionRequest, sender 
 			}
 
 			batcher.Write(data)
-
-			// TODO Send loggregator.doppler.egress metric
 		}
 	}
 }

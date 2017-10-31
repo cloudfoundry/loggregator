@@ -6,8 +6,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
@@ -21,15 +19,11 @@ var _ = Describe("SinkManager", func() {
 	)
 
 	BeforeEach(func() {
-		fakeMetricSender.Reset()
-
 		health := newSpyHealthRegistrar()
 		sinkManager = sinks.NewSinkManager(
 			1,
-			"dropsonde-origin",
 			1*time.Second,
 			1*time.Second,
-			nil,
 			testhelper.NewMetricClient(),
 			health,
 		)
@@ -54,8 +48,8 @@ var _ = Describe("SinkManager", func() {
 			sinkManager.RegisterSink(sink2)
 
 			expectedMessageString := "Some Data"
-			expectedMessage, _ := emitter.Wrap(
-				factories.NewLogMessage(
+			expectedMessage, _ := wrap(
+				newLogMessage(
 					events.LogMessage_OUT,
 					expectedMessageString,
 					"myApp",
@@ -85,8 +79,8 @@ var _ = Describe("SinkManager", func() {
 			sinkManager.RegisterSink(sink2)
 
 			expectedMessageString := "Some Data"
-			expectedMessage, _ := emitter.Wrap(
-				factories.NewLogMessage(
+			expectedMessage, _ := wrap(
+				newLogMessage(
 					events.LogMessage_OUT,
 					expectedMessageString,
 					"myApp",
@@ -110,8 +104,8 @@ var _ = Describe("SinkManager", func() {
 			}
 
 			expectedMessageString := "Some Data"
-			expectedMessage, _ := emitter.Wrap(
-				factories.NewLogMessage(
+			expectedMessage, _ := wrap(
+				newLogMessage(
 					events.LogMessage_OUT,
 					expectedMessageString,
 					"myApp",
@@ -139,8 +133,8 @@ var _ = Describe("SinkManager", func() {
 
 			expectedFirstMessageString := "Some Data 1"
 			expectedSecondMessageString := "Some Data 2"
-			expectedFirstMessage, _ := emitter.Wrap(
-				factories.NewLogMessage(
+			expectedFirstMessage, _ := wrap(
+				newLogMessage(
 					events.LogMessage_OUT,
 					expectedFirstMessageString,
 					"myApp",
@@ -148,8 +142,8 @@ var _ = Describe("SinkManager", func() {
 				),
 				"origin",
 			)
-			expectedSecondMessage, _ := emitter.Wrap(
-				factories.NewLogMessage(
+			expectedSecondMessage, _ := wrap(
+				newLogMessage(
 					events.LogMessage_OUT,
 					expectedSecondMessageString,
 					"myApp",
@@ -200,8 +194,8 @@ var _ = Describe("SinkManager", func() {
 
 			It("clears the recent logs buffer", func() {
 				expectedMessageString := "Some Data"
-				expectedMessage, _ := emitter.Wrap(
-					factories.NewLogMessage(
+				expectedMessage, _ := wrap(
+					newLogMessage(
 						events.LogMessage_OUT,
 						expectedMessageString,
 						"myApp",
@@ -220,33 +214,6 @@ var _ = Describe("SinkManager", func() {
 				Eventually(func() []*events.Envelope {
 					return sinkManager.RecentLogsFor("appId")
 				}).Should(HaveLen(0))
-			})
-		})
-
-		Context("when called twice", func() {
-			var dumpSink *sinks.DumpSink
-
-			BeforeEach(func() {
-				health := newSpyHealthRegistrar()
-				dumpSink = sinks.NewDumpSink("appId", 1, time.Hour, health)
-				sinkManager.RegisterSink(dumpSink)
-			})
-
-			It("decrements the metric only once", func() {
-				f := func() float64 {
-					return fakeMetricSender.GetValue(
-						"messageRouter.numberOfDumpSinks",
-					).Value
-				}
-				Eventually(f, 2).Should(BeEquivalentTo(1))
-
-				sinkManager.UnregisterSink(dumpSink)
-
-				Eventually(f, 2).Should(BeEquivalentTo(0))
-
-				sinkManager.UnregisterSink(dumpSink)
-
-				Eventually(f, 2).Should(BeEquivalentTo(0))
 			})
 		})
 	})

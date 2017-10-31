@@ -5,7 +5,6 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 )
 
 // HealthRegistrar describes the health interface for keeping track of various
@@ -19,30 +18,26 @@ type DopplerIngress_SenderServer interface {
 	plumbing.DopplerIngress_SenderServer
 }
 
-type Batcher interface {
-	BatchCounter(name string) metricbatcher.BatchCounterChainer
-}
-
-type IngressServer struct {
-	v1Buf         *diodes.ManyToOneEnvelope
-	v2Buf         *diodes.ManyToOneEnvelopeV2
-	batcher       Batcher
-	ingressMetric *metricemitter.Counter
-	health        HealthRegistrar
-}
-
 // MetricClient creates new CounterMetrics to be emitted periodically.
 type MetricClient interface {
 	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
 }
 
+type IngressServer struct {
+	v1Buf         *diodes.ManyToOneEnvelope
+	v2Buf         *diodes.ManyToOneEnvelopeV2
+	ingressMetric *metricemitter.Counter
+	health        HealthRegistrar
+}
+
 func NewIngressServer(
 	v1Buf *diodes.ManyToOneEnvelope,
 	v2Buf *diodes.ManyToOneEnvelopeV2,
-	batcher Batcher,
 	metricClient MetricClient,
 	health HealthRegistrar,
 ) *IngressServer {
+	// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
+	// envelopes from Metron on Doppler's v2 gRPC server
 	ingressMetric := metricClient.NewCounter("ingress",
 		metricemitter.WithVersion(2, 0),
 	)
@@ -50,7 +45,6 @@ func NewIngressServer(
 	return &IngressServer{
 		v1Buf:         v1Buf,
 		v2Buf:         v2Buf,
-		batcher:       batcher,
 		ingressMetric: ingressMetric,
 		health:        health,
 	}
@@ -76,9 +70,6 @@ func (i IngressServer) BatchSender(s plumbing.DopplerIngress_BatchSenderServer) 
 				}
 
 				i.v1Buf.Set(v1e)
-
-				// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
-				// envelopes from Metron on Doppler's v2 gRPC server
 				i.ingressMetric.Increment(1)
 			}
 		}
@@ -106,14 +97,6 @@ func (i IngressServer) Sender(s plumbing.DopplerIngress_SenderServer) error {
 			}
 
 			i.v1Buf.Set(v1e)
-
-			// metric-documentation-v1: (listeners.totalReceivedMessageCount)
-			// Total number of messages received by doppler.
-			i.batcher.BatchCounter("listeners.totalReceivedMessageCount").
-				Increment()
-
-			// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
-			// envelopes from Metron on Doppler's v2 gRPC server
 			i.ingressMetric.Increment(1)
 		}
 	}

@@ -1,46 +1,18 @@
 package sinks_test
 
 import (
+	"errors"
 	"sync"
+	"time"
 
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
-
-type fakeSinkManager struct {
-	sync.RWMutex
-	receivedMessages []*events.Envelope
-	receivedDrains   [][]string
-}
-
-func (f *fakeSinkManager) SendTo(appId string, receivedMessage *events.Envelope) {
-	f.Lock()
-	defer f.Unlock()
-	f.receivedMessages = append(f.receivedMessages, receivedMessage)
-}
-
-func (f *fakeSinkManager) ManageSyslogSinks(appId string, syslogSinkUrls []string) {
-	f.Lock()
-	defer f.Unlock()
-	f.receivedDrains = append(f.receivedDrains, syslogSinkUrls)
-}
-
-func (f *fakeSinkManager) received() []*events.Envelope {
-	f.RLock()
-	defer f.RUnlock()
-	return f.receivedMessages
-}
-
-func (f *fakeSinkManager) drains() [][]string {
-	f.RLock()
-	defer f.RUnlock()
-	return f.receivedDrains
-}
 
 var _ = Describe("Message Router", func() {
 
@@ -73,7 +45,7 @@ var _ = Describe("Message Router", func() {
 			})
 
 			It("sends the message to each sender if it is an app message", func() {
-				message, _ := emitter.Wrap(factories.NewLogMessage(events.LogMessage_OUT, "testMessage", "app", "App"), "origin")
+				message, _ := wrap(newLogMessage(events.LogMessage_OUT, "testMessage", "app", "App"), "origin")
 				incoming.Set(message)
 				Eventually(fakeManagerA.received).Should(HaveLen(1))
 				Eventually(fakeManagerB.received).Should(HaveLen(1))
@@ -83,3 +55,83 @@ var _ = Describe("Message Router", func() {
 		})
 	})
 })
+
+var errorMissingOrigin = errors.New("Event not emitted due to missing origin information")
+var errorUnknownEventType = errors.New("Cannot create envelope for unknown event type")
+
+func wrap(event events.Event, origin string) (*events.Envelope, error) {
+	if origin == "" {
+		return nil, errorMissingOrigin
+	}
+
+	envelope := &events.Envelope{
+		Origin:    proto.String(origin),
+		Timestamp: proto.Int64(time.Now().UnixNano()),
+	}
+
+	switch event := event.(type) {
+	case *events.HttpStartStop:
+		envelope.EventType = events.Envelope_HttpStartStop.Enum()
+		envelope.HttpStartStop = event
+	case *events.ValueMetric:
+		envelope.EventType = events.Envelope_ValueMetric.Enum()
+		envelope.ValueMetric = event
+	case *events.CounterEvent:
+		envelope.EventType = events.Envelope_CounterEvent.Enum()
+		envelope.CounterEvent = event
+	case *events.LogMessage:
+		envelope.EventType = events.Envelope_LogMessage.Enum()
+		envelope.LogMessage = event
+	case *events.ContainerMetric:
+		envelope.EventType = events.Envelope_ContainerMetric.Enum()
+		envelope.ContainerMetric = event
+	default:
+		return nil, errorUnknownEventType
+	}
+
+	return envelope, nil
+}
+
+func newLogMessage(messageType events.LogMessage_MessageType, messageString, appId, sourceType string) *events.LogMessage {
+	currentTime := time.Now()
+
+	logMessage := &events.LogMessage{
+		Message:     []byte(messageString),
+		AppId:       &appId,
+		MessageType: &messageType,
+		SourceType:  proto.String(sourceType),
+		Timestamp:   proto.Int64(currentTime.UnixNano()),
+	}
+
+	return logMessage
+}
+
+type fakeSinkManager struct {
+	sync.RWMutex
+	receivedMessages []*events.Envelope
+	receivedDrains   [][]string
+}
+
+func (f *fakeSinkManager) SendTo(appId string, receivedMessage *events.Envelope) {
+	f.Lock()
+	defer f.Unlock()
+	f.receivedMessages = append(f.receivedMessages, receivedMessage)
+}
+
+func (f *fakeSinkManager) ManageSyslogSinks(appId string, syslogSinkUrls []string) {
+	f.Lock()
+	defer f.Unlock()
+	f.receivedDrains = append(f.receivedDrains, syslogSinkUrls)
+}
+
+func (f *fakeSinkManager) received() []*events.Envelope {
+	f.RLock()
+	defer f.RUnlock()
+	return f.receivedMessages
+}
+
+func (f *fakeSinkManager) drains() [][]string {
+	f.RLock()
+	defer f.RUnlock()
+	return f.receivedDrains
+}

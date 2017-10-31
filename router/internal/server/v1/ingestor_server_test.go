@@ -10,10 +10,10 @@ import (
 	"google.golang.org/grpc"
 
 	"code.cloudfoundry.org/loggregator/diodes"
+	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/sonde-go/events"
 
 	. "github.com/onsi/ginkgo"
@@ -53,13 +53,9 @@ var _ = Describe("IngestorServer", func() {
 		var grpcAddr string
 		v1Buf = diodes.NewManyToOneEnvelope(5, nil)
 		v2Buf = diodes.NewManyToOneEnvelopeV2(5, nil)
-		mockBatcher := newSpyBatcher()
-		mockChainer := newSpyBatchCounterChainer()
-		mockBatcher.batchCounter = mockChainer
-		mockChainer.setTag = mockChainer
 		healthRegistrar = newSpyHealthRegistrar()
 
-		manager = v1.NewIngestorServer(v1Buf, v2Buf, mockBatcher, healthRegistrar)
+		manager = v1.NewIngestorServer(v1Buf, v2Buf, testhelper.NewMetricClient(), healthRegistrar)
 		server, grpcAddr = startGRPCServer(manager)
 		dopplerClient, connCloser = establishClient(grpcAddr)
 	})
@@ -213,36 +209,6 @@ func (s *SpyHealthRegistrar) Get(name string) float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.values[name]
-}
-
-func newSpyBatcher() *spyBatcher {
-	return &spyBatcher{}
-}
-
-type spyBatcher struct {
-	batchCounter interface{} // FIXME
-}
-
-func (s *spyBatcher) BatchCounter(name string) metricbatcher.BatchCounterChainer {
-	return &spyBatchCounterChainer{}
-}
-
-func newSpyBatchCounterChainer() *spyBatchCounterChainer {
-	return &spyBatchCounterChainer{}
-}
-
-type spyBatchCounterChainer struct {
-	setTag interface{} // FIXME
-}
-
-func (s *spyBatchCounterChainer) Add(value uint64) {
-}
-
-func (s *spyBatchCounterChainer) Increment() {
-}
-
-func (s *spyBatchCounterChainer) SetTag(key, value string) metricbatcher.BatchCounterChainer {
-	return s
 }
 
 func newSpyIngestorGRPCServer() *spyIngestorGRPCServer {

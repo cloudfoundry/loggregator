@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/diodes"
+	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
 	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"google.golang.org/grpc"
@@ -24,30 +25,40 @@ type DataSetter interface {
 
 // EgressServer implements the loggregator_v2.EgressServer interface.
 type EgressServer struct {
-	subscriber    Subscriber
-	health        HealthRegistrar
-	batchInterval time.Duration
-	batchSize     uint
+	subscriber          Subscriber
+	egressMetric        *metricemitter.Counter
+	subscriptionsMetric *metricemitter.Gauge
+	health              HealthRegistrar
+	batchInterval       time.Duration
+	batchSize           uint
 }
 
 // NewEgressServer is the constructor for EgressServer.
 func NewEgressServer(
 	s Subscriber,
+	m MetricClient,
+	subscriptionsMetric *metricemitter.Gauge,
 	h HealthRegistrar,
 	batchInterval time.Duration,
 	batchSize uint,
 ) *EgressServer {
+	// metric-documentation-v2: (loggregator.doppler.egress) Number of
+	// envelopes read from a diode to be sent to subscriptions.
+	egressMetric := m.NewCounter("egress",
+		metricemitter.WithVersion(2, 0),
+	)
 	return &EgressServer{
-		subscriber:    s,
-		health:        h,
-		batchInterval: batchInterval,
-		batchSize:     batchSize,
+		subscriber:          s,
+		egressMetric:        egressMetric,
+		subscriptionsMetric: subscriptionsMetric,
+		health:              h,
+		batchInterval:       batchInterval,
+		batchSize:           batchSize,
 	}
 }
 
 // Alert logs dropped message counts to stderr.
 func (*EgressServer) Alert(missed int) {
-	// TODO: Should we have a metric?
 	log.Printf("Dropped %d envelopes (v2 Egress Server)", missed)
 }
 
@@ -64,6 +75,8 @@ func (s *EgressServer) BatchedReceiver(
 	req *loggregator_v2.EgressBatchRequest,
 	sender loggregator_v2.Egress_BatchedReceiverServer,
 ) error {
+	s.subscriptionsMetric.Increment(1.0)
+	defer s.subscriptionsMetric.Decrement(1.0)
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
@@ -75,7 +88,11 @@ func (s *EgressServer) BatchedReceiver(
 	batcher := batching.NewV2EnvelopeBatcher(
 		int(s.batchSize),
 		s.batchInterval,
-		&batchWriter{sender: sender, errStream: errStream},
+		&batchWriter{
+			sender:       sender,
+			errStream:    errStream,
+			egressMetric: s.egressMetric,
+		},
 	)
 
 	for {
@@ -98,8 +115,9 @@ func (s *EgressServer) BatchedReceiver(
 }
 
 type batchWriter struct {
-	sender    loggregator_v2.Egress_BatchedReceiverServer
-	errStream chan<- error
+	sender       loggregator_v2.Egress_BatchedReceiverServer
+	errStream    chan<- error
+	egressMetric *metricemitter.Counter
 }
 
 // Write adds an entry to the batch. If the batch conditions are met, the
@@ -110,5 +128,7 @@ func (b *batchWriter) Write(batch []*loggregator_v2.Envelope) {
 	})
 	if err != nil {
 		b.errStream <- err
+		return
 	}
+	b.egressMetric.Increment(uint64(len(batch)))
 }

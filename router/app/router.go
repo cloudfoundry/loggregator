@@ -14,10 +14,6 @@ import (
 	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
-	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -38,12 +34,10 @@ func NewRouter(grpc GRPC, opts ...RouterOption) *Router {
 	r := &Router{
 		c: &Config{
 			GRPC: grpc,
-
 			MaxRetainedLogMessages:       100,
 			ContainerMetricTTLSeconds:    120,
 			SinkInactivityTimeoutSeconds: 3600,
-
-			HealthAddr: "localhost:14825",
+			HealthAddr:                   "localhost:14825",
 			Agent: Agent{
 				UDPAddress:  "127.0.0.1:3457",
 				GRPCAddress: "127.0.0.1:3458",
@@ -99,14 +93,6 @@ func (d *Router) Start() {
 	log.Printf("Startup: Setting up the router server")
 
 	//------------------------------
-	// v1 Metrics (UDP)
-	//------------------------------
-	metricBatcher := initV1Metrics(
-		d.c.MetricBatchIntervalMilliseconds,
-		d.c.Agent.UDPAddress,
-	)
-
-	//------------------------------
 	// v2 Metrics (gRPC)
 	//------------------------------
 	metricClient := initV2Metrics(d.c)
@@ -126,10 +112,8 @@ func (d *Router) Start() {
 	//------------------------------
 	sinkManager := sinks.NewSinkManager(
 		d.c.MaxRetainedLogMessages,
-		"DopplerServer",
 		time.Duration(d.c.SinkInactivityTimeoutSeconds)*time.Second,
 		time.Duration(d.c.ContainerMetricTTLSeconds)*time.Second,
-		metricBatcher,
 		metricClient,
 		healthRegistrar,
 	)
@@ -138,32 +122,36 @@ func (d *Router) Start() {
 	// Ingress (gRPC v1 and v2)
 	// Egress  (gRPC v1 and v2)
 	//------------------------------
-	droppedMetric := metricClient.NewCounter(
-		"dropped",
+
+	// metric-documentation-v2: (loggregator.doppler.dropped) Number of envelopes dropped by the
+	// diode inbound from metron
+	droppedMetric := metricClient.NewCounter("dropped",
 		metricemitter.WithVersion(2, 0),
 		metricemitter.WithTags(map[string]string{"direction": "ingress"}),
 	)
 
 	v1Buf := diodes.NewManyToOneEnvelope(10000, gendiodes.AlertFunc(func(missed int) {
-		log.Printf("Shed %d envelopes (v1 buffer)", missed)
+		log.Printf("Dropped %d envelopes (v1 buffer)", missed)
 
-		// metric-documentation-v1: (doppler.shedEnvelopes) Number of envelopes dropped by the
-		// diode inbound from metron
-		metricBatcher.BatchCounter("doppler.shedEnvelopes").Add(uint64(missed))
+		droppedMetric.Increment(uint64(missed))
 	}))
 
 	v2Buf := diodes.NewManyToOneEnvelopeV2(10000, gendiodes.AlertFunc(func(missed int) {
 		log.Printf("Dropped %d envelopes (v2 buffer)", missed)
 
-		// metric-documentation-v2: (loggregator.doppler.dropped) Number of envelopes dropped by the
-		// diode inbound from metron
 		droppedMetric.Increment(uint64(missed))
 	}))
+
+	// metric-documentation-v2: (loggregator.doppler.subscriptions) Number of
+	// active subscriptions for both V1 and V2 egress APIs.
+	subscriptionsMetric := metricClient.NewGauge("subscriptions", "subscriptions",
+		metricemitter.WithVersion(2, 0),
+	)
 
 	v1Ingress := v1.NewIngestorServer(
 		v1Buf,
 		v2Buf,
-		metricBatcher,
+		metricClient,
 		healthRegistrar,
 	)
 	v1Router := v1.NewRouter()
@@ -171,6 +159,7 @@ func (d *Router) Start() {
 		v1Router,
 		sinkManager,
 		metricClient,
+		subscriptionsMetric,
 		healthRegistrar,
 		100*time.Millisecond,
 		100,
@@ -178,13 +167,14 @@ func (d *Router) Start() {
 	v2Ingress := v2.NewIngressServer(
 		v1Buf,
 		v2Buf,
-		metricBatcher,
 		metricClient,
 		healthRegistrar,
 	)
 	v2PubSub := v2.NewPubSub()
 	v2Egress := v2.NewEgressServer(
 		v2PubSub,
+		metricClient,
+		subscriptionsMetric,
 		healthRegistrar,
 		100*time.Millisecond,
 		100,
@@ -252,26 +242,6 @@ func (d *Router) Stop() {
 	// TODO: Drain
 	d.healthListener.Close()
 	d.server.Stop()
-}
-
-func initV1Metrics(milliseconds uint, udpAddr string) *metricbatcher.MetricBatcher {
-	err := dropsonde.Initialize(udpAddr, "DopplerServer")
-	if err != nil {
-		log.Fatal(err)
-	}
-	eventEmitter := dropsonde.AutowiredEmitter()
-	metricSender := metric_sender.NewMetricSender(eventEmitter)
-	metricBatcher := metricbatcher.New(
-		metricSender,
-		time.Duration(milliseconds)*time.Millisecond,
-	)
-	metricBatcher.AddConsistentlyEmittedMetrics(
-		"doppler.shedEnvelopes",
-		"TruncatingBuffer.totalDroppedMessages",
-		"listeners.totalReceivedMessageCount",
-	)
-	metrics.Initialize(metricSender, metricBatcher)
-	return metricBatcher
 }
 
 func initV2Metrics(c *Config) *metricemitter.Client {

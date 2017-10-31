@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"code.cloudfoundry.org/loggregator/metricemitter"
+	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 	. "github.com/onsi/ginkgo"
@@ -17,7 +19,14 @@ import (
 var _ = Describe("EgressServer", func() {
 	Describe("Receiver", func() {
 		It("returns an unimplemented error code", func() {
-			server := v2.NewEgressServer(nil, nil, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				nil,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				nil,
+				time.Millisecond,
+				10,
+			)
 
 			err := server.Receiver(&loggregator_v2.EgressRequest{}, nil)
 			Expect(err).To(HaveOccurred())
@@ -31,7 +40,14 @@ var _ = Describe("EgressServer", func() {
 				_context: context.Background(),
 			}
 			subscriber := &spySubscriber{}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
 
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
 
@@ -46,7 +62,14 @@ var _ = Describe("EgressServer", func() {
 			subscriber := &spySubscriber{
 				wait: time.Hour,
 			}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Hour, 2000)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Hour,
+				2000,
+			)
 
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
 
@@ -64,7 +87,14 @@ var _ = Describe("EgressServer", func() {
 				_context: ctx,
 			}
 			subscriber := &spySubscriber{}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
 
 			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
 			Expect(err).To(HaveOccurred())
@@ -77,7 +107,14 @@ var _ = Describe("EgressServer", func() {
 				err:      errors.New("some error"),
 			}
 			subscriber := &spySubscriber{}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
 
 			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
 			Expect(err).To(HaveOccurred())
@@ -90,7 +127,14 @@ var _ = Describe("EgressServer", func() {
 				err:      errors.New("some error"),
 			}
 			subscriber := &spySubscriber{}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
 
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
 
@@ -103,7 +147,14 @@ var _ = Describe("EgressServer", func() {
 				_context: context.Background(),
 			}
 			subscriber := &spySubscriber{}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
 
 			req := &loggregator_v2.EgressBatchRequest{
 				ShardId: "some-shard-id",
@@ -114,13 +165,21 @@ var _ = Describe("EgressServer", func() {
 		})
 
 		It("increments and decrements the subscription count", func() {
+			subscriptionsMetric := &metricemitter.Gauge{}
 			healthRegistrar := newSpyHealthRegistrar()
 			ctx, cancel := context.WithCancel(context.Background())
 			spyReceiver := &spyBatchReceiver{
 				_context: ctx,
 			}
 			subscriber := &spySubscriber{}
-			server := v2.NewEgressServer(subscriber, healthRegistrar, time.Millisecond, 10)
+			server := v2.NewEgressServer(
+				subscriber,
+				testhelper.NewMetricClient(),
+				subscriptionsMetric,
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
 
 			req := &loggregator_v2.EgressBatchRequest{
 				ShardId: "some-shard-id",
@@ -130,12 +189,41 @@ var _ = Describe("EgressServer", func() {
 			Eventually(func() float64 {
 				return healthRegistrar.Get("subscriptionCount")
 			}).Should(Equal(1.0))
+			Eventually(func() float64 {
+				return subscriptionsMetric.GetValue()
+			}).Should(Equal(1.0))
 
 			cancel()
 
 			Eventually(func() float64 {
 				return healthRegistrar.Get("subscriptionCount")
 			}).Should(Equal(0.0))
+			Eventually(func() float64 {
+				return subscriptionsMetric.GetValue()
+			}).Should(Equal(0.0))
+
+		})
+
+		It("emits a metric for the number of envelopes sent", func() {
+			metricClient := testhelper.NewMetricClient()
+			healthRegistrar := newSpyHealthRegistrar()
+			spyReceiver := &spyBatchReceiver{
+				_context: context.Background(),
+			}
+			subscriber := &spySubscriber{}
+			server := v2.NewEgressServer(
+				subscriber,
+				metricClient,
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				time.Millisecond,
+				10,
+			)
+			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
+
+			Eventually(func() uint64 {
+				return metricClient.GetDelta("egress")
+			}).Should(BeNumerically(">", 1))
 		})
 	})
 })
