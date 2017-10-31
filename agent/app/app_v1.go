@@ -14,10 +14,6 @@ import (
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -68,8 +64,7 @@ func (a *AppV1) Start() {
 		return
 	}
 
-	statsStopChan := make(chan struct{})
-	eventWriter := a.initializeMetrics(statsStopChan)
+	eventWriter := egress.New("MetronAgent")
 
 	log.Print("Startup: Setting up the agent")
 	marshaller := a.initializeV1DopplerPool()
@@ -98,17 +93,6 @@ func (a *AppV1) Start() {
 	log.Printf("agent v1 API started on addr %s", agentAddress)
 	go networkReader.StartReading()
 	networkReader.StartWriting()
-}
-
-func (a *AppV1) initializeMetrics(stopChan chan struct{}) *egress.EventWriter {
-	eventWriter := egress.New("MetronAgent")
-	metricSender := metric_sender.NewMetricSender(eventWriter)
-	metricBatcher := metricbatcher.New(metricSender, time.Duration(a.config.MetricBatchIntervalMilliseconds)*time.Millisecond)
-	metrics.Initialize(metricSender, metricBatcher)
-
-	stats := runtime_stats.NewRuntimeStats(eventWriter, time.Duration(a.config.RuntimeStatsIntervalMilliseconds)*time.Millisecond)
-	go stats.Run(stopChan)
-	return eventWriter
 }
 
 func (a *AppV1) initializeV1DopplerPool() *egress.EventMarshaller {

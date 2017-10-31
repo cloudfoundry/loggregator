@@ -35,8 +35,7 @@ func BuildAgentConfig(dopplerURI string, dopplerGRPCPort int) app.Config {
 			CAFile:   Cert("loggregator-ca.crt"),
 		},
 
-		MetricBatchIntervalMilliseconds:  5000,
-		RuntimeStatsIntervalMilliseconds: 10,
+		MetricBatchIntervalMilliseconds: 5000,
 	}
 }
 
