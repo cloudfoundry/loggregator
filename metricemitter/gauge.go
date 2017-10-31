@@ -38,12 +38,22 @@ func NewGauge(name, unit, sourceID string, opts ...MetricOption) *Gauge {
 
 // Set atomically sets the value of the Gauge.
 func (m *Gauge) Set(value float64) {
-	atomic.StoreUint64(&m.value, math.Float64bits(value))
+	atomic.StoreUint64(&m.value, toUint64(value, 2))
+}
+
+// Increment increments the gauge by a specified value.
+func (m *Gauge) Increment(value float64) {
+	atomic.AddUint64(&m.value, toUint64(value, 2))
+}
+
+// Decrement decrements the gauge by a specified value.
+func (m *Gauge) Decrement(value float64) {
+	atomic.AddUint64(&m.value, toUint64(-value, 2))
 }
 
 // GetValue atomically returns the current value of the gauge.
 func (m *Gauge) GetValue() float64 {
-	return math.Float64frombits(atomic.LoadUint64(&m.value))
+	return toFloat64(atomic.LoadUint64(&m.value), 2)
 }
 
 // WithEnvelope will take in a function that will receive a V2 Envelope. This
@@ -71,4 +81,12 @@ func (m *Gauge) toEnvelope(value float64) *v2.Envelope {
 		},
 		DeprecatedTags: m.tags,
 	}
+}
+
+func toFloat64(v uint64, precision int) float64 {
+	return float64(v) / math.Pow(10.0, float64(precision))
+}
+
+func toUint64(v float64, precision int) uint64 {
+	return uint64(v * math.Pow(10.0, float64(precision)))
 }
