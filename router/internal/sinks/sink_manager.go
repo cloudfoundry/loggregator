@@ -9,8 +9,7 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
-// SinkManager manages the lifecycle of a syslog sink. It also provides an
-// in memory store of recent logs and container metrics.
+// SinkManager provides an in memory store of recent logs and container metrics.
 type SinkManager struct {
 	dropsondeOrigin string
 	metrics         *SinkManagerMetrics
