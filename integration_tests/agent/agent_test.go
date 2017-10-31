@@ -35,27 +35,34 @@ var _ = Describe("Agent", func() {
 		Expect(err).ToNot(HaveOccurred())
 		eventEmitter := emitter.NewEventEmitter(udpEmitter, "some-origin")
 
-		emitEnvelope := &events.Envelope{
-			Origin:    proto.String("some-origin"),
-			EventType: events.Envelope_Error.Enum(),
-			Error: &events.Error{
-				Source:  proto.String("some-source"),
-				Code:    proto.Int32(1),
-				Message: proto.String("message"),
-			},
-		}
+		go func() {
+			event := &events.CounterEvent{
+				Name:  proto.String("some-name"),
+				Delta: proto.Uint64(5),
+				Total: proto.Uint64(6),
+			}
 
-		f := func() int {
-			eventEmitter.Emit(emitEnvelope)
-			return len(consumerServer.V1.PusherCalled)
-		}
-		Eventually(f, 5).Should(BeNumerically(">", 0))
+			for {
+				eventEmitter.Emit(event)
+			}
+		}()
 
 		var rx plumbing.DopplerIngestor_PusherServer
 		Eventually(consumerServer.V1.PusherInput.Arg0).Should(Receive(&rx))
 
-		data, err := rx.Recv()
-		Expect(err).ToNot(HaveOccurred())
+		e := make(chan *plumbing.EnvelopeData)
+		go func() {
+			for {
+				data, err := rx.Recv()
+				if err != nil {
+					return
+				}
+				e <- data
+			}
+		}()
+
+		var data *plumbing.EnvelopeData
+		Eventually(e).Should(Receive(&data))
 
 		envelope := new(events.Envelope)
 		Expect(envelope.Unmarshal(data.Payload)).To(Succeed())
