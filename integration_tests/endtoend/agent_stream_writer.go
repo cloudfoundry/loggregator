@@ -20,8 +20,5 @@ func NewAgentStreamWriter(agentPort int) *AgentStreamWriter {
 
 func (w *AgentStreamWriter) Write(b []byte) {
 	w.Writes++
-	_, err := w.agentConn.Write(b)
-	if err != nil {
-		panic(err)
-	}
+	w.agentConn.Write(b)
 }

@@ -20,16 +20,16 @@ type FirehoseReader struct {
 	DopplerReceivedMessageCount float64
 	DopplerSentMessageCount     float64
 
-	LogMessages chan *events.Envelope
+	LogMessageAppIDs chan string
 }
 
 func NewFirehoseReader(tcPort int) *FirehoseReader {
 	consumer, msgChan := initiateFirehoseConnection(tcPort)
 	return &FirehoseReader{
-		consumer:    consumer,
-		msgChan:     msgChan,
-		LogMessages: make(chan *events.Envelope, 100),
-		stopChan:    make(chan struct{}),
+		consumer:         consumer,
+		msgChan:          msgChan,
+		LogMessageAppIDs: make(chan string, 100),
+		stopChan:         make(chan struct{}),
 	}
 }
 
@@ -58,7 +58,7 @@ func (r *FirehoseReader) Read() {
 
 		if msg.GetEventType() == events.Envelope_LogMessage {
 			select {
-			case r.LogMessages <- msg:
+			case r.LogMessageAppIDs <- msg.GetLogMessage().GetAppId():
 			default:
 			}
 		}

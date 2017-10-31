@@ -1,8 +1,6 @@
 package endtoend_test
 
 import (
-	"time"
-
 	"code.cloudfoundry.org/loggregator/integration_tests/endtoend"
 	"code.cloudfoundry.org/loggregator/testservers"
 
@@ -28,22 +26,17 @@ var _ = Describe("End to end tests", func() {
 		)
 		defer trafficcontrollerCleanup()
 
-		const writeRatePerSecond = 10
-		agentStreamWriter := endtoend.NewAgentStreamWriter(agentPorts.UDP)
-		generator := endtoend.NewLogMessageGenerator("custom-app-id")
-		writeStrategy := endtoend.NewConstantWriteStrategy(generator, agentStreamWriter, writeRatePerSecond)
-
 		firehoseReader := endtoend.NewFirehoseReader(tcPorts.WS)
-		ex := endtoend.NewExperiment(firehoseReader)
-		ex.AddWriteStrategy(writeStrategy)
 
-		ex.Warmup()
 		go func() {
-			defer ex.Stop()
-			time.Sleep(2 * time.Second)
+			agentStreamWriter := endtoend.NewAgentStreamWriter(agentPorts.UDP)
+			generator := endtoend.NewLogMessageGenerator("custom-app-id")
+			for {
+				agentStreamWriter.Write(generator.Generate())
+				firehoseReader.Read()
+			}
 		}()
-		ex.Start()
 
-		Eventually(firehoseReader.LogMessages).Should(Receive(ContainSubstring("custom-app-id")))
+		Eventually(firehoseReader.LogMessageAppIDs).Should(Receive(Equal("custom-app-id")))
 	}, 10)
 })
