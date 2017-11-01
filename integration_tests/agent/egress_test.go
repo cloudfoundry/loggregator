@@ -51,12 +51,12 @@ var _ = Describe("Agent", func() {
 
 		By("reading a message from doppler")
 
-		Eventually(func() ([]byte, error) {
+		Eventually(func() string {
 			resp, err := subscriptionClient.Recv()
 			if err != nil {
-				return nil, err
+				return ""
 			}
-			return resp.GetPayload(), nil
+			return string(resp.GetPayload())
 		}).Should(ContainSubstring("An event happened!"))
 	})
 })
