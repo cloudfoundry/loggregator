@@ -31,7 +31,7 @@ Loggregator uses Google's [protocol buffers][protobuf] along with [gRPC][grpc] t
 
 ##### Asynchronous vs Synchronous Data
 
-The Loggregator system as a whole does not have an opinion about how frequently any log type is emitted. However, there are recommendations. `Counter` and `Gauge` logs should be emitted reguarly (e.g., once a minute) so downstream consumers can easily plot the increasing total.
+The Loggregator system as a whole does not have an opinion about how frequently any log type is emitted. However, there are recommendations. `Counter` and `Gauge` logs should be emitted regularly (e.g., once a minute) so downstream consumers can easily plot the increasing total.
 
 `Log`, `Timer` and `Event` should be emitted when the corresponding action occurred and therefore should be treated as asynchronous data. These data types do not lend themselves to be plotted as a time series.
 
@@ -45,7 +45,7 @@ Loggregator is made up of 4 components:
 
 ##### Agent
 
-The Agent is a daemon process that is intented to run on each container/VM. It is the entry point into Loggregator. Any log that is written to Loggregator is written to the Agent.
+The Agent is a daemon process that is intended to run on each container/VM. It is the entry point into Loggregator. Any log that is written to Loggregator is written to the Agent.
 
 ##### Router
 
