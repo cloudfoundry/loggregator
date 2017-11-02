@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apoydence/eachers/testhelpers"
-
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"golang.org/x/net/context"
@@ -32,11 +30,7 @@ func BenchmarkGRPCConnectorParallel(b *testing.B) {
 		},
 	}
 	metricClient := testhelper.NewMetricClient()
-	batcher := newMockMetaMetricBatcher()
-	chainer := newMockBatchCounterChainer()
-	testhelpers.AlwaysReturn(batcher.BatchCounterOutput, chainer)
-	testhelpers.AlwaysReturn(chainer.SetTagOutput, chainer)
-	connector := plumbing.NewGRPCConnector(5, pool, finder, batcher, metricClient)
+	connector := plumbing.NewGRPCConnector(5, pool, finder, metricClient)
 
 	time.Sleep(2 * time.Second)
 	b.ResetTimer()
