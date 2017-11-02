@@ -97,30 +97,6 @@ var _ = Describe("SinkManager", func() {
 			close(done)
 		})
 
-		It("sends a message to app sink registered after a message was sent", func() {
-			sink1 := &channelSink{appId: "myApp",
-				identifier: "myAppChan1",
-				done:       make(chan struct{}),
-			}
-
-			expectedMessageString := "Some Data"
-			expectedMessage, _ := wrap(
-				newLogMessage(
-					events.LogMessage_OUT,
-					expectedMessageString,
-					"myApp",
-					"App",
-				),
-				"origin",
-			)
-			go sinkManager.SendTo("myApp", expectedMessage)
-
-			sinkManager.RegisterSink(sink1)
-
-			Eventually(sink1.Received, 2).Should(HaveLen(1))
-			Expect(sink1.Received()[0]).To(Equal(expectedMessage))
-		})
-
 		It("buffers a messages when a sink is consuming slowly", func() {
 			ready := make(chan struct{})
 			sink1 := &channelSink{appId: "myApp",
