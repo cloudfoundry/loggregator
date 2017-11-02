@@ -125,6 +125,7 @@ func (c *Client) EmitEvent(title, body string) {
 	if err != nil {
 		return
 	}
+	defer senderClient.CloseAndRecv()
 
 	err = senderClient.Send(&v2.Envelope{
 		Message: &v2.Envelope_Event{
