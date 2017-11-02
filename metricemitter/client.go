@@ -119,7 +119,9 @@ func (c *Client) NewGauge(name, unit string, opts ...MetricOption) *Gauge {
 // envelopes with a normal RPC call, we will be able to do something with
 // an error.
 func (c *Client) EmitEvent(title, body string) {
-	senderClient, err := c.ingressClient.Sender(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	senderClient, err := c.ingressClient.Sender(ctx)
 	if err != nil {
 		return
 	}
