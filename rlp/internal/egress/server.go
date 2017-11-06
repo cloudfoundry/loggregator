@@ -1,7 +1,6 @@
 package egress
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,10 +15,6 @@ import (
 
 const (
 	envelopeBufferSize = 10000
-)
-
-var (
-	errUnsupportedMixOfSelectors = errors.New("Using LegacySelector with Selectors is not supported.")
 )
 
 // HealthRegistrar provides an interface to record various counters.
@@ -87,8 +82,11 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
-	if r.GetLegacySelector() != nil && r.GetSelectors() != nil {
-		return errUnsupportedMixOfSelectors
+	if r.GetLegacySelector() != nil && len(r.GetSelectors()) > 0 {
+		// Both would be set by the consumer for upgrade path purposes.
+		// The contract should be to assume that the Selectors encompasses
+		// the LegacySelector. Therefore, just ignore the LegacySelector.
+		r.LegacySelector = nil
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -143,8 +141,11 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
-	if r.GetLegacySelector() != nil && r.GetSelectors() != nil {
-		return errUnsupportedMixOfSelectors
+	if r.GetLegacySelector() != nil && len(r.GetSelectors()) > 0 {
+		// Both would be set by the consumer for upgrade path purposes.
+		// The contract should be to assume that the Selectors encompasses
+		// the LegacySelector. Therefore, just ignore the LegacySelector.
+		r.LegacySelector = nil
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
