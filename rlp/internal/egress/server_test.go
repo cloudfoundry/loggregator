@@ -83,7 +83,7 @@ var _ = Describe("Server", func() {
 			Expect(egressBatchReq.GetUsePreferredTags()).To(Equal(egressReq.GetUsePreferredTags()))
 		})
 
-		It("errors when it receives a legacy selector and a selector", func() {
+		It("ignores the legacy selector if both old and new selectors are used", func() {
 			receiverServer := &spyReceiverServer{}
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
@@ -101,10 +101,16 @@ var _ = Describe("Server", func() {
 				},
 				Selectors: []*v2.Selector{
 					{SourceId: "source-id"},
+					{SourceId: "other-source-id"},
 				},
 			}, receiverServer)
+			Expect(err).ToNot(HaveOccurred())
 
-			Expect(err).To(MatchError("Using LegacySelector with Selectors is not supported."))
+			var req *v2.EgressBatchRequest
+			Expect(receiver.requests).Should(Receive(&req))
+			Expect(req.Selectors).Should(HaveLen(2))
+
+			Expect(req.LegacySelector).To(BeNil())
 		})
 
 		It("closes the receiver when the context is canceled", func() {
@@ -263,7 +269,7 @@ var _ = Describe("Server", func() {
 			Eventually(receiverServer.EnvelopeCount).Should(Equal(int64(10)))
 		})
 
-		It("errors when it receives a legacy selector and a selector", func() {
+		It("ignores the legacy selector if both old and new selectors are used", func() {
 			receiverServer := &spyBatchedReceiverServer{}
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
@@ -281,10 +287,16 @@ var _ = Describe("Server", func() {
 				},
 				Selectors: []*v2.Selector{
 					{SourceId: "source-id"},
+					{SourceId: "other-source-id"},
 				},
 			}, receiverServer)
+			Expect(err).ToNot(HaveOccurred())
 
-			Expect(err).To(MatchError("Using LegacySelector with Selectors is not supported."))
+			var req *v2.EgressBatchRequest
+			Expect(receiver.requests).Should(Receive(&req))
+			Expect(req.Selectors).Should(HaveLen(2))
+
+			Expect(req.LegacySelector).To(BeNil())
 		})
 
 		It("passes the egress batch request through", func() {
