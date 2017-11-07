@@ -331,7 +331,7 @@ var _ = Describe("GRPCConnector", func() {
 				})
 
 				It("attempts to reconnect", func() {
-					Eventually(mockDopplerServerA.BatchSubscribeInput.Stream, 3).Should(Receive())
+					Eventually(mockDopplerServerA.BatchSubscribeInput.Stream, 5).Should(Receive())
 				})
 			})
 
