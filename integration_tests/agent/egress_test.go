@@ -57,7 +57,7 @@ var _ = Describe("Agent", func() {
 				return ""
 			}
 			return string(resp.GetPayload())
-		}).Should(ContainSubstring("An event happened!"))
+		}, 3).Should(ContainSubstring("An event happened!"))
 	})
 })
 
