@@ -96,10 +96,15 @@ var _ = Describe("Start", func() {
 
 	It("limits the number of allowed connections", func() {
 		doppler, _, dopplerLis := setupDoppler()
-		doppler.ContainerMetricsOutput.Err <- nil
-		doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
-			Payload: [][]byte{buildContainerMetric()},
-		}
+
+		go func() {
+			for {
+				doppler.ContainerMetricsOutput.Err <- nil
+				doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
+					Payload: [][]byte{buildContainerMetric()},
+				}
+			}
+		}()
 
 		egressAddr, _ := setupRLP(dopplerLis, "localhost:0")
 		createStream := func() error {
@@ -129,10 +134,15 @@ var _ = Describe("Start", func() {
 	Describe("draining", func() {
 		It("Stops accepting new connections", func() {
 			doppler, _, dopplerLis := setupDoppler()
-			doppler.ContainerMetricsOutput.Err <- nil
-			doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
-				Payload: [][]byte{buildContainerMetric()},
-			}
+
+			go func() {
+				for {
+					doppler.ContainerMetricsOutput.Err <- nil
+					doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
+						Payload: [][]byte{buildContainerMetric()},
+					}
+				}
+			}()
 
 			egressAddr, rlp := setupRLP(dopplerLis, "localhost:0")
 
