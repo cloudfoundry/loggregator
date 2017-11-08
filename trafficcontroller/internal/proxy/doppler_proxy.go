@@ -70,23 +70,50 @@ func NewDopplerProxy(
 
 	adminAccessMiddleware := NewAdminAccessMiddleware(adminAuthorizer)
 	logAccessMiddleware := NewLogAccessMiddleware(logAuthorizer)
+	corsMiddleware := NewCORSMiddleware()
 
-	r.Handle("/set-cookie", NewSetCookieHandler(cookieDomain))
+	r.Handle(
+		"/set-cookie",
+		corsMiddleware.Wrap(
+			NewSetCookieHandler(cookieDomain),
+			AllowCredentials(),
+			AllowHeader("Content-Type"),
+		),
+	)
 
 	containerMetricsHandler := NewContainerMetricsHandler(grpcConn, timeout, m)
-	r.Handle("/apps/{appID}/containermetrics", logAccessMiddleware.Wrap(
-		containerMetricsHandler,
-	))
+	r.Handle(
+		"/apps/{appID}/containermetrics",
+		corsMiddleware.Wrap(
+			logAccessMiddleware.Wrap(containerMetricsHandler),
+			AllowCredentials(),
+		),
+	)
 
 	recentLogsHandler := NewRecentLogsHandler(grpcConn, timeout, m)
-	r.Handle("/apps/{appID}/recentlogs", logAccessMiddleware.Wrap(recentLogsHandler))
+	r.Handle(
+		"/apps/{appID}/recentlogs",
+		corsMiddleware.Wrap(
+			logAccessMiddleware.Wrap(recentLogsHandler),
+			AllowCredentials(),
+		),
+	)
 
 	wsServer := NewWebSocketServer(slowConsumerTimeout, m, health)
 	streamHandler := NewStreamHandler(grpcConn, wsServer, m)
-	r.Handle("/apps/{appID}/stream", logAccessMiddleware.Wrap(streamHandler))
+	r.Handle(
+		"/apps/{appID}/stream",
+		corsMiddleware.Wrap(
+			logAccessMiddleware.Wrap(streamHandler),
+			AllowCredentials(),
+		),
+	)
 
 	firehoseHandler := NewFirehoseHandler(grpcConn, wsServer, m)
-	r.Handle("/firehose/{subID}", adminAccessMiddleware.Wrap(firehoseHandler))
+	r.Handle(
+		"/firehose/{subID}",
+		adminAccessMiddleware.Wrap(firehoseHandler),
+	)
 
 	d := &DopplerProxy{
 		Router:              r,

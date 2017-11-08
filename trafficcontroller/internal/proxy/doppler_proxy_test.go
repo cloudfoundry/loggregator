@@ -265,18 +265,7 @@ var _ = Describe("DopplerProxy", func() {
 			dopplerProxy.ServeHTTP(recorder, req)
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-		})
-
-		It("sets the passed value as a cookie and sets CORS headers", func() {
-			req, _ := http.NewRequest("POST", "/set-cookie", strings.NewReader("CookieName=cookie&CookieValue=monster"))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			req.Header.Set("Origin", "fake-origin-string")
-
-			dopplerProxy.ServeHTTP(recorder, req)
-
 			Expect(recorder.Header().Get("Set-Cookie")).To(Equal("cookie=monster; Domain=cookieDomain; Secure"))
-			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
-			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
 		})
 
 		It("returns a bad request if the form does not parse", func() {
@@ -286,6 +275,70 @@ var _ = Describe("DopplerProxy", func() {
 			dopplerProxy.ServeHTTP(recorder, req)
 
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+		})
+	})
+
+	Context("CORS requests", func() {
+		It("configures CORS for set-cookie", func() {
+			req, _ := http.NewRequest(
+				"POST",
+				"/set-cookie",
+				strings.NewReader("CookieName=cookie&CookieValue=monster"),
+			)
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.Header.Set("Origin", "fake-origin-string")
+
+			dopplerProxy.ServeHTTP(recorder, req)
+
+			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Headers")).To(Equal("Content-Type"))
+		})
+
+		It("configures CORS for recentlogs", func() {
+			mockGrpcConnector.RecentLogsOutput.Ret0 <- nil
+			req, _ := http.NewRequest(
+				"GET",
+				"/apps/guid/recentlogs",
+				nil,
+			)
+			req.Header.Set("Origin", "fake-origin-string")
+
+			dopplerProxy.ServeHTTP(recorder, req)
+
+			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Headers")).To(Equal(""))
+		})
+
+		It("configures CORS for container metrics", func() {
+			mockGrpcConnector.ContainerMetricsOutput.Ret0 <- nil
+			req, _ := http.NewRequest(
+				"GET",
+				"/apps/guid/containermetrics",
+				nil,
+			)
+			req.Header.Set("Origin", "fake-origin-string")
+
+			dopplerProxy.ServeHTTP(recorder, req)
+
+			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Headers")).To(Equal(""))
+		})
+		It("configures CORS for stream", func() {
+			req, _ := http.NewRequest(
+				"GET",
+				"/apps/guid/stream",
+				nil,
+			)
+			req.Header.Set("Origin", "fake-origin-string")
+
+			dopplerProxy.ServeHTTP(recorder, req)
+
+			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
+			Expect(recorder.Header().Get("Access-Control-Allow-Headers")).To(Equal(""))
 		})
 	})
 })
