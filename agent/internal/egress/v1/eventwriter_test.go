@@ -2,8 +2,6 @@ package v1_test
 
 import (
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v1"
-
-	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
@@ -86,6 +84,3 @@ var _ = Describe("EventWriter", func() {
 		})
 	})
 })
-
-// Make sure eventwriter satisfies "github.com/cloudfoundry/dropsonde".EventEmitter
-var _ dropsonde.EventEmitter = egress.New("Africa")

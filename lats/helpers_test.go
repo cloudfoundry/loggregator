@@ -3,6 +3,7 @@ package lats_test
 import (
 	"context"
 	"crypto/tls"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
@@ -11,7 +12,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/plumbing"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
-	"github.com/cloudfoundry/dropsonde/envelope_extensions"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/gomega"
@@ -227,7 +227,7 @@ func FindMatchingEnvelopeByID(id string, msgChan <-chan *events.Envelope) (*even
 	for {
 		select {
 		case receivedEnvelope := <-msgChan:
-			receivedID := envelope_extensions.GetAppId(receivedEnvelope)
+			receivedID := GetAppId(receivedEnvelope)
 			if receivedID == id {
 				return receivedEnvelope, nil
 			}
@@ -236,4 +236,41 @@ func FindMatchingEnvelopeByID(id string, msgChan <-chan *events.Envelope) (*even
 			return nil, errors.New("Timed out while waiting for message")
 		}
 	}
+}
+
+const SystemAppId = "system"
+
+func GetAppId(envelope *events.Envelope) string {
+	if envelope.GetEventType() == events.Envelope_LogMessage {
+		return envelope.GetLogMessage().GetAppId()
+	}
+
+	if envelope.GetEventType() == events.Envelope_ContainerMetric {
+		return envelope.GetContainerMetric().GetApplicationId()
+	}
+
+	var event hasAppId
+	switch envelope.GetEventType() {
+	case events.Envelope_HttpStartStop:
+		event = envelope.GetHttpStartStop()
+	default:
+		return SystemAppId
+	}
+
+	uuid := event.GetApplicationId()
+	if uuid != nil {
+		return formatUUID(uuid)
+	}
+	return SystemAppId
+}
+
+type hasAppId interface {
+	GetApplicationId() *events.UUID
+}
+
+func formatUUID(uuid *events.UUID) string {
+	var uuidBytes [16]byte
+	binary.LittleEndian.PutUint64(uuidBytes[:8], uuid.GetLow())
+	binary.LittleEndian.PutUint64(uuidBytes[8:], uuid.GetHigh())
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuidBytes[0:4], uuidBytes[4:6], uuidBytes[6:8], uuidBytes[8:10], uuidBytes[10:])
 }

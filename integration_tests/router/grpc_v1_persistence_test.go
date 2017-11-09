@@ -8,8 +8,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
-
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
@@ -28,7 +26,7 @@ var _ = Describe("Persistence", func() {
 			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
-			containerMetric := factories.NewContainerMetric("some-test-app-id", 0, 1, 2, 3)
+			containerMetric := NewContainerMetric("some-test-app-id", 0, 1, 2, 3)
 			marshalledContainerMetric := marshalContainerMetric(containerMetric)
 
 			err := ingressClient.Send(marshalledContainerMetric)
@@ -50,11 +48,11 @@ var _ = Describe("Persistence", func() {
 			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
-			containerMetric := factories.NewContainerMetric("some-test-app-id", 0, 100, 2, 3)
+			containerMetric := NewContainerMetric("some-test-app-id", 0, 100, 2, 3)
 			marshalledContainerMetric := marshalContainerMetric(containerMetric)
-			otherContainerMetric0 := factories.NewContainerMetric("some-other-test-app-id", 0, 1, 2, 3)
+			otherContainerMetric0 := NewContainerMetric("some-other-test-app-id", 0, 1, 2, 3)
 			marshalledOtherContainerMetric0 := marshalContainerMetric(otherContainerMetric0)
-			otherContainerMetric1 := factories.NewContainerMetric("some-other-test-app-id", 1, 1, 2, 3)
+			otherContainerMetric1 := NewContainerMetric("some-other-test-app-id", 1, 1, 2, 3)
 			marshalledOtherContainerMetric1 := marshalContainerMetric(otherContainerMetric1)
 
 			err := ingressClient.Send(marshalledOtherContainerMetric0)
@@ -78,9 +76,9 @@ var _ = Describe("Persistence", func() {
 			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
-			containerMetric := factories.NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
+			containerMetric := NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
 			marshalledContainerMetric := marshalContainerMetric(containerMetric)
-			secondContainerMetric := factories.NewContainerMetric("some-test-app-id", 0, 20, 2, 3)
+			secondContainerMetric := NewContainerMetric("some-test-app-id", 0, 20, 2, 3)
 			marshalledSecondContainerMetric := marshalContainerMetric(secondContainerMetric)
 
 			err := ingressClient.Send(marshalledContainerMetric)
@@ -104,7 +102,7 @@ var _ = Describe("Persistence", func() {
 			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
-			logMessage := factories.NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
+			logMessage := NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
 			marshalledLogMessage := marshalLogMessage(logMessage)
 
 			err := ingressClient.Send(marshalledLogMessage)
@@ -125,9 +123,9 @@ var _ = Describe("Persistence", func() {
 			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
-			logMessage0 := factories.NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
+			logMessage0 := NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
 			marshalledLogMessage0 := marshalLogMessage(logMessage0)
-			logMessage1 := factories.NewLogMessage(events.LogMessage_OUT, "msg 2", "some-other-app-id", "APP")
+			logMessage1 := NewLogMessage(events.LogMessage_OUT, "msg 2", "some-other-app-id", "APP")
 			marshalledLogMessage1 := marshalLogMessage(logMessage1)
 
 			err := ingressClient.Send(marshalledLogMessage0)
@@ -151,7 +149,7 @@ var _ = Describe("Persistence", func() {
 			defer egressCleanup()
 
 			for i := 0; i < 15; i++ {
-				logMessage := factories.NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "some-test-app-id", "APP")
+				logMessage := NewLogMessage(events.LogMessage_OUT, strconv.Itoa(i), "some-test-app-id", "APP")
 				err := ingressClient.Send(marshalLogMessage(logMessage))
 				Expect(err).ToNot(HaveOccurred())
 			}

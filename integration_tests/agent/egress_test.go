@@ -4,16 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
-
-	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/logs"
-
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
-
+	"github.com/cloudfoundry/dropsonde"
+	"github.com/cloudfoundry/dropsonde/logs"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/grpc"
 )
 
 var _ = Describe("Agent", func() {
@@ -29,9 +26,6 @@ var _ = Describe("Agent", func() {
 		egressCleanup, egressClient := dopplerEgressClient(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
 		defer egressCleanup()
 
-		err := dropsonde.Initialize(fmt.Sprintf("localhost:%d", agentPorts.UDP), "test-origin")
-		Expect(err).NotTo(HaveOccurred())
-
 		var subscriptionClient plumbing.Doppler_SubscribeClient
 		f := func() error {
 			var err error
@@ -46,7 +40,7 @@ var _ = Describe("Agent", func() {
 		Eventually(f).ShouldNot(HaveOccurred())
 
 		By("sending a message into agent")
-		err = logs.SendAppLog("test-app-id", "An event happened!", "test-app-id", "0")
+		err := sendAppLog("test-app-id", "An event happened!", agentPorts.UDP)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("reading a message from doppler")
@@ -60,6 +54,11 @@ var _ = Describe("Agent", func() {
 		}, 3).Should(ContainSubstring("An event happened!"))
 	})
 })
+
+func sendAppLog(appID, msg string, port int) error {
+	dropsonde.Initialize(fmt.Sprintf("localhost:%d", port), "test-origin")
+	return logs.SendAppLog(appID, msg, appID, "0")
+}
 
 func dopplerEgressClient(addr string) (func(), plumbing.DopplerClient) {
 	creds, err := plumbing.NewClientCredentials(
