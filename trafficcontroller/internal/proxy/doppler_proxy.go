@@ -103,10 +103,7 @@ func NewDopplerProxy(
 	streamHandler := NewStreamHandler(grpcConn, wsServer, m)
 	r.Handle(
 		"/apps/{appID}/stream",
-		corsMiddleware.Wrap(
-			logAccessMiddleware.Wrap(streamHandler),
-			AllowCredentials(),
-		),
+		logAccessMiddleware.Wrap(streamHandler),
 	)
 
 	firehoseHandler := NewFirehoseHandler(grpcConn, wsServer, m)

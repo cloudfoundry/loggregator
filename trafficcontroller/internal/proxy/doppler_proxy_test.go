@@ -12,11 +12,9 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
-
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -316,20 +314,6 @@ var _ = Describe("DopplerProxy", func() {
 			req, _ := http.NewRequest(
 				"GET",
 				"/apps/guid/containermetrics",
-				nil,
-			)
-			req.Header.Set("Origin", "fake-origin-string")
-
-			dopplerProxy.ServeHTTP(recorder, req)
-
-			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
-			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
-			Expect(recorder.Header().Get("Access-Control-Allow-Headers")).To(Equal(""))
-		})
-		It("configures CORS for stream", func() {
-			req, _ := http.NewRequest(
-				"GET",
-				"/apps/guid/stream",
 				nil,
 			)
 			req.Header.Set("Origin", "fake-origin-string")
