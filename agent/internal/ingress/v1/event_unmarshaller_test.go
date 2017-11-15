@@ -2,8 +2,6 @@ package v1_test
 
 import (
 	ingress "code.cloudfoundry.org/loggregator/agent/internal/ingress/v1"
-
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
@@ -26,7 +24,7 @@ var _ = Describe("EventUnmarshaller", func() {
 		event = &events.Envelope{
 			Origin:      proto.String("fake-origin-3"),
 			EventType:   events.Envelope_ValueMetric.Enum(),
-			ValueMetric: factories.NewValueMetric("value-name", 1.0, "units"),
+			ValueMetric: NewValueMetric("value-name", 1.0, "units"),
 		}
 		message, _ = proto.Marshal(event)
 
@@ -80,3 +78,11 @@ var _ = Describe("EventUnmarshaller", func() {
 		})
 	})
 })
+
+func NewValueMetric(name string, value float64, unit string) *events.ValueMetric {
+	return &events.ValueMetric{
+		Name:  proto.String(name),
+		Value: proto.Float64(value),
+		Unit:  proto.String(unit),
+	}
+}

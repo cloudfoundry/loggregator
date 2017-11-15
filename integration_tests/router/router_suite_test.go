@@ -4,20 +4,17 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"log"
 	"net"
 	"sync"
 	"testing"
-
 	"time"
 
 	"code.cloudfoundry.org/loggregator/integration_tests/binaries"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
-
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
@@ -178,7 +175,7 @@ func dopplerIngressV2Client(addr string) (func(), loggregator_v2.DopplerIngress_
 }
 
 func sendAppLog(appID string, message string, client plumbing.DopplerIngestor_PusherClient) error {
-	logMessage := factories.NewLogMessage(events.LogMessage_OUT, message, appID, "APP")
+	logMessage := NewLogMessage(events.LogMessage_OUT, message, appID, "APP")
 
 	return sendEvent(logMessage, client)
 }
@@ -193,7 +190,7 @@ func sendEvent(event events.Event, client plumbing.DopplerIngestor_PusherClient)
 }
 
 func marshalEvent(event events.Event, secret string) []byte {
-	envelope, _ := emitter.Wrap(event, "origin")
+	envelope, _ := Wrap(event, "origin")
 
 	return marshalProtoBuf(envelope)
 }
@@ -373,4 +370,51 @@ func primePumpV2(ingressClient loggregator_v2.DopplerIngress_SenderClient, subsc
 	// wait for a single message to come through
 	_, err := subscribeClient.Recv()
 	Expect(err).ToNot(HaveOccurred())
+}
+
+var ErrorMissingOrigin = errors.New("Event not emitted due to missing origin information")
+var ErrorUnknownEventType = errors.New("Cannot create envelope for unknown event type")
+
+func Wrap(event events.Event, origin string) (*events.Envelope, error) {
+	if origin == "" {
+		return nil, ErrorMissingOrigin
+	}
+
+	envelope := &events.Envelope{Origin: proto.String(origin), Timestamp: proto.Int64(time.Now().UnixNano())}
+
+	switch event := event.(type) {
+	case *events.HttpStartStop:
+		envelope.EventType = events.Envelope_HttpStartStop.Enum()
+		envelope.HttpStartStop = event
+	case *events.ValueMetric:
+		envelope.EventType = events.Envelope_ValueMetric.Enum()
+		envelope.ValueMetric = event
+	case *events.CounterEvent:
+		envelope.EventType = events.Envelope_CounterEvent.Enum()
+		envelope.CounterEvent = event
+	case *events.LogMessage:
+		envelope.EventType = events.Envelope_LogMessage.Enum()
+		envelope.LogMessage = event
+	case *events.ContainerMetric:
+		envelope.EventType = events.Envelope_ContainerMetric.Enum()
+		envelope.ContainerMetric = event
+	default:
+		return nil, ErrorUnknownEventType
+	}
+
+	return envelope, nil
+}
+
+func NewLogMessage(messageType events.LogMessage_MessageType, messageString, appId, sourceType string) *events.LogMessage {
+	currentTime := time.Now()
+
+	logMessage := &events.LogMessage{
+		Message:     []byte(messageString),
+		AppId:       &appId,
+		MessageType: &messageType,
+		SourceType:  proto.String(sourceType),
+		Timestamp:   proto.Int64(currentTime.UnixNano()),
+	}
+
+	return logMessage
 }

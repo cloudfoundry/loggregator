@@ -9,7 +9,6 @@ import (
 	"code.cloudfoundry.org/loggregator/plumbing"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -86,7 +85,7 @@ var _ = Describe("Firehose test", func() {
 
 			done := make(chan struct{})
 			defer close(done)
-			containerMetric := factories.NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
+			containerMetric := NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
 			go func() {
 				for {
 					_ = sendEvent(containerMetric, ingressClient)
@@ -347,4 +346,14 @@ func recvMessages(recv chan struct{}, client plumbing.Doppler_SubscribeClient) {
 			recv <- struct{}{}
 		}
 	}()
+}
+
+func NewContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) *events.ContainerMetric {
+	return &events.ContainerMetric{
+		ApplicationId: &applicationId,
+		InstanceIndex: &instanceIndex,
+		CpuPercentage: &cpuPercentage,
+		MemoryBytes:   &memoryBytes,
+		DiskBytes:     &diskBytes,
+	}
 }

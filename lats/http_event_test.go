@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/envelope_extensions"
 	"github.com/cloudfoundry/dropsonde/instrumented_handler"
 	"github.com/cloudfoundry/sonde-go/events"
 	uuid "github.com/nu7hatch/gouuid"
@@ -79,7 +78,7 @@ var _ = Describe("Sending HTTP events through loggregator", func() {
 			Expect(receivedEnvelope.GetEventType()).To(Equal(events.Envelope_HttpStartStop))
 
 			event := receivedEnvelope.GetHttpStartStop()
-			Expect(envelope_extensions.GetAppId(receivedEnvelope)).To(Equal(id.String()))
+			Expect(GetAppId(receivedEnvelope)).To(Equal(id.String()))
 			Expect(event.GetPeerType().String()).To(Equal(events.PeerType_Server.Enum().String()))
 			Expect(event.GetMethod().String()).To(Equal(events.Method_HEAD.Enum().String()))
 			Expect(event.GetStartTimestamp()).ToNot(BeZero())
