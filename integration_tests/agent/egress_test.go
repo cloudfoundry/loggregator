@@ -8,6 +8,8 @@ import (
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/logs"
+	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
@@ -50,7 +52,13 @@ var _ = Describe("Agent", func() {
 			if err != nil {
 				return ""
 			}
-			return string(resp.GetPayload())
+
+			var e events.Envelope
+			if err := proto.Unmarshal(resp.GetPayload(), &e); err != nil {
+				return ""
+			}
+
+			return string(e.GetLogMessage().GetMessage())
 		}, 3).Should(ContainSubstring("An event happened!"))
 	})
 })
