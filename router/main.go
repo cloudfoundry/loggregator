@@ -28,7 +28,6 @@ func main() {
 			conf.SinkInactivityTimeoutSeconds,
 		),
 		app.WithMetricReporting(
-			conf.PProfPort,
 			conf.HealthAddr,
 			conf.Agent,
 			conf.MetricBatchIntervalMilliseconds,
@@ -36,6 +35,5 @@ func main() {
 	)
 	r.Start()
 
-	p := profiler.New(conf.PProfPort)
-	p.Start()
+	profiler.New(conf.PProfPort).Start()
 }

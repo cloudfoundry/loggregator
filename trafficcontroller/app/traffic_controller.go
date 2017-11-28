@@ -173,10 +173,7 @@ func (t *TrafficController) Start() {
 		log.Fatal(http.Serve(lis, dopplerHandler))
 	}()
 
-	// We start the profiler last so that we can definitively claim that we're ready for
-	// connections by the time we're listening on the PPROFPort.
-	p := profiler.New(t.conf.PProfPort)
-	go p.Start()
+	go profiler.New(t.conf.PProfPort).Start()
 
 	killChan := make(chan os.Signal)
 	signal.Notify(killChan, os.Interrupt)

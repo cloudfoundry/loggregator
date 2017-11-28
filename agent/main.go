@@ -23,7 +23,5 @@ func main() {
 	a := app.NewAgent(config)
 	go a.Start()
 
-	// We start the profiler last so that we can definitively say that we're
-	// all connected and ready for data by the time the profiler starts up.
 	profiler.New(config.PProfPort).Start()
 }

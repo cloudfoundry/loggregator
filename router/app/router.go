@@ -59,13 +59,11 @@ type RouterOption func(*Router)
 // WithMetricReporting returns a RouterOption that enables Router to emit
 // metrics about itself.
 func WithMetricReporting(
-	pprofPort uint32,
 	healthAddr string,
 	agent Agent,
 	metricBatchIntervalMilliseconds uint,
 ) RouterOption {
 	return func(r *Router) {
-		r.c.PProfPort = pprofPort
 		r.c.HealthAddr = healthAddr
 		r.c.Agent = agent
 		r.c.MetricBatchIntervalMilliseconds = metricBatchIntervalMilliseconds

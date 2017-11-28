@@ -97,8 +97,8 @@ func main() {
 		app.WithHealthAddr(conf.HealthAddr),
 	)
 	go rlp.Start()
-	go profiler.New(conf.PProfPort).Start()
 	defer rlp.Stop()
+	go profiler.New(conf.PProfPort).Start()
 
 	killSignal := make(chan os.Signal, 1)
 	signal.Notify(killSignal, syscall.SIGINT, syscall.SIGTERM)
