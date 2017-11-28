@@ -22,7 +22,7 @@ import (
 
 var _ = Describe("IngestorServer", func() {
 	var startGRPCServer = func(ds plumbing.DopplerIngestorServer) (*grpc.Server, string) {
-		lis, err := net.Listen("tcp", ":0")
+		lis, err := net.Listen("tcp", "localhost:0")
 		Expect(err).ToNot(HaveOccurred())
 		s := grpc.NewServer()
 		plumbing.RegisterDopplerIngestorServer(s, ds)

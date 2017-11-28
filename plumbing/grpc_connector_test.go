@@ -39,8 +39,8 @@ var _ = Describe("GRPCConnector", func() {
 
 		pool := plumbing.NewPool(2, grpc.WithInsecure())
 
-		lisA, serverA := startGRPCServer(mockDopplerServerA, ":0")
-		lisB, serverB := startGRPCServer(mockDopplerServerB, ":0")
+		lisA, serverA := startGRPCServer(mockDopplerServerA, "localhost:0")
+		lisB, serverB := startGRPCServer(mockDopplerServerB, "localhost:0")
 		listeners = append(listeners, lisA, lisB)
 		grpcServers = append(grpcServers, serverA, serverB)
 
@@ -144,7 +144,7 @@ var _ = Describe("GRPCConnector", func() {
 						Eventually(mockDopplerServerB.BatchSubscribeCalled).Should(HaveLen(1))
 
 						mockDopplerServerC := newMockDopplerServer()
-						lisC, serverC := startGRPCServer(mockDopplerServerC, ":0")
+						lisC, serverC := startGRPCServer(mockDopplerServerC, "localhost:0")
 						listeners = append(listeners, lisC)
 						grpcServers = append(grpcServers, serverC)
 

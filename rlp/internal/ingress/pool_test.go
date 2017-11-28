@@ -31,8 +31,8 @@ var _ = Describe("Pool", func() {
 		)
 
 		BeforeEach(func() {
-			lis1, accepter1 = accepter(startListener(":0"))
-			lis2, accepter2 = accepter(startListener(":0"))
+			lis1, accepter1 = accepter(startListener("localhost:0"))
+			lis2, accepter2 = accepter(startListener("localhost:0"))
 			listeners = append(listeners, lis1, lis2)
 		})
 
