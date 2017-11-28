@@ -109,16 +109,18 @@ func (a *AppV1) setupGRPC() *clientpoolv1.ClientPool {
 		return nil
 	}
 
-	balancers := []*clientpoolv1.Balancer{
-		clientpoolv1.NewBalancer(
+	balancers := make([]*clientpoolv1.Balancer, 0, 2)
+
+	if a.config.RouterAddrWithAZ != "" {
+		balancers = append(balancers, clientpoolv1.NewBalancer(
 			a.config.RouterAddrWithAZ,
 			clientpoolv1.WithLookup(a.lookup),
-		),
-		clientpoolv1.NewBalancer(
-			a.config.RouterAddr,
-			clientpoolv1.WithLookup(a.lookup),
-		),
+		))
 	}
+	balancers = append(balancers, clientpoolv1.NewBalancer(
+		a.config.RouterAddr,
+		clientpoolv1.WithLookup(a.lookup),
+	))
 
 	avgEnvelopeSize := a.metricClient.NewGauge("average_envelope", "bytes/minute",
 		metricemitter.WithVersion(2, 0),

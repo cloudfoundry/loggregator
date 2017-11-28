@@ -55,10 +55,6 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("RouterAddr is required")
 	}
 
-	if config.RouterAddrWithAZ == "" {
-		return nil, fmt.Errorf("RouterAddrWithAZ is required")
-	}
-
 	config.RouterAddrWithAZ, err = idna.ToASCII(config.RouterAddrWithAZ)
 	if err != nil {
 		return nil, err

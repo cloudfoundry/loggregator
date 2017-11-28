@@ -121,10 +121,17 @@ func (a *AppV2) initializePool() *clientpoolv2.ClientPool {
 		log.Panic("Failed to load TLS client config")
 	}
 
-	balancers := []*clientpoolv2.Balancer{
-		clientpoolv2.NewBalancer(a.config.RouterAddrWithAZ, clientpoolv2.WithLookup(a.lookup)),
-		clientpoolv2.NewBalancer(a.config.RouterAddr, clientpoolv2.WithLookup(a.lookup)),
+	balancers := make([]*clientpoolv2.Balancer, 0, 2)
+	if a.config.RouterAddrWithAZ != "" {
+		balancers = append(balancers, clientpoolv2.NewBalancer(
+			a.config.RouterAddrWithAZ,
+			clientpoolv2.WithLookup(a.lookup)),
+		)
 	}
+	balancers = append(balancers, clientpoolv2.NewBalancer(
+		a.config.RouterAddr,
+		clientpoolv2.WithLookup(a.lookup)),
+	)
 
 	avgEnvelopeSize := a.metricClient.NewGauge("average_envelope", "bytes/minute",
 		metricemitter.WithVersion(2, 0),
