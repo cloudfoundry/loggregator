@@ -1,9 +1,7 @@
 package testservers
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"regexp"
 	"strconv"
@@ -22,7 +20,7 @@ const (
 const (
 	red = 31 + iota
 	green
-	yellow
+	_ // yellow
 	blue
 	magenta
 	cyan
@@ -35,25 +33,6 @@ func color(oe, proc string, oeColor, procColor int) string {
 		procColor = 0
 	}
 	return fmt.Sprintf(colorFmt, oeColor, oe, procColor, proc)
-}
-
-func writeConfigToFile(name string, conf interface{}) (string, error) {
-	confFile, err := ioutil.TempFile("", name)
-	if err != nil {
-		return "", err
-	}
-
-	err = json.NewEncoder(confFile).Encode(conf)
-	if err != nil {
-		return "", err
-	}
-
-	err = confFile.Close()
-	if err != nil {
-		return "", err
-	}
-
-	return confFile.Name(), nil
 }
 
 func waitForPortBinding(prefix string, buf *gbytes.Buffer) int {

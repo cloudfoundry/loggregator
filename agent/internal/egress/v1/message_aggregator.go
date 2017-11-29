@@ -80,8 +80,3 @@ type counterID struct {
 	name     string
 	tagsHash string
 }
-
-type eventID struct {
-	requestID string
-	peerType  events.PeerType
-}

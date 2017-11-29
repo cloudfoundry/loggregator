@@ -224,19 +224,6 @@ func valueText(s string) *v2.Value {
 	return &v2.Value{&v2.Value_Text{Text: s}}
 }
 
-func valueInt64(i int64) *v2.Value {
-	return &v2.Value{&v2.Value_Integer{Integer: i}}
-}
-
-func valueInt32(i int32) *v2.Value {
-	return &v2.Value{&v2.Value_Integer{Integer: int64(i)}}
-}
-
-func valueTextSlice(s []string) *v2.Value {
-	text := strings.Join(s, "\n")
-	return &v2.Value{&v2.Value_Text{Text: text}}
-}
-
 func uuidToString(uuid *events.UUID) string {
 	low := make([]byte, 8)
 	high := make([]byte, 8)

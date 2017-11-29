@@ -256,13 +256,6 @@ func (c *GRPCConnector) readStream(s loggregator_v2.Egress_BatchedReceiverClient
 	}
 }
 
-func writeError(err error, c chan<- error) {
-	select {
-	case c <- err:
-	default:
-	}
-}
-
 func (c *GRPCConnector) addConsumerState(cs *consumerState) error {
 	for i := range c.consumerStates {
 		state := atomic.LoadPointer(&c.consumerStates[i])

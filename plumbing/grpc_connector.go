@@ -342,13 +342,6 @@ func (c *GRPCConnector) readStream(s Doppler_BatchSubscribeClient, cs *consumerS
 	}
 }
 
-func writeError(err error, c chan<- error) {
-	select {
-	case c <- err:
-	default:
-	}
-}
-
 func (c *GRPCConnector) addConsumerState(cs *consumerState) error {
 	for i := range c.consumerStates {
 		state := atomic.LoadPointer(&c.consumerStates[i])

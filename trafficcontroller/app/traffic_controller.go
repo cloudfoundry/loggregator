@@ -37,12 +37,6 @@ type TrafficController struct {
 	ccHTTPClient         *http.Client
 }
 
-// finder provides service discovery of Doppler processes
-type finder interface {
-	Start()
-	Next() plumbing.Event
-}
-
 func NewTrafficController(
 	c *Config,
 	disableAccessControl bool,
