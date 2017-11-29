@@ -27,7 +27,7 @@ var _ = Describe("Agent", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer consumerServer.Stop()
 		agentCleanup, agentPorts := testservers.StartAgent(
-			testservers.BuildAgentConfig("localhost", consumerServer.Port()),
+			testservers.BuildAgentConfig("127.0.0.1", consumerServer.Port()),
 		)
 		defer agentCleanup()
 
@@ -73,7 +73,7 @@ var _ = Describe("Agent", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer consumerServer.Stop()
 		agentCleanup, agentPorts := testservers.StartAgent(
-			testservers.BuildAgentConfig("localhost", consumerServer.Port()),
+			testservers.BuildAgentConfig("127.0.0.1", consumerServer.Port()),
 		)
 		defer agentCleanup()
 

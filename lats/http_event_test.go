@@ -19,7 +19,7 @@ var _ = Describe("Sending HTTP events through loggregator", func() {
 		It("should emit an HttpStartStop through the firehose", func() {
 			msgChan, errorChan := ConnectToFirehose()
 
-			udpEmitter, err := emitter.NewUdpEmitter(fmt.Sprintf("localhost:%d", config.DropsondePort))
+			udpEmitter, err := emitter.NewUdpEmitter(fmt.Sprintf("127.0.0.1:%d", config.DropsondePort))
 			Expect(err).ToNot(HaveOccurred())
 			origin := fmt.Sprintf("%s-%d", OriginName, time.Now().UnixNano())
 			emitter := emitter.NewEventEmitter(udpEmitter, origin)
@@ -55,7 +55,7 @@ var _ = Describe("Sending HTTP events through loggregator", func() {
 			id, _ := uuid.NewV4()
 			msgChan, errorChan := ConnectToStream(id.String())
 
-			udpEmitter, err := emitter.NewUdpEmitter(fmt.Sprintf("localhost:%d", config.DropsondePort))
+			udpEmitter, err := emitter.NewUdpEmitter(fmt.Sprintf("127.0.0.1:%d", config.DropsondePort))
 			Expect(err).ToNot(HaveOccurred())
 			emitter := emitter.NewEventEmitter(udpEmitter, OriginName)
 			r, err := http.NewRequest("HEAD", "/", nil)

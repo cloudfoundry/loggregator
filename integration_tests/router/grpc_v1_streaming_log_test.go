@@ -20,9 +20,9 @@ var _ = Describe("GRPC Streaming Logs", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

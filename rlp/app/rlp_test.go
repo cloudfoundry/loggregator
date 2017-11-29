@@ -31,7 +31,7 @@ var _ = Describe("Start", func() {
 			Expect(dopplerLis.Close()).To(Succeed())
 		}()
 
-		egressAddr, _ := setupRLP(dopplerLis, "localhost:0")
+		egressAddr, _ := setupRLP(dopplerLis, "127.0.0.1:0")
 
 		egressStream, cleanup := setupRLPStream(egressAddr)
 		defer cleanup()
@@ -48,7 +48,7 @@ var _ = Describe("Start", func() {
 			Expect(dopplerLis.Close()).To(Succeed())
 		}()
 
-		egressAddr, _ := setupRLP(dopplerLis, "localhost:0")
+		egressAddr, _ := setupRLP(dopplerLis, "127.0.0.1:0")
 
 		egressStream, cleanup := setupRLPBatchedStream(egressAddr)
 		defer cleanup()
@@ -73,7 +73,7 @@ var _ = Describe("Start", func() {
 			}
 		}()
 
-		egressAddr, _ := setupRLP(dopplerLis, "localhost:0")
+		egressAddr, _ := setupRLP(dopplerLis, "127.0.0.1:0")
 		egressClient, cleanup := setupRLPQueryClient(egressAddr)
 		defer cleanup()
 
@@ -106,7 +106,7 @@ var _ = Describe("Start", func() {
 			}
 		}()
 
-		egressAddr, _ := setupRLP(dopplerLis, "localhost:0")
+		egressAddr, _ := setupRLP(dopplerLis, "127.0.0.1:0")
 		createStream := func() error {
 			egressClient, _ := setupRLPClient(egressAddr)
 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -144,7 +144,7 @@ var _ = Describe("Start", func() {
 				}
 			}()
 
-			egressAddr, rlp := setupRLP(dopplerLis, "localhost:0")
+			egressAddr, rlp := setupRLP(dopplerLis, "127.0.0.1:0")
 
 			egressClient, cleanup := setupRLPQueryClient(egressAddr)
 			defer cleanup()
@@ -177,7 +177,7 @@ var _ = Describe("Start", func() {
 			defer func() {
 				Expect(dopplerLis.Close()).To(Succeed())
 			}()
-			egressAddr, rlp := setupRLP(dopplerLis, "localhost:0")
+			egressAddr, rlp := setupRLP(dopplerLis, "127.0.0.1:0")
 
 			stream, cleanup := setupRLPStream(egressAddr)
 			defer cleanup()
@@ -247,7 +247,7 @@ func setupDoppler() (*mockDopplerServer, *spyDopplerV2, net.Listener) {
 	dopplerV1 := newMockDopplerServer()
 	dopplerV2 := newSpyDopplerV2()
 
-	lis, err := net.Listen("tcp", "localhost:0")
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	Expect(err).ToNot(HaveOccurred())
 
 	tlsCredentials, err := plumbing.NewServerCredentials(

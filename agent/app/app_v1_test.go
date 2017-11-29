@@ -29,7 +29,7 @@ var _ = Describe("v1 App", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		config := testservers.BuildAgentConfig("localhost", 1234)
+		config := testservers.BuildAgentConfig("127.0.0.1", 1234)
 		config.Zone = "something-bad"
 		expectedHost, _, err := net.SplitHostPort(config.RouterAddrWithAZ)
 		Expect(err).ToNot(HaveOccurred())

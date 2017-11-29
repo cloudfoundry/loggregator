@@ -20,11 +20,11 @@ var _ = Describe("V2 Egress", func() {
 			)
 			defer dopplerCleanup()
 			ingressCleanup, ingressClient := dopplerIngressV1Client(
-				fmt.Sprintf("localhost:%d", dopplerPorts.GRPC),
+				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 			defer ingressCleanup()
 			egressCleanup, egressClient := dopplerEgressV2Client(
-				fmt.Sprintf("localhost:%d", dopplerPorts.GRPC),
+				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 			defer egressCleanup()
 
@@ -77,10 +77,10 @@ var _ = Describe("V2 Egress", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			ingressCleanup, ingressClient = dopplerIngressV2Client(
-				fmt.Sprintf("localhost:%d", dopplerPorts.GRPC),
+				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 			egressCleanup, egressClient = dopplerEgressV2Client(
-				fmt.Sprintf("localhost:%d", dopplerPorts.GRPC),
+				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 		})
 

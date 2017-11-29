@@ -95,7 +95,7 @@ func WaitForWebsocketConnection(printer *TestDebugPrinter) {
 }
 
 func EmitToMetronV1(envelope *events.Envelope) {
-	metronConn, err := net.Dial("udp4", fmt.Sprintf("localhost:%d", config.DropsondePort))
+	metronConn, err := net.Dial("udp4", fmt.Sprintf("127.0.0.1:%d", config.DropsondePort))
 	Expect(err).NotTo(HaveOccurred())
 
 	b, err := envelope.Marshal()
@@ -114,7 +114,7 @@ func EmitToMetronV2(envelope *v2.Envelope) {
 	)
 	Expect(err).NotTo(HaveOccurred())
 
-	conn, err := grpc.Dial("localhost:3458", grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial("127.0.0.1:3458", grpc.WithTransportCredentials(creds))
 	Expect(err).NotTo(HaveOccurred())
 	defer conn.Close()
 	c := v2.NewIngressClient(conn)
