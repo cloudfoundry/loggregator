@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"time"
 
-	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -65,8 +64,17 @@ var _ = Describe("Logs", func() {
 				Expect(err).NotTo(HaveOccurred())
 				return envelopes
 			}
-			v1Env := conversion.ToV1(env)[0]
-			Eventually(getRecentLogs).Should(ContainElement(v1Env.LogMessage))
+
+			v1EnvLogMsg := &events.LogMessage{
+				Message:        env.GetLog().Payload,
+				MessageType:    events.LogMessage_OUT.Enum(),
+				Timestamp:      proto.Int64(env.Timestamp),
+				AppId:          proto.String(env.SourceId),
+				SourceType:     proto.String(""),
+				SourceInstance: proto.String(""),
+			}
+
+			Eventually(getRecentLogs).Should(ContainElement(v1EnvLogMsg))
 		})
 
 		It("sends log messages for a specific app through the stream endpoint", func() {
@@ -78,8 +86,16 @@ var _ = Describe("Logs", func() {
 			receivedEnvelope, err := FindMatchingEnvelopeByID("foo-stream", msgChan)
 			Expect(err).NotTo(HaveOccurred())
 
-			v1Env := conversion.ToV1(env)[0]
-			Expect(receivedEnvelope.LogMessage).To(Equal(v1Env.LogMessage))
+			v1EnvLogMsg := &events.LogMessage{
+				Message:        env.GetLog().Payload,
+				MessageType:    events.LogMessage_OUT.Enum(),
+				Timestamp:      proto.Int64(env.Timestamp),
+				AppId:          proto.String(env.SourceId),
+				SourceType:     proto.String(""),
+				SourceInstance: proto.String(""),
+			}
+
+			Expect(receivedEnvelope.LogMessage).To(Equal(v1EnvLogMsg))
 
 			Expect(errorChan).To(BeEmpty())
 		})
@@ -92,11 +108,14 @@ var _ = Describe("Logs", func() {
 			env := createLogEnvelopeV1("Stream message", "rlp-stream-foo")
 			EmitToMetronV1(env)
 
-			v2Env := conversion.ToV2(env, false)
+			v2EnvLog := &v2.Log{
+				Payload: env.GetLogMessage().Message,
+				Type:    v2.Log_OUT,
+			}
 
 			var outEnv *v2.Envelope
 			Eventually(msgChan, 5).Should(Receive(&outEnv))
-			Expect(outEnv.GetLog()).To(Equal(v2Env.GetLog()))
+			Expect(outEnv.GetLog()).To(Equal(v2EnvLog))
 		})
 
 		It("sends log messages through rlp with preferred tags", func() {
@@ -105,11 +124,14 @@ var _ = Describe("Logs", func() {
 			env := createLogEnvelopeV1("Stream message", "rlp-stream-foo")
 			EmitToMetronV1(env)
 
-			v2Env := conversion.ToV2(env, true)
+			v2EnvLog := &v2.Log{
+				Payload: env.GetLogMessage().Message,
+				Type:    v2.Log_OUT,
+			}
 
 			var outEnv *v2.Envelope
 			Eventually(msgChan, 5).Should(Receive(&outEnv))
-			Expect(outEnv.GetLog()).To(Equal(v2Env.GetLog()))
+			Expect(outEnv.GetLog()).To(Equal(v2EnvLog))
 		})
 	})
 
