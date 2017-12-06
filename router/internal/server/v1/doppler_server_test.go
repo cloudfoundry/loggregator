@@ -483,7 +483,7 @@ func buildLogMessage() (*events.Envelope, []byte) {
 }
 
 func startGRPCServer(ds plumbing.DopplerServer) net.Listener {
-	lis, err := net.Listen("tcp", ":0")
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	Expect(err).ToNot(HaveOccurred())
 	s := grpc.NewServer()
 	plumbing.RegisterDopplerServer(s, ds)

@@ -45,8 +45,8 @@ var _ = Describe("Pool", func() {
 		)
 
 		BeforeEach(func() {
-			lis1, accepter1 = accepter(startListener(":0"))
-			lis2, accepter2 = accepter(startListener(":0"))
+			lis1, accepter1 = accepter(startListener("127.0.0.1:0"))
+			lis2, accepter2 = accepter(startListener("127.0.0.1:0"))
 			listeners = append(listeners, lis1, lis2)
 		})
 
@@ -98,7 +98,7 @@ var _ = Describe("Pool", func() {
 
 		Context("when the doppler is already available", func() {
 			BeforeEach(func() {
-				lis1, server1 = startGRPCServer(mockDoppler1, ":0")
+				lis1, server1 = startGRPCServer(mockDoppler1, "127.0.0.1:0")
 				listeners = append(listeners, lis1)
 				servers = append(servers, server1)
 
@@ -174,7 +174,7 @@ var _ = Describe("Pool", func() {
 
 		Context("when the doppler is registered", func() {
 			BeforeEach(func() {
-				lis1, server1 = startGRPCServer(mockDoppler1, ":0")
+				lis1, server1 = startGRPCServer(mockDoppler1, "127.0.0.1:0")
 				listeners = append(listeners, lis1)
 				servers = append(servers, server1)
 

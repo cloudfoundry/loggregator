@@ -56,18 +56,18 @@ var _ = AfterSuite(func() {
 })
 
 var setupFakeAuthServer = func() {
-	fakeAuthServer := &FakeAuthServer{ApiEndpoint: ":42123"}
+	fakeAuthServer := &FakeAuthServer{ApiEndpoint: "127.0.0.1:42123"}
 	fakeAuthServer.Start()
 
 	Eventually(func() error {
-		_, err := http.Get("http://" + localIPAddress + ":42123")
+		_, err := http.Get("http://" + localIPAddress + "127.0.0.1:42123")
 		return err
 	}).ShouldNot(HaveOccurred())
 }
 
 var setupFakeUaaServer = func() {
 	fakeUaaServer := &FakeUaaHandler{}
-	go http.ListenAndServe(":5678", fakeUaaServer)
+	go http.ListenAndServe("127.0.0.1:5678", fakeUaaServer)
 	Eventually(func() error {
 		_, err := http.Get("http://" + localIPAddress + ":5678/check_token")
 		return err

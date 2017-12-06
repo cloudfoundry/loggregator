@@ -17,7 +17,7 @@ var _ = Describe("End to end tests", func() {
 		)
 		defer dopplerCleanup()
 		agentCleanup, agentPorts := testservers.StartAgent(
-			testservers.BuildAgentConfig("localhost", dopplerPorts.GRPC),
+			testservers.BuildAgentConfig("127.0.0.1", dopplerPorts.GRPC),
 		)
 		defer agentCleanup()
 		trafficcontrollerCleanup, tcPorts := testservers.StartTrafficController(

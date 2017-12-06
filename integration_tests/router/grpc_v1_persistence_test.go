@@ -21,9 +21,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			containerMetric := NewContainerMetric("some-test-app-id", 0, 1, 2, 3)
@@ -43,9 +43,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			containerMetric := NewContainerMetric("some-test-app-id", 0, 100, 2, 3)
@@ -71,9 +71,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			containerMetric := NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
@@ -97,9 +97,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			logMessage := NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
@@ -118,9 +118,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			logMessage0 := NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
@@ -143,9 +143,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			for i := 0; i < 15; i++ {

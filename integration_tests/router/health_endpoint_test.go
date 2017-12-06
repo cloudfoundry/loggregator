@@ -18,7 +18,7 @@ var _ = Describe("Doppler Health Endpoint", func() {
 		)
 		defer dopplerCleanup()
 
-		resp, err := http.Get(fmt.Sprintf("http://localhost:%d/health", dopplerPorts.Health))
+		resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/health", dopplerPorts.Health))
 		Expect(err).ToNot(HaveOccurred())
 		defer resp.Body.Close()
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))

@@ -20,7 +20,7 @@ func BuildRouterConfig(agentUDPPort, agentGRPCPort int) app.Config {
 			KeyFile:  Cert("doppler.key"),
 			CAFile:   Cert("loggregator-ca.crt"),
 		},
-		HealthAddr: "localhost:0",
+		HealthAddr: "127.0.0.1:0",
 
 		Agent: app.Agent{
 			UDPAddress:  fmt.Sprintf("127.0.0.1:%d", agentUDPPort),

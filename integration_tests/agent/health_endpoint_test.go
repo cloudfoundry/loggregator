@@ -17,11 +17,11 @@ var _ = Describe("Agent Health Endpoint", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer consumerServer.Stop()
 		agentCleanup, agentPorts := testservers.StartAgent(
-			testservers.BuildAgentConfig("localhost", consumerServer.Port()),
+			testservers.BuildAgentConfig("127.0.0.1", consumerServer.Port()),
 		)
 		defer agentCleanup()
 
-		resp, err := http.Get(fmt.Sprintf("http://localhost:%d/health", agentPorts.Health))
+		resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/health", agentPorts.Health))
 		Expect(err).ToNot(HaveOccurred())
 		defer resp.Body.Close()
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))

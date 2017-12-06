@@ -22,10 +22,10 @@ var _ = Describe("Agent", func() {
 		)
 		defer dopplerCleanup()
 		agentCleanup, agentPorts := testservers.StartAgent(
-			testservers.BuildAgentConfig("localhost", dopplerPorts.GRPC),
+			testservers.BuildAgentConfig("127.0.0.1", dopplerPorts.GRPC),
 		)
 		defer agentCleanup()
-		egressCleanup, egressClient := dopplerEgressClient(fmt.Sprintf("localhost:%d", dopplerPorts.GRPC))
+		egressCleanup, egressClient := dopplerEgressClient(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 		defer egressCleanup()
 
 		var subscriptionClient plumbing.Doppler_SubscribeClient
@@ -64,7 +64,7 @@ var _ = Describe("Agent", func() {
 })
 
 func sendAppLog(appID, msg string, port int) error {
-	dropsonde.Initialize(fmt.Sprintf("localhost:%d", port), "test-origin")
+	dropsonde.Initialize(fmt.Sprintf("127.0.0.1:%d", port), "test-origin")
 	return logs.SendAppLog(appID, msg, appID, "0")
 }
 

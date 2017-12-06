@@ -62,7 +62,7 @@ var _ = Describe("PusherFetcher", func() {
 
 	It("returns an error when the server is unavailable", func() {
 		fetcher := v2.NewSenderFetcher(newSpyRegistry(), grpc.WithInsecure())
-		_, _, err := fetcher.Fetch("localhost:1122")
+		_, _, err := fetcher.Fetch("127.0.0.1:1122")
 		Expect(err).To(HaveOccurred())
 	})
 })
@@ -109,7 +109,7 @@ func newSpyIngestorServer() *SpyIngestorServer {
 }
 
 func (s *SpyIngestorServer) Start() error {
-	lis, err := net.Listen("tcp", "localhost:0")
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return err
 	}
