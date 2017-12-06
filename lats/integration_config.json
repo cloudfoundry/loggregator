@@ -1,4 +1,0 @@
-{
-	"DopplerEndpoint": "ws://10.244.10.252:8081",
-	"SkipSslVerify": true
-}
