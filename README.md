@@ -57,7 +57,7 @@ The ReverseLogProxy (RLP) has gRPC endpoints to allow consumers to read data fro
 
 ##### Traffic Controller
 
-The TrafficController (TC) is like the RLP, but is tuned for CloudFoundry. It authenticates via the UAA and CloudController, which are both CF components. It egresses logs via Websockets. It only speaks V1.
+The TrafficController (TC) is like the RLP, but is tuned for CloudFoundry. It authenticates via the UAA and CloudController, which are both CF components. It egresses logs via Websockets. It only speaks V1. Planned deprecation in 2018. 
 
 ### Avoiding Producer Backpressure
 
