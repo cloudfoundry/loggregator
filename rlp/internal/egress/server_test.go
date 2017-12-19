@@ -113,6 +113,60 @@ var _ = Describe("Server", func() {
 			Expect(req.LegacySelector).To(BeNil())
 		})
 
+		It("upgrades LegacySelector to Selector if no Selectors are present", func() {
+			receiverServer := &spyReceiverServer{}
+			receiver := newSpyReceiver(10)
+			server := egress.NewServer(
+				receiver,
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+			)
+
+			err := server.Receiver(&v2.EgressRequest{
+				LegacySelector: &v2.Selector{
+					SourceId: "legacy-source-id",
+				},
+			}, receiverServer)
+			Expect(err).ToNot(HaveOccurred())
+
+			var req *v2.EgressBatchRequest
+			Expect(receiver.requests).Should(Receive(&req))
+			Expect(req.Selectors).Should(HaveLen(1))
+
+			Expect(req.LegacySelector).To(BeNil())
+			Expect(req.Selectors[0].SourceId).To(Equal("legacy-source-id"))
+		})
+
+		It("upgrades LegacySelector to Selector if no Selectors are present for batching", func() {
+			receiverServer := &spyBatchedReceiverServer{}
+			receiver := newSpyReceiver(10)
+			server := egress.NewServer(
+				receiver,
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+			)
+
+			err := server.BatchedReceiver(&v2.EgressBatchRequest{
+				LegacySelector: &v2.Selector{
+					SourceId: "legacy-source-id",
+				},
+			}, receiverServer)
+			Expect(err).ToNot(HaveOccurred())
+
+			var req *v2.EgressBatchRequest
+			Expect(receiver.requests).Should(Receive(&req))
+			Expect(req.Selectors).Should(HaveLen(1))
+
+			Expect(req.LegacySelector).To(BeNil())
+			Expect(req.Selectors[0].SourceId).To(Equal("legacy-source-id"))
+		})
+
 		It("closes the receiver when the context is canceled", func() {
 			receiverServer := &spyReceiverServer{}
 			receiver := newSpyReceiver(1000000000)

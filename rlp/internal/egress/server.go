@@ -82,17 +82,13 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
-	if r.GetLegacySelector() != nil && len(r.GetSelectors()) > 0 {
-		// Both would be set by the consumer for upgrade path purposes.
-		// The contract should be to assume that the Selectors encompasses
-		// the LegacySelector. Therefore, just ignore the LegacySelector.
-		r.LegacySelector = nil
-	}
-
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
 	buffer := make(chan *v2.Envelope, envelopeBufferSize)
+
+	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
+	r.LegacySelector = nil
 
 	go func() {
 		select {
@@ -141,12 +137,8 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
-	if r.GetLegacySelector() != nil && len(r.GetSelectors()) > 0 {
-		// Both would be set by the consumer for upgrade path purposes.
-		// The contract should be to assume that the Selectors encompasses
-		// the LegacySelector. Therefore, just ignore the LegacySelector.
-		r.LegacySelector = nil
-	}
+	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
+	r.LegacySelector = nil
 
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
@@ -205,6 +197,24 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 	}
 
 	return nil
+}
+
+// convergeSelectors takes in any LegacySelector on the request as well as
+// Selectors and converts LegacySelector into a Selector based on Selector
+// heirarchy.
+func (s *Server) convergeSelectors(legacy *v2.Selector, selectors []*v2.Selector) []*v2.Selector {
+	if legacy != nil && len(selectors) > 0 {
+		// Both would be set by the consumer for upgrade path purposes.
+		// The contract should be to assume that the Selectors encompasses
+		// the LegacySelector. Therefore, just ignore the LegacySelector.
+		return selectors
+	}
+
+	if legacy != nil {
+		return []*v2.Selector{legacy}
+	}
+
+	return selectors
 }
 
 type batchWriter struct {

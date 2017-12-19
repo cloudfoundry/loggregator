@@ -131,6 +131,35 @@ var _ = Describe("Start", func() {
 		Expect(dopplerLis.Close()).To(Succeed())
 	})
 
+	It("upgrades a LegacySelector into a Selector", func() {
+		_, doppler, dopplerLis := setupDoppler()
+		defer dopplerLis.Close()
+
+		egressAddr, _ := setupRLP(dopplerLis, "127.0.0.1:0")
+
+		egressClient, cleanup := setupRLPClient(egressAddr)
+		defer cleanup()
+
+		Eventually(func() error {
+			var err error
+			_, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{
+				LegacySelector: &v2.Selector{
+					SourceId: "some-id",
+				},
+			})
+			return err
+		}, 5).ShouldNot(HaveOccurred())
+
+		Eventually(func() int {
+			return len(doppler.requests())
+		}).ShouldNot(BeZero())
+
+		req := doppler.requests()[0]
+
+		Expect(len(req.Selectors)).ToNot(BeZero())
+		Expect(req.Selectors[0].SourceId).To(Equal("some-id"))
+	})
+
 	Describe("draining", func() {
 		It("Stops accepting new connections", func() {
 			doppler, _, dopplerLis := setupDoppler()
@@ -208,7 +237,6 @@ var _ = Describe("Start", func() {
 			Eventually(errs, 5).Should(Receive(HaveOccurred()))
 			Eventually(done).Should(BeClosed())
 		})
-
 	})
 })
 
