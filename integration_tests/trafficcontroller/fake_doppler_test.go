@@ -17,11 +17,11 @@ type FakeDoppler struct {
 	GrpcEndpoint             string
 	grpcListener             net.Listener
 	grpcOut                  chan []byte
+	grpcServer               *grpc.Server
 	SubscriptionRequests     chan *plumbing.SubscriptionRequest
 	ContainerMetricsRequests chan *plumbing.ContainerMetricsRequest
 	RecentLogsRequests       chan *plumbing.RecentLogsRequest
 	SubscribeServers         chan plumbing.Doppler_BatchSubscribeServer
-	done                     chan struct{}
 	sync.RWMutex
 }
 
@@ -33,13 +33,10 @@ func NewFakeDoppler() *FakeDoppler {
 		ContainerMetricsRequests: make(chan *plumbing.ContainerMetricsRequest, 100),
 		RecentLogsRequests:       make(chan *plumbing.RecentLogsRequest, 100),
 		SubscribeServers:         make(chan plumbing.Doppler_BatchSubscribeServer, 100),
-		done:                     make(chan struct{}),
 	}
 }
 
 func (fakeDoppler *FakeDoppler) Start() error {
-	defer close(fakeDoppler.done)
-
 	var err error
 	fakeDoppler.Lock()
 	fakeDoppler.grpcListener, err = net.Listen("tcp", fakeDoppler.GrpcEndpoint)
@@ -57,19 +54,18 @@ func (fakeDoppler *FakeDoppler) Start() error {
 	}
 	transportCreds := credentials.NewTLS(tlsConfig)
 
-	grpcServer := grpc.NewServer(grpc.Creds(transportCreds))
-	plumbing.RegisterDopplerServer(grpcServer, fakeDoppler)
+	fakeDoppler.grpcServer = grpc.NewServer(grpc.Creds(transportCreds))
+	plumbing.RegisterDopplerServer(fakeDoppler.grpcServer, fakeDoppler)
 
-	return grpcServer.Serve(fakeDoppler.grpcListener)
+	return fakeDoppler.grpcServer.Serve(fakeDoppler.grpcListener)
 }
 
 func (fakeDoppler *FakeDoppler) Stop() {
 	fakeDoppler.Lock()
-	if fakeDoppler.grpcListener != nil {
-		fakeDoppler.grpcListener.Close()
+	if fakeDoppler.grpcServer != nil {
+		fakeDoppler.grpcServer.Stop()
 	}
 	fakeDoppler.Unlock()
-	<-fakeDoppler.done
 }
 
 func (fakeDoppler *FakeDoppler) SendLogMessage(messageBody []byte) {

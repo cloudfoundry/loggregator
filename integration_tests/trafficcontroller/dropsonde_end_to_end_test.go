@@ -49,9 +49,10 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 		dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
 	})
 
-	AfterEach(func() {
+	AfterEach(func(done Done) {
+		defer close(done)
 		fakeDoppler.Stop()
-	})
+	}, 30)
 
 	Context("Streaming", func() {
 		var (
