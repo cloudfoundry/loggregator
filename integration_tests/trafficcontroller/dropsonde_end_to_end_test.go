@@ -45,7 +45,7 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 		}, 10).Should(Succeed())
 
 		fakeDoppler = NewFakeDoppler()
-		go fakeDoppler.Start()
+		fakeDoppler.Start()
 		dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
 	})
 

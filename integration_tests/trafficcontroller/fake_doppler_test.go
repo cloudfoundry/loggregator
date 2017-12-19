@@ -2,7 +2,6 @@ package trafficcontroller_test
 
 import (
 	"net"
-	"sync"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
@@ -22,7 +21,7 @@ type FakeDoppler struct {
 	ContainerMetricsRequests chan *plumbing.ContainerMetricsRequest
 	RecentLogsRequests       chan *plumbing.RecentLogsRequest
 	SubscribeServers         chan plumbing.Doppler_BatchSubscribeServer
-	sync.RWMutex
+	done                     chan struct{}
 }
 
 func NewFakeDoppler() *FakeDoppler {
@@ -33,14 +32,13 @@ func NewFakeDoppler() *FakeDoppler {
 		ContainerMetricsRequests: make(chan *plumbing.ContainerMetricsRequest, 100),
 		RecentLogsRequests:       make(chan *plumbing.RecentLogsRequest, 100),
 		SubscribeServers:         make(chan plumbing.Doppler_BatchSubscribeServer, 100),
+		done:                     make(chan struct{}),
 	}
 }
 
 func (fakeDoppler *FakeDoppler) Start() error {
 	var err error
-	fakeDoppler.Lock()
 	fakeDoppler.grpcListener, err = net.Listen("tcp", fakeDoppler.GrpcEndpoint)
-	fakeDoppler.Unlock()
 	if err != nil {
 		return err
 	}
@@ -57,15 +55,18 @@ func (fakeDoppler *FakeDoppler) Start() error {
 	fakeDoppler.grpcServer = grpc.NewServer(grpc.Creds(transportCreds))
 	plumbing.RegisterDopplerServer(fakeDoppler.grpcServer, fakeDoppler)
 
-	return fakeDoppler.grpcServer.Serve(fakeDoppler.grpcListener)
+	go func() {
+		defer close(fakeDoppler.done)
+		fakeDoppler.grpcServer.Serve(fakeDoppler.grpcListener)
+	}()
+	return nil
 }
 
 func (fakeDoppler *FakeDoppler) Stop() {
-	fakeDoppler.Lock()
 	if fakeDoppler.grpcServer != nil {
 		fakeDoppler.grpcServer.Stop()
 	}
-	fakeDoppler.Unlock()
+	<-fakeDoppler.done
 }
 
 func (fakeDoppler *FakeDoppler) SendLogMessage(messageBody []byte) {
