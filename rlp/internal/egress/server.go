@@ -99,7 +99,6 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 		}
 	}()
 
-	// TODO: Error when given legacy selector and selector
 	br := &v2.EgressBatchRequest{
 		ShardId:          r.GetShardId(),
 		LegacySelector:   r.GetLegacySelector(),
@@ -113,7 +112,7 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 		return fmt.Errorf("unable to setup subscription")
 	}
 
-	go s.consumeReceiver(buffer, rx, cancel)
+	go s.consumeReceiver(r.UsePreferredTags, buffer, rx, cancel)
 
 	for data := range buffer {
 		if err := srv.Send(data); err != nil {
@@ -155,14 +154,13 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 	}()
 
 	rx, err := s.receiver.Subscribe(ctx, r)
-	// TODO Add coverage for this error case
 	if err != nil {
 		log.Printf("Unable to setup subscription: %s", err)
 		return fmt.Errorf("unable to setup subscription")
 	}
 
 	receiveErrorStream := make(chan error, 1)
-	go s.consumeBatchReceiver(buffer, receiveErrorStream, rx, cancel)
+	go s.consumeBatchReceiver(r.UsePreferredTags, buffer, receiveErrorStream, rx, cancel)
 
 	senderErrorStream := make(chan error, 1)
 	batcher := batching.NewV2EnvelopeBatcher(
@@ -200,7 +198,7 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 
 // convergeSelectors takes in any LegacySelector on the request as well as
 // Selectors and converts LegacySelector into a Selector based on Selector
-// heirarchy.
+// hierarchy.
 func (s *Server) convergeSelectors(legacy *v2.Selector, selectors []*v2.Selector) []*v2.Selector {
 	if legacy != nil && len(selectors) > 0 {
 		// Both would be set by the consumer for upgrade path purposes.
@@ -238,6 +236,7 @@ func (b *batchWriter) Write(batch []*v2.Envelope) {
 }
 
 func (s *Server) consumeBatchReceiver(
+	usePreferred bool,
 	buffer chan<- *v2.Envelope,
 	errorStream chan<- error,
 	rx func() (*v2.Envelope, error),
@@ -259,6 +258,8 @@ func (s *Server) consumeBatchReceiver(
 			break
 		}
 
+		s.convergeTags(usePreferred, e)
+
 		select {
 		case buffer <- e:
 		default:
@@ -270,6 +271,7 @@ func (s *Server) consumeBatchReceiver(
 }
 
 func (s *Server) consumeReceiver(
+	usePreferred bool,
 	buffer chan<- *v2.Envelope,
 	rx func() (*v2.Envelope, error),
 	cancel func(),
@@ -289,6 +291,8 @@ func (s *Server) consumeReceiver(
 			break
 		}
 
+		s.convergeTags(usePreferred, e)
+
 		select {
 		case buffer <- e:
 		default:
@@ -297,4 +301,30 @@ func (s *Server) consumeReceiver(
 			s.droppedMetric.Increment(1)
 		}
 	}
+}
+
+func (s *Server) convergeTags(usePreferred bool, e *v2.Envelope) {
+	if usePreferred {
+		for name, value := range e.GetDeprecatedTags() {
+			switch x := value.Data.(type) {
+			case *v2.Value_Decimal:
+				e.GetTags()[name] = fmt.Sprint(x.Decimal)
+			case *v2.Value_Integer:
+				e.GetTags()[name] = fmt.Sprint(x.Integer)
+			case *v2.Value_Text:
+				e.GetTags()[name] = x.Text
+			}
+		}
+		e.DeprecatedTags = nil
+		return
+	}
+
+	for name, value := range e.GetTags() {
+		e.GetDeprecatedTags()[name] = &v2.Value{
+			Data: &v2.Value_Text{
+				Text: value,
+			},
+		}
+	}
+	e.Tags = nil
 }

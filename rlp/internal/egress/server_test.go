@@ -183,6 +183,87 @@ var _ = Describe("Server", func() {
 			Eventually(ctx.Done()).Should(BeClosed())
 		})
 
+		Describe("Preferred Tags option", func() {
+			var (
+				receiverServer *spyReceiverServer
+				receiver       *spyReceiver
+				server         *egress.Server
+			)
+
+			BeforeEach(func() {
+				receiverServer = newSpyReceiverServer(nil)
+				receiver = newSpyReceiver(10)
+				receiver.envelope = &v2.Envelope{
+					Tags: map[string]string{
+						"a": "value-a",
+					},
+					DeprecatedTags: map[string]*v2.Value{
+						"b": {
+							Data: &v2.Value_Decimal{
+								Decimal: 0.8,
+							},
+						},
+						"c": {
+							Data: &v2.Value_Integer{
+								Integer: 18,
+							},
+						},
+						"d": {
+							Data: &v2.Value_Text{
+								Text: "value-d",
+							},
+						},
+					},
+				}
+				server = egress.NewServer(
+					receiver,
+					testhelper.NewMetricClient(),
+					newSpyHealthRegistrar(),
+					context.TODO(),
+					1,
+					time.Nanosecond,
+				)
+			})
+
+			It("sends deprecated tags", func() {
+				err := server.Receiver(&v2.EgressRequest{
+					Selectors:        []*v2.Selector{},
+					UsePreferredTags: false,
+				}, receiverServer)
+				Expect(err).ToNot(HaveOccurred())
+
+				var e *v2.Envelope
+				Eventually(receiverServer.envelopes).Should(Receive(&e))
+				Expect(e.GetTags()).To(BeEmpty())
+				Expect(e.GetDeprecatedTags()).To(HaveLen(4))
+
+				tags := e.GetDeprecatedTags()
+				Expect(tags["a"].GetText()).To(Equal("value-a"))
+				Expect(tags["b"].GetDecimal()).To(Equal(0.8))
+				Expect(tags["c"].GetInteger()).To(Equal(int64(18)))
+				Expect(tags["d"].GetText()).To(Equal("value-d"))
+			})
+
+			It("sends preferred tags", func() {
+				err := server.Receiver(&v2.EgressRequest{
+					Selectors:        []*v2.Selector{},
+					UsePreferredTags: true,
+				}, receiverServer)
+				Expect(err).ToNot(HaveOccurred())
+
+				var e *v2.Envelope
+				Eventually(receiverServer.envelopes).Should(Receive(&e))
+				Expect(e.GetDeprecatedTags()).To(BeEmpty())
+				Expect(e.GetTags()).To(HaveLen(4))
+
+				tags := e.GetTags()
+				Expect(tags["a"]).To(Equal("value-a"))
+				Expect(tags["b"]).To(Equal("0.8"))
+				Expect(tags["c"]).To(Equal("18"))
+				Expect(tags["d"]).To(Equal("value-d"))
+			})
+		})
+
 		Describe("Metrics", func() {
 			It("emits 'egress' metric for each envelope", func() {
 				metricClient := testhelper.NewMetricClient()
@@ -416,6 +497,87 @@ var _ = Describe("Server", func() {
 			var ctx context.Context
 			Eventually(receiver.ctx).Should(Receive(&ctx))
 			Eventually(ctx.Done()).Should(BeClosed())
+		})
+
+		Describe("Preferred Tags option", func() {
+			var (
+				receiverServer *spyBatchedReceiverServer
+				receiver       *spyReceiver
+				server         *egress.Server
+			)
+
+			BeforeEach(func() {
+				receiverServer = newSpyBatchedReceiverServer(nil)
+				receiver = newSpyReceiver(10)
+				receiver.envelope = &v2.Envelope{
+					Tags: map[string]string{
+						"a": "value-a",
+					},
+					DeprecatedTags: map[string]*v2.Value{
+						"b": {
+							Data: &v2.Value_Decimal{
+								Decimal: 0.8,
+							},
+						},
+						"c": {
+							Data: &v2.Value_Integer{
+								Integer: 18,
+							},
+						},
+						"d": {
+							Data: &v2.Value_Text{
+								Text: "value-d",
+							},
+						},
+					},
+				}
+				server = egress.NewServer(
+					receiver,
+					testhelper.NewMetricClient(),
+					newSpyHealthRegistrar(),
+					context.TODO(),
+					1,
+					time.Nanosecond,
+				)
+			})
+
+			It("sends deprecated tags", func() {
+				err := server.BatchedReceiver(&v2.EgressBatchRequest{
+					Selectors:        []*v2.Selector{},
+					UsePreferredTags: false,
+				}, receiverServer)
+				Expect(err).ToNot(HaveOccurred())
+
+				var e *v2.Envelope
+				Eventually(receiverServer.envelopes).Should(Receive(&e))
+				Expect(e.GetTags()).To(BeEmpty())
+				Expect(e.GetDeprecatedTags()).To(HaveLen(4))
+
+				tags := e.GetDeprecatedTags()
+				Expect(tags["a"].GetText()).To(Equal("value-a"))
+				Expect(tags["b"].GetDecimal()).To(Equal(0.8))
+				Expect(tags["c"].GetInteger()).To(Equal(int64(18)))
+				Expect(tags["d"].GetText()).To(Equal("value-d"))
+			})
+
+			It("sends preferred tags", func() {
+				err := server.BatchedReceiver(&v2.EgressBatchRequest{
+					Selectors:        []*v2.Selector{},
+					UsePreferredTags: true,
+				}, receiverServer)
+				Expect(err).ToNot(HaveOccurred())
+
+				var e *v2.Envelope
+				Eventually(receiverServer.envelopes).Should(Receive(&e))
+				Expect(e.GetDeprecatedTags()).To(BeEmpty())
+				Expect(e.GetTags()).To(HaveLen(4))
+
+				tags := e.GetTags()
+				Expect(tags["a"]).To(Equal("value-a"))
+				Expect(tags["b"]).To(Equal("0.8"))
+				Expect(tags["c"]).To(Equal("18"))
+				Expect(tags["d"]).To(Equal("value-d"))
+			})
 		})
 
 		Describe("Metrics", func() {
