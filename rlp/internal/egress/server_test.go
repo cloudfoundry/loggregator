@@ -262,6 +262,50 @@ var _ = Describe("Server", func() {
 				Expect(tags["c"]).To(Equal("18"))
 				Expect(tags["d"]).To(Equal("value-d"))
 			})
+
+			It("works if deprecated tags is nil when requesting preferred tags", func() {
+				receiver.envelope = &v2.Envelope{
+					Tags: nil,
+					DeprecatedTags: map[string]*v2.Value{
+						"a": {
+							Data: &v2.Value_Text{
+								Text: "value-a",
+							},
+						},
+					},
+				}
+
+				err := server.Receiver(&v2.EgressRequest{
+					Selectors:        []*v2.Selector{},
+					UsePreferredTags: true,
+				}, receiverServer)
+				Expect(err).ToNot(HaveOccurred())
+
+				var e *v2.Envelope
+				Eventually(receiverServer.envelopes).Should(Receive(&e))
+				Expect(e.GetTags()).To(HaveLen(1))
+				Expect(e.GetDeprecatedTags()).To(BeEmpty())
+			})
+
+			It("works if tags is nil when requesting deprecated tags", func() {
+				receiver.envelope = &v2.Envelope{
+					DeprecatedTags: nil,
+					Tags: map[string]string{
+						"a": "value-a",
+					},
+				}
+
+				err := server.Receiver(&v2.EgressRequest{
+					Selectors:        []*v2.Selector{},
+					UsePreferredTags: false,
+				}, receiverServer)
+				Expect(err).ToNot(HaveOccurred())
+
+				var e *v2.Envelope
+				Eventually(receiverServer.envelopes).Should(Receive(&e))
+				Expect(e.GetTags()).To(BeEmpty())
+				Expect(e.GetDeprecatedTags()).To(HaveLen(1))
+			})
 		})
 
 		Describe("Metrics", func() {

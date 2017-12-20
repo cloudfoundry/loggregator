@@ -305,6 +305,10 @@ func (s *Server) consumeReceiver(
 
 func (s *Server) convergeTags(usePreferred bool, e *v2.Envelope) {
 	if usePreferred {
+		if e.Tags == nil {
+			e.Tags = make(map[string]string)
+		}
+
 		for name, value := range e.GetDeprecatedTags() {
 			switch x := value.Data.(type) {
 			case *v2.Value_Decimal:
@@ -317,6 +321,10 @@ func (s *Server) convergeTags(usePreferred bool, e *v2.Envelope) {
 		}
 		e.DeprecatedTags = nil
 		return
+	}
+
+	if e.DeprecatedTags == nil {
+		e.DeprecatedTags = make(map[string]*v2.Value)
 	}
 
 	for name, value := range e.GetTags() {
