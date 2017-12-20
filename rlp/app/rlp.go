@@ -197,7 +197,6 @@ func (r *RLP) setupEgress() {
 		r.egressServer,
 		egress.NewServer(r.v2Connector, r.metricClient, r.health, r.ctx, 100, 100*time.Millisecond),
 	)
-	v2.RegisterEgressQueryServer(r.egressServer, egress.NewQueryServer(r.querier))
 }
 
 func (r *RLP) setupHealthEndpoint() {

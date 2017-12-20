@@ -23,7 +23,7 @@ type IngressResponse struct {
 func (m *IngressResponse) Reset()                    { *m = IngressResponse{} }
 func (m *IngressResponse) String() string            { return proto.CompactTextString(m) }
 func (*IngressResponse) ProtoMessage()               {}
-func (*IngressResponse) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
+func (*IngressResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
 
 type BatchSenderResponse struct {
 }
@@ -31,7 +31,7 @@ type BatchSenderResponse struct {
 func (m *BatchSenderResponse) Reset()                    { *m = BatchSenderResponse{} }
 func (m *BatchSenderResponse) String() string            { return proto.CompactTextString(m) }
 func (*BatchSenderResponse) ProtoMessage()               {}
-func (*BatchSenderResponse) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
+func (*BatchSenderResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
 
 type SendResponse struct {
 }
@@ -39,7 +39,7 @@ type SendResponse struct {
 func (m *SendResponse) Reset()                    { *m = SendResponse{} }
 func (m *SendResponse) String() string            { return proto.CompactTextString(m) }
 func (*SendResponse) ProtoMessage()               {}
-func (*SendResponse) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{2} }
+func (*SendResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{2} }
 
 func init() {
 	proto.RegisterType((*IngressResponse)(nil), "loggregator.v2.IngressResponse")
@@ -254,9 +254,9 @@ var _Ingress_serviceDesc = grpc.ServiceDesc{
 	Metadata: "ingress.proto",
 }
 
-func init() { proto.RegisterFile("ingress.proto", fileDescriptor4) }
+func init() { proto.RegisterFile("ingress.proto", fileDescriptor3) }
 
-var fileDescriptor4 = []byte{
+var fileDescriptor3 = []byte{
 	// 178 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcd, 0xcc, 0x4b, 0x2f,
 	0x4a, 0x2d, 0x2e, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xcb, 0xc9, 0x4f, 0x4f, 0x2f,

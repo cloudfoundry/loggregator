@@ -62,38 +62,6 @@ var _ = Describe("Start", func() {
 		Eventually(f, 2).Should(BeNumerically(">", 10))
 	}, 10)
 
-	It("receives container metrics via egress query client", func() {
-		doppler, _, dopplerLis := setupDoppler()
-		go func() {
-			for {
-				doppler.ContainerMetricsOutput.Err <- nil
-				doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
-					Payload: [][]byte{buildContainerMetric()},
-				}
-			}
-		}()
-
-		egressAddr, _ := setupRLP(dopplerLis, "127.0.0.1:0")
-		egressClient, cleanup := setupRLPQueryClient(egressAddr)
-		defer cleanup()
-
-		f := func() int {
-			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-			defer cancel()
-
-			resp, err := egressClient.ContainerMetrics(ctx, &v2.ContainerMetricRequest{
-				SourceId: "some-app",
-			})
-			if err != nil {
-				return 0
-			}
-
-			return len(resp.Envelopes)
-		}
-		Eventually(f, 5).Should(Equal(1))
-		Expect(dopplerLis.Close()).To(Succeed())
-	})
-
 	It("limits the number of allowed connections", func() {
 		doppler, _, dopplerLis := setupDoppler()
 
@@ -162,43 +130,27 @@ var _ = Describe("Start", func() {
 
 	Describe("draining", func() {
 		It("Stops accepting new connections", func() {
-			doppler, _, dopplerLis := setupDoppler()
-
-			go func() {
-				for {
-					doppler.ContainerMetricsOutput.Err <- nil
-					doppler.ContainerMetricsOutput.Resp <- &plumbing.ContainerMetricsResponse{
-						Payload: [][]byte{buildContainerMetric()},
-					}
-				}
+			_, _, dopplerLis := setupDoppler()
+			defer func() {
+				Expect(dopplerLis.Close()).To(Succeed())
 			}()
 
 			egressAddr, rlp := setupRLP(dopplerLis, "127.0.0.1:0")
 
-			egressClient, cleanup := setupRLPQueryClient(egressAddr)
+			egressClient, cleanup := setupRLPClient(egressAddr)
 			defer cleanup()
 
+			var egressStream v2.Egress_ReceiverClient
 			Eventually(func() error {
-				ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-				defer cancel()
-
-				_, err := egressClient.ContainerMetrics(ctx, &v2.ContainerMetricRequest{
-					SourceId: "some-id",
-				})
+				var err error
+				egressStream, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{})
 				return err
-			}, 10).ShouldNot(HaveOccurred())
+			}, 5).ShouldNot(HaveOccurred())
 
 			rlp.Stop()
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-
-			_, err := egressClient.ContainerMetrics(ctx, &v2.ContainerMetricRequest{
-				SourceId: "some-id",
-			})
+			_, err := egressClient.Receiver(context.Background(), &v2.EgressRequest{})
 			Expect(err).To(HaveOccurred())
-			Expect(ctx.Done()).ToNot(BeClosed())
-			Expect(dopplerLis.Close()).To(Succeed())
 		})
 
 		It("Drains the envelopes", func() {
@@ -370,28 +322,6 @@ func setupRLPBatchedStream(egressAddr string) (v2.Egress_BatchedReceiverClient, 
 	}, 5).ShouldNot(HaveOccurred())
 
 	return egressStream, cleanup
-}
-
-func setupRLPQueryClient(egressAddr string) (v2.EgressQueryClient, func()) {
-	ingressTLSCredentials, err := plumbing.NewClientCredentials(
-		testservers.Cert("reverselogproxy.crt"),
-		testservers.Cert("reverselogproxy.key"),
-		testservers.Cert("loggregator-ca.crt"),
-		"reverselogproxy",
-	)
-	Expect(err).ToNot(HaveOccurred())
-
-	conn, err := grpc.Dial(
-		egressAddr,
-		grpc.WithTransportCredentials(ingressTLSCredentials),
-	)
-	Expect(err).ToNot(HaveOccurred())
-
-	egressClient := v2.NewEgressQueryClient(conn)
-
-	return egressClient, func() {
-		Expect(conn.Close()).To(Succeed())
-	}
 }
 
 type spyDopplerV2 struct {

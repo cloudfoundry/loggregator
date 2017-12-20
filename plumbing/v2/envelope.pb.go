@@ -31,7 +31,7 @@ var Log_Type_value = map[string]int32{
 func (x Log_Type) String() string {
 	return proto.EnumName(Log_Type_name, int32(x))
 }
-func (Log_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptor3, []int{3, 0} }
+func (Log_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptor2, []int{3, 0} }
 
 type Envelope struct {
 	Timestamp      int64             `protobuf:"varint,1,opt,name=timestamp" json:"timestamp,omitempty"`
@@ -51,7 +51,7 @@ type Envelope struct {
 func (m *Envelope) Reset()                    { *m = Envelope{} }
 func (m *Envelope) String() string            { return proto.CompactTextString(m) }
 func (*Envelope) ProtoMessage()               {}
-func (*Envelope) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
+func (*Envelope) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
 
 type isEnvelope_Message interface {
 	isEnvelope_Message()
@@ -294,7 +294,7 @@ type EnvelopeBatch struct {
 func (m *EnvelopeBatch) Reset()                    { *m = EnvelopeBatch{} }
 func (m *EnvelopeBatch) String() string            { return proto.CompactTextString(m) }
 func (*EnvelopeBatch) ProtoMessage()               {}
-func (*EnvelopeBatch) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
+func (*EnvelopeBatch) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{1} }
 
 func (m *EnvelopeBatch) GetBatch() []*Envelope {
 	if m != nil {
@@ -314,7 +314,7 @@ type Value struct {
 func (m *Value) Reset()                    { *m = Value{} }
 func (m *Value) String() string            { return proto.CompactTextString(m) }
 func (*Value) ProtoMessage()               {}
-func (*Value) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{2} }
+func (*Value) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{2} }
 
 type isValue_Data interface {
 	isValue_Data()
@@ -449,7 +449,7 @@ type Log struct {
 func (m *Log) Reset()                    { *m = Log{} }
 func (m *Log) String() string            { return proto.CompactTextString(m) }
 func (*Log) ProtoMessage()               {}
-func (*Log) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{3} }
+func (*Log) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{3} }
 
 func (m *Log) GetPayload() []byte {
 	if m != nil {
@@ -474,7 +474,7 @@ type Counter struct {
 func (m *Counter) Reset()                    { *m = Counter{} }
 func (m *Counter) String() string            { return proto.CompactTextString(m) }
 func (*Counter) ProtoMessage()               {}
-func (*Counter) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{4} }
+func (*Counter) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{4} }
 
 func (m *Counter) GetName() string {
 	if m != nil {
@@ -504,7 +504,7 @@ type Gauge struct {
 func (m *Gauge) Reset()                    { *m = Gauge{} }
 func (m *Gauge) String() string            { return proto.CompactTextString(m) }
 func (*Gauge) ProtoMessage()               {}
-func (*Gauge) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{5} }
+func (*Gauge) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{5} }
 
 func (m *Gauge) GetMetrics() map[string]*GaugeValue {
 	if m != nil {
@@ -521,7 +521,7 @@ type GaugeValue struct {
 func (m *GaugeValue) Reset()                    { *m = GaugeValue{} }
 func (m *GaugeValue) String() string            { return proto.CompactTextString(m) }
 func (*GaugeValue) ProtoMessage()               {}
-func (*GaugeValue) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{6} }
+func (*GaugeValue) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{6} }
 
 func (m *GaugeValue) GetUnit() string {
 	if m != nil {
@@ -546,7 +546,7 @@ type Timer struct {
 func (m *Timer) Reset()                    { *m = Timer{} }
 func (m *Timer) String() string            { return proto.CompactTextString(m) }
 func (*Timer) ProtoMessage()               {}
-func (*Timer) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{7} }
+func (*Timer) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{7} }
 
 func (m *Timer) GetName() string {
 	if m != nil {
@@ -577,7 +577,7 @@ type Event struct {
 func (m *Event) Reset()                    { *m = Event{} }
 func (m *Event) String() string            { return proto.CompactTextString(m) }
 func (*Event) ProtoMessage()               {}
-func (*Event) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{8} }
+func (*Event) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{8} }
 
 func (m *Event) GetTitle() string {
 	if m != nil {
@@ -606,9 +606,9 @@ func init() {
 	proto.RegisterEnum("loggregator.v2.Log_Type", Log_Type_name, Log_Type_value)
 }
 
-func init() { proto.RegisterFile("envelope.proto", fileDescriptor3) }
+func init() { proto.RegisterFile("envelope.proto", fileDescriptor2) }
 
-var fileDescriptor3 = []byte{
+var fileDescriptor2 = []byte{
 	// 634 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x94, 0x61, 0x6b, 0xd4, 0x4c,
 	0x10, 0xc7, 0x2f, 0x4d, 0xd2, 0x34, 0xd3, 0x3e, 0xf7, 0x94, 0x6d, 0xc5, 0x70, 0x0a, 0x1e, 0x79,
