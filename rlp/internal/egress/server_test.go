@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/context"
@@ -21,7 +20,7 @@ import (
 var _ = Describe("Server", func() {
 	Describe("Receiver()", func() {
 		It("errors when the sender cannot send the envelope", func() {
-			receiverServer := &spyReceiverServer{err: errors.New("Oh No!")}
+			receiverServer := newSpyReceiverServer(errors.New("Oh No!"))
 			receiver := newSpyReceiver(1)
 			server := egress.NewServer(
 				receiver,
@@ -38,7 +37,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("streams data when there are envelopes", func() {
-			receiverServer := &spyReceiverServer{}
+			receiverServer := newSpyReceiverServer(nil)
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
 				receiver,
@@ -51,11 +50,11 @@ var _ = Describe("Server", func() {
 
 			err := server.Receiver(&v2.EgressRequest{}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(receiverServer.EnvelopeCount).Should(Equal(int64(10)))
+			Eventually(receiverServer.envelopes).Should(HaveLen(10))
 		})
 
 		It("forwards the request as an egress batch request", func() {
-			receiverServer := &spyReceiverServer{}
+			receiverServer := newSpyReceiverServer(nil)
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
 				receiver,
@@ -84,7 +83,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("ignores the legacy selector if both old and new selectors are used", func() {
-			receiverServer := &spyReceiverServer{}
+			receiverServer := newSpyReceiverServer(nil)
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
 				receiver,
@@ -114,7 +113,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("upgrades LegacySelector to Selector if no Selectors are present", func() {
-			receiverServer := &spyReceiverServer{}
+			receiverServer := newSpyReceiverServer(nil)
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
 				receiver,
@@ -140,35 +139,8 @@ var _ = Describe("Server", func() {
 			Expect(req.Selectors[0].SourceId).To(Equal("legacy-source-id"))
 		})
 
-		It("upgrades LegacySelector to Selector if no Selectors are present for batching", func() {
-			receiverServer := &spyBatchedReceiverServer{}
-			receiver := newSpyReceiver(10)
-			server := egress.NewServer(
-				receiver,
-				testhelper.NewMetricClient(),
-				newSpyHealthRegistrar(),
-				context.TODO(),
-				1,
-				time.Nanosecond,
-			)
-
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{
-				LegacySelector: &v2.Selector{
-					SourceId: "legacy-source-id",
-				},
-			}, receiverServer)
-			Expect(err).ToNot(HaveOccurred())
-
-			var req *v2.EgressBatchRequest
-			Expect(receiver.requests).Should(Receive(&req))
-			Expect(req.Selectors).Should(HaveLen(1))
-
-			Expect(req.LegacySelector).To(BeNil())
-			Expect(req.Selectors[0].SourceId).To(Equal("legacy-source-id"))
-		})
-
 		It("closes the receiver when the context is canceled", func() {
-			receiverServer := &spyReceiverServer{}
+			receiverServer := newSpyReceiverServer(nil)
 			receiver := newSpyReceiver(1000000000)
 			ctx, cancel := context.WithCancel(context.TODO())
 			server := egress.NewServer(
@@ -193,9 +165,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("cancels the context when Receiver exits", func() {
-			receiverServer := &spyReceiverServer{
-				err: errors.New("Oh no!"),
-			}
+			receiverServer := newSpyReceiverServer(errors.New("Oh no!"))
 			receiver := newSpyReceiver(100000000)
 			server := egress.NewServer(
 				receiver,
@@ -216,7 +186,7 @@ var _ = Describe("Server", func() {
 		Describe("Metrics", func() {
 			It("emits 'egress' metric for each envelope", func() {
 				metricClient := testhelper.NewMetricClient()
-				receiverServer := &spyReceiverServer{}
+				receiverServer := newSpyReceiverServer(nil)
 				receiver := newSpyReceiver(10)
 				server := egress.NewServer(
 					receiver,
@@ -237,9 +207,8 @@ var _ = Describe("Server", func() {
 
 			It("emits 'dropped' metric for each envelope", func() {
 				metricClient := testhelper.NewMetricClient()
-				receiverServer := &spyReceiverServer{
-					wait: make(chan struct{}),
-				}
+				receiverServer := newSpyReceiverServer(nil)
+				receiverServer.wait = make(chan struct{})
 				defer receiverServer.stopWait()
 
 				receiver := newSpyReceiver(1000000)
@@ -262,7 +231,7 @@ var _ = Describe("Server", func() {
 
 		Describe("health monitoring", func() {
 			It("increments and decrements subscription count", func() {
-				receiverServer := &spyReceiverServer{}
+				receiverServer := newSpyReceiverServer(nil)
 				receiver := newSpyReceiver(1000000000)
 
 				health := newSpyHealthRegistrar()
@@ -291,7 +260,7 @@ var _ = Describe("Server", func() {
 
 	Describe("BatchedReceiver()", func() {
 		It("errors when the sender cannot send the envelope", func() {
-			receiverServer := &spyBatchedReceiverServer{err: errors.New("Oh No!")}
+			receiverServer := newSpyBatchedReceiverServer(errors.New("Oh No!"))
 			server := egress.NewServer(
 				&stubReceiver{},
 				testhelper.NewMetricClient(),
@@ -307,7 +276,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("streams data when there are envelopes", func() {
-			receiverServer := &spyBatchedReceiverServer{}
+			receiverServer := newSpyBatchedReceiverServer(nil)
 			server := egress.NewServer(
 				newSpyReceiver(10),
 				testhelper.NewMetricClient(),
@@ -320,11 +289,11 @@ var _ = Describe("Server", func() {
 			err := server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
 
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(receiverServer.EnvelopeCount).Should(Equal(int64(10)))
+			Eventually(receiverServer.envelopes).Should(HaveLen(10))
 		})
 
 		It("ignores the legacy selector if both old and new selectors are used", func() {
-			receiverServer := &spyBatchedReceiverServer{}
+			receiverServer := newSpyBatchedReceiverServer(nil)
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
 				receiver,
@@ -353,8 +322,35 @@ var _ = Describe("Server", func() {
 			Expect(req.LegacySelector).To(BeNil())
 		})
 
+		It("upgrades LegacySelector to Selector if no Selectors are present for batching", func() {
+			receiverServer := newSpyBatchedReceiverServer(nil)
+			receiver := newSpyReceiver(10)
+			server := egress.NewServer(
+				receiver,
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+			)
+
+			err := server.BatchedReceiver(&v2.EgressBatchRequest{
+				LegacySelector: &v2.Selector{
+					SourceId: "legacy-source-id",
+				},
+			}, receiverServer)
+			Expect(err).ToNot(HaveOccurred())
+
+			var req *v2.EgressBatchRequest
+			Expect(receiver.requests).Should(Receive(&req))
+			Expect(req.Selectors).Should(HaveLen(1))
+
+			Expect(req.LegacySelector).To(BeNil())
+			Expect(req.Selectors[0].SourceId).To(Equal("legacy-source-id"))
+		})
+
 		It("passes the egress batch request through", func() {
-			receiverServer := &spyBatchedReceiverServer{}
+			receiverServer := newSpyBatchedReceiverServer(nil)
 			receiver := newSpyReceiver(10)
 			server := egress.NewServer(
 				receiver,
@@ -379,7 +375,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("closes the receiver when the context is canceled", func() {
-			receiverServer := &spyBatchedReceiverServer{}
+			receiverServer := newSpyBatchedReceiverServer(nil)
 			receiver := newSpyReceiver(1000000000)
 
 			ctx, cancel := context.WithCancel(context.TODO())
@@ -405,9 +401,7 @@ var _ = Describe("Server", func() {
 		})
 
 		It("cancels the context when Receiver exits", func() {
-			receiverServer := &spyBatchedReceiverServer{
-				err: errors.New("Oh no!"),
-			}
+			receiverServer := newSpyBatchedReceiverServer(errors.New("Oh no!"))
 			receiver := newSpyReceiver(100000000)
 			server := egress.NewServer(
 				receiver,
@@ -439,7 +433,7 @@ var _ = Describe("Server", func() {
 
 				err := server.BatchedReceiver(
 					&v2.EgressBatchRequest{},
-					&spyBatchedReceiverServer{},
+					newSpyBatchedReceiverServer(nil),
 				)
 
 				Expect(err).ToNot(HaveOccurred())
@@ -450,7 +444,7 @@ var _ = Describe("Server", func() {
 
 			It("emits 'dropped' metric for each envelope", func() {
 				metricClient := testhelper.NewMetricClient()
-				receiverServer := &spyBatchedReceiverServer{}
+				receiverServer := newSpyBatchedReceiverServer(nil)
 				receiver := newSpyReceiver(1000000)
 
 				server := egress.NewServer(
@@ -484,7 +478,7 @@ var _ = Describe("Server", func() {
 
 				go server.BatchedReceiver(
 					&v2.EgressBatchRequest{},
-					&spyBatchedReceiverServer{},
+					newSpyBatchedReceiverServer(nil),
 				)
 
 				Eventually(func() float64 {
@@ -502,29 +496,36 @@ var _ = Describe("Server", func() {
 })
 
 type spyReceiverServer struct {
-	err           error
-	envelopeCount int64
-	wait          chan struct{}
+	err       error
+	wait      chan struct{}
+	envelopes chan *v2.Envelope
 
 	grpc.ServerStream
+}
+
+func newSpyReceiverServer(err error) *spyReceiverServer {
+	return &spyReceiverServer{
+		envelopes: make(chan *v2.Envelope, 100),
+		err:       err,
+	}
 }
 
 func (*spyReceiverServer) Context() context.Context {
 	return context.Background()
 }
 
-func (s *spyReceiverServer) Send(*v2.Envelope) error {
+func (s *spyReceiverServer) Send(e *v2.Envelope) error {
 	if s.wait != nil {
 		<-s.wait
 		return nil
 	}
 
-	atomic.AddInt64(&s.envelopeCount, 1)
-	return s.err
-}
+	select {
+	case s.envelopes <- e:
+	default:
+	}
 
-func (s *spyReceiverServer) EnvelopeCount() int64 {
-	return atomic.LoadInt64(&s.envelopeCount)
+	return s.err
 }
 
 func (s *spyReceiverServer) stopWait() {
@@ -532,10 +533,17 @@ func (s *spyReceiverServer) stopWait() {
 }
 
 type spyBatchedReceiverServer struct {
-	err           error
-	envelopeCount int64
+	err       error
+	envelopes chan *v2.Envelope
 
 	grpc.ServerStream
+}
+
+func newSpyBatchedReceiverServer(err error) *spyBatchedReceiverServer {
+	return &spyBatchedReceiverServer{
+		envelopes: make(chan *v2.Envelope, 1000),
+		err:       err,
+	}
 }
 
 func (*spyBatchedReceiverServer) Context() context.Context {
@@ -543,12 +551,14 @@ func (*spyBatchedReceiverServer) Context() context.Context {
 }
 
 func (s *spyBatchedReceiverServer) Send(b *v2.EnvelopeBatch) error {
-	atomic.AddInt64(&s.envelopeCount, int64(len(b.Batch)))
-	return s.err
-}
+	for _, e := range b.GetBatch() {
+		select {
+		case s.envelopes <- e:
+		default:
+		}
+	}
 
-func (s *spyBatchedReceiverServer) EnvelopeCount() int64 {
-	return atomic.LoadInt64(&s.envelopeCount)
+	return s.err
 }
 
 type spyReceiver struct {

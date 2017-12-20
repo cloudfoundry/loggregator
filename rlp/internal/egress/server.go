@@ -154,7 +154,6 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 		}
 	}()
 
-	// TODO: Error if given legacy selector and selector
 	rx, err := s.receiver.Subscribe(ctx, r)
 	// TODO Add coverage for this error case
 	if err != nil {
