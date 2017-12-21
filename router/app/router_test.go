@@ -38,7 +38,7 @@ var _ = Describe("Router", func() {
 
 	Describe("Selectors", func() {
 		Context("when no selectors are given", func() {
-			FIt("should not egress any envelopes", func() {
+			It("should not egress any envelopes", func() {
 				grpc := app.GRPC{
 					CAFile:   testservers.Cert("loggregator-ca.crt"),
 					CertFile: testservers.Cert("doppler.crt"),
