@@ -9,6 +9,8 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
 	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"golang.org/x/net/context"
 )
@@ -90,6 +92,15 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
 	r.LegacySelector = nil
 
+	if len(r.Selectors) == 0 {
+		return grpc.Errorf(codes.InvalidArgument, "Selectors cannot be empty")
+	}
+	for _, s := range r.Selectors {
+		if s.Message == nil {
+			return grpc.Errorf(codes.InvalidArgument, "Selectors must have a Message")
+		}
+	}
+
 	go func() {
 		select {
 		case <-s.ctx.Done():
@@ -101,7 +112,6 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 
 	br := &v2.EgressBatchRequest{
 		ShardId:          r.GetShardId(),
-		LegacySelector:   r.GetLegacySelector(),
 		Selectors:        r.GetSelectors(),
 		UsePreferredTags: r.GetUsePreferredTags(),
 	}
@@ -138,6 +148,15 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 
 	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
 	r.LegacySelector = nil
+
+	if len(r.Selectors) == 0 {
+		return grpc.Errorf(codes.InvalidArgument, "Selectors cannot be empty")
+	}
+	for _, s := range r.Selectors {
+		if s.Message == nil {
+			return grpc.Errorf(codes.InvalidArgument, "Selectors must have a Message")
+		}
+	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()

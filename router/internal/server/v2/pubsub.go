@@ -55,15 +55,13 @@ func (p *PubSub) Subscribe(
 	req *loggregator_v2.EgressBatchRequest,
 	setter DataSetter,
 ) (unsubscribe func()) {
-	if len(req.GetSelectors()) < 1 {
-		return p.pubsub.Subscribe(
-			subscription("", setter),
-			pubsub.WithShardID(req.GetShardId()),
-		)
-	}
-
 	var unsubscribes []func()
 	for _, s := range req.GetSelectors() {
+		// Selector.Message is required.
+		if s.Message == nil {
+			continue
+		}
+
 		unsubscribes = append(unsubscribes, p.pubsub.Subscribe(
 			subscription(s.GetSourceId(), setter),
 			pubsub.WithShardID(req.GetShardId()),

@@ -31,9 +31,40 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{}, receiverServer)
+			err := server.Receiver(&v2.EgressRequest{
+				Selectors: []*v2.Selector{
+					{
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
 
 			Expect(err).To(Equal(io.ErrUnexpectedEOF))
+		})
+
+		It("errors when there aren't any Message selectors", func() {
+			receiverServer := newSpyReceiverServer(nil)
+			receiver := newSpyReceiver(1)
+			server := egress.NewServer(
+				receiver,
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+			)
+
+			err := server.Receiver(&v2.EgressRequest{}, receiverServer)
+
+			Expect(err).To(HaveOccurred())
+
+			err = server.Receiver(&v2.EgressRequest{
+				Selectors: []*v2.Selector{{}},
+			}, receiverServer)
+
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("streams data when there are envelopes", func() {
@@ -48,7 +79,15 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{}, receiverServer)
+			err := server.Receiver(&v2.EgressRequest{
+				Selectors: []*v2.Selector{
+					{
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(receiverServer.envelopes).Should(HaveLen(10))
 		})
@@ -68,7 +107,12 @@ var _ = Describe("Server", func() {
 			egressReq := &v2.EgressRequest{
 				ShardId: "a-shard-id",
 				Selectors: []*v2.Selector{
-					{SourceId: "a-source-id"},
+					{
+						SourceId: "a-source-id",
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
 				},
 				UsePreferredTags: true,
 			}
@@ -99,8 +143,18 @@ var _ = Describe("Server", func() {
 					SourceId: "source-id",
 				},
 				Selectors: []*v2.Selector{
-					{SourceId: "source-id"},
-					{SourceId: "other-source-id"},
+					{
+						SourceId: "source-id",
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+					{
+						SourceId: "other-source-id",
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
@@ -127,6 +181,9 @@ var _ = Describe("Server", func() {
 			err := server.Receiver(&v2.EgressRequest{
 				LegacySelector: &v2.Selector{
 					SourceId: "legacy-source-id",
+					Message: &v2.Selector_Log{
+						Log: &v2.LogSelector{},
+					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
@@ -153,7 +210,16 @@ var _ = Describe("Server", func() {
 			)
 
 			go func() {
-				err := server.Receiver(&v2.EgressRequest{}, receiverServer)
+				err := server.Receiver(&v2.EgressRequest{
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
+
 				Expect(err).ToNot(HaveOccurred())
 			}()
 
@@ -176,7 +242,15 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			go server.Receiver(&v2.EgressRequest{}, receiverServer)
+			go server.Receiver(&v2.EgressRequest{
+				Selectors: []*v2.Selector{
+					{
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
 
 			var ctx context.Context
 			Eventually(receiver.ctx).Should(Receive(&ctx))
@@ -227,7 +301,13 @@ var _ = Describe("Server", func() {
 
 			It("sends deprecated tags", func() {
 				err := server.Receiver(&v2.EgressRequest{
-					Selectors:        []*v2.Selector{},
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
 					UsePreferredTags: false,
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
@@ -246,7 +326,13 @@ var _ = Describe("Server", func() {
 
 			It("sends preferred tags", func() {
 				err := server.Receiver(&v2.EgressRequest{
-					Selectors:        []*v2.Selector{},
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
 					UsePreferredTags: true,
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
@@ -276,7 +362,13 @@ var _ = Describe("Server", func() {
 				}
 
 				err := server.Receiver(&v2.EgressRequest{
-					Selectors:        []*v2.Selector{},
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
 					UsePreferredTags: true,
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
@@ -296,7 +388,13 @@ var _ = Describe("Server", func() {
 				}
 
 				err := server.Receiver(&v2.EgressRequest{
-					Selectors:        []*v2.Selector{},
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
 					UsePreferredTags: false,
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
@@ -322,7 +420,15 @@ var _ = Describe("Server", func() {
 					time.Nanosecond,
 				)
 
-				err := server.Receiver(&v2.EgressRequest{}, receiverServer)
+				err := server.Receiver(&v2.EgressRequest{
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
 
 				Expect(err).ToNot(HaveOccurred())
 				Eventually(func() uint64 {
@@ -346,7 +452,15 @@ var _ = Describe("Server", func() {
 					time.Nanosecond,
 				)
 
-				go server.Receiver(&v2.EgressRequest{}, receiverServer)
+				go server.Receiver(&v2.EgressRequest{
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
 
 				Eventually(func() uint64 {
 					return metricClient.GetDelta("dropped")
@@ -368,7 +482,15 @@ var _ = Describe("Server", func() {
 					1,
 					time.Nanosecond,
 				)
-				go server.Receiver(&v2.EgressRequest{}, receiverServer)
+				go server.Receiver(&v2.EgressRequest{
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
 
 				Eventually(func() float64 {
 					return health.Get("subscriptionCount")
@@ -395,9 +517,39 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+			err := server.BatchedReceiver(&v2.EgressBatchRequest{
+				Selectors: []*v2.Selector{
+					{
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
 
 			Expect(err).To(Equal(io.ErrUnexpectedEOF))
+		})
+
+		It("errors when there aren't any Message selectors", func() {
+			receiverServer := newSpyBatchedReceiverServer(nil)
+			server := egress.NewServer(
+				&stubReceiver{},
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+			)
+
+			err := server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+
+			Expect(err).To(HaveOccurred())
+
+			err = server.BatchedReceiver(&v2.EgressBatchRequest{
+				Selectors: []*v2.Selector{{}},
+			}, receiverServer)
+
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("streams data when there are envelopes", func() {
@@ -411,7 +563,15 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+			err := server.BatchedReceiver(&v2.EgressBatchRequest{
+				Selectors: []*v2.Selector{
+					{
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
 
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(receiverServer.envelopes).Should(HaveLen(10))
@@ -432,10 +592,23 @@ var _ = Describe("Server", func() {
 			err := server.BatchedReceiver(&v2.EgressBatchRequest{
 				LegacySelector: &v2.Selector{
 					SourceId: "source-id",
+					Message: &v2.Selector_Log{
+						Log: &v2.LogSelector{},
+					},
 				},
 				Selectors: []*v2.Selector{
-					{SourceId: "source-id"},
-					{SourceId: "other-source-id"},
+					{
+						SourceId: "source-id",
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+					{
+						SourceId: "other-source-id",
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
@@ -462,6 +635,9 @@ var _ = Describe("Server", func() {
 			err := server.BatchedReceiver(&v2.EgressBatchRequest{
 				LegacySelector: &v2.Selector{
 					SourceId: "legacy-source-id",
+					Message: &v2.Selector_Log{
+						Log: &v2.LogSelector{},
+					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
@@ -489,7 +665,12 @@ var _ = Describe("Server", func() {
 			expectedReq := &v2.EgressBatchRequest{
 				ShardId: "a-shard-id",
 				Selectors: []*v2.Selector{
-					{SourceId: "a-source-id"},
+					{
+						SourceId: "a-source-id",
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
 				},
 				UsePreferredTags: true,
 			}
@@ -514,7 +695,15 @@ var _ = Describe("Server", func() {
 			)
 
 			go func() {
-				err := server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+				err := server.BatchedReceiver(&v2.EgressBatchRequest{
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 			}()
 
@@ -536,7 +725,15 @@ var _ = Describe("Server", func() {
 				1,
 				time.Nanosecond,
 			)
-			go server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+			go server.BatchedReceiver(&v2.EgressBatchRequest{
+				Selectors: []*v2.Selector{
+					{
+						Message: &v2.Selector_Log{
+							Log: &v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
 
 			var ctx context.Context
 			Eventually(receiver.ctx).Should(Receive(&ctx))
@@ -587,8 +784,14 @@ var _ = Describe("Server", func() {
 
 			It("sends deprecated tags", func() {
 				err := server.BatchedReceiver(&v2.EgressBatchRequest{
-					Selectors:        []*v2.Selector{},
 					UsePreferredTags: false,
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -606,8 +809,14 @@ var _ = Describe("Server", func() {
 
 			It("sends preferred tags", func() {
 				err := server.BatchedReceiver(&v2.EgressBatchRequest{
-					Selectors:        []*v2.Selector{},
 					UsePreferredTags: true,
+					Selectors: []*v2.Selector{
+						{
+							Message: &v2.Selector_Log{
+								Log: &v2.LogSelector{},
+							},
+						},
+					},
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -638,7 +847,15 @@ var _ = Describe("Server", func() {
 				)
 
 				err := server.BatchedReceiver(
-					&v2.EgressBatchRequest{},
+					&v2.EgressBatchRequest{
+						Selectors: []*v2.Selector{
+							{
+								Message: &v2.Selector_Log{
+									Log: &v2.LogSelector{},
+								},
+							},
+						},
+					},
 					newSpyBatchedReceiverServer(nil),
 				)
 
@@ -661,7 +878,17 @@ var _ = Describe("Server", func() {
 					1,
 					time.Nanosecond,
 				)
-				go server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+				go server.BatchedReceiver(
+					&v2.EgressBatchRequest{
+						Selectors: []*v2.Selector{
+							{
+								Message: &v2.Selector_Log{
+									Log: &v2.LogSelector{},
+								},
+							},
+						},
+					}, receiverServer,
+				)
 
 				Eventually(func() uint64 {
 					return metricClient.GetDelta("dropped")
@@ -683,7 +910,15 @@ var _ = Describe("Server", func() {
 				)
 
 				go server.BatchedReceiver(
-					&v2.EgressBatchRequest{},
+					&v2.EgressBatchRequest{
+						Selectors: []*v2.Selector{
+							{
+								Message: &v2.Selector_Log{
+									Log: &v2.LogSelector{},
+								},
+							},
+						},
+					},
 					newSpyBatchedReceiverServer(nil),
 				)
 

@@ -30,7 +30,15 @@ var _ = Describe("V2 Egress", func() {
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			receiverClient, err := egressClient.BatchedReceiver(ctx, &loggregator_v2.EgressBatchRequest{})
+			receiverClient, err := egressClient.BatchedReceiver(ctx, &loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
+						},
+					},
+				},
+			})
 			Expect(err).ToNot(HaveOccurred())
 			defer receiverClient.CloseSend()
 
@@ -93,7 +101,15 @@ var _ = Describe("V2 Egress", func() {
 		It("receives envelope batches", func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			receiverClient, err := egressClient.BatchedReceiver(ctx, &loggregator_v2.EgressBatchRequest{})
+			receiverClient, err := egressClient.BatchedReceiver(ctx, &loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
+						},
+					},
+				},
+			})
 			Expect(err).ToNot(HaveOccurred())
 			defer receiverClient.CloseSend()
 

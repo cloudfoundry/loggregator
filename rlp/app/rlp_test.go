@@ -113,6 +113,9 @@ var _ = Describe("Start", func() {
 			_, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{
 				LegacySelector: &v2.Selector{
 					SourceId: "some-id",
+					Message: &v2.Selector_Log{
+						Log: &v2.LogSelector{},
+					},
 				},
 			})
 			return err
@@ -304,7 +307,15 @@ func setupRLPStream(egressAddr string) (v2.Egress_ReceiverClient, func()) {
 	var egressStream v2.Egress_ReceiverClient
 	Eventually(func() error {
 		var err error
-		egressStream, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{})
+		egressStream, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{
+			Selectors: []*v2.Selector{
+				{
+					Message: &v2.Selector_Log{
+						Log: &v2.LogSelector{},
+					},
+				},
+			},
+		})
 		return err
 	}, 5).ShouldNot(HaveOccurred())
 
@@ -317,7 +328,15 @@ func setupRLPBatchedStream(egressAddr string) (v2.Egress_BatchedReceiverClient, 
 	var egressStream v2.Egress_BatchedReceiverClient
 	Eventually(func() error {
 		var err error
-		egressStream, err = egressClient.BatchedReceiver(context.Background(), &v2.EgressBatchRequest{})
+		egressStream, err = egressClient.BatchedReceiver(context.Background(), &v2.EgressBatchRequest{
+			Selectors: []*v2.Selector{
+				{
+					Message: &v2.Selector_Log{
+						Log: &v2.LogSelector{},
+					},
+				},
+			},
+		})
 		return err
 	}, 5).ShouldNot(HaveOccurred())
 

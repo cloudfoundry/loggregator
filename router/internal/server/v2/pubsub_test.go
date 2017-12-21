@@ -20,15 +20,33 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("writes each envelope to each subscription", func() {
-		emptyReq := &loggregator_v2.EgressBatchRequest{}
+		req := &loggregator_v2.EgressBatchRequest{
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
+		}
 		setter1 := newSpyDataSetter()
 		setter2 := newSpyDataSetter()
 
-		pubsub.Subscribe(emptyReq, setter1)
-		pubsub.Subscribe(emptyReq, setter2)
+		pubsub.Subscribe(req, setter1)
+		pubsub.Subscribe(req, setter2)
 
-		pubsub.Publish(&loggregator_v2.Envelope{SourceId: "1"})
-		pubsub.Publish(&loggregator_v2.Envelope{SourceId: "2"})
+		pubsub.Publish(&loggregator_v2.Envelope{
+			SourceId: "1",
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{},
+			},
+		})
+		pubsub.Publish(&loggregator_v2.Envelope{
+			SourceId: "2",
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{},
+			},
+		})
 
 		Expect(setter1.envelopes).To(HaveLen(2))
 		Expect(setter1.envelopes[0].SourceId).To(Equal("1"))
@@ -40,15 +58,28 @@ var _ = Describe("PubSub", func() {
 	})
 
 	It("can unsubscribe from the subscription", func() {
-		emptyReq := &loggregator_v2.EgressBatchRequest{}
+		req := &loggregator_v2.EgressBatchRequest{
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
+		}
 		setter1 := newSpyDataSetter()
 		setter2 := newSpyDataSetter()
 
-		_ = pubsub.Subscribe(emptyReq, setter1)
-		unsubscribe := pubsub.Subscribe(emptyReq, setter2)
+		_ = pubsub.Subscribe(req, setter1)
+		unsubscribe := pubsub.Subscribe(req, setter2)
 		unsubscribe()
 
-		pubsub.Publish(&loggregator_v2.Envelope{SourceId: "1"})
+		pubsub.Publish(&loggregator_v2.Envelope{
+			SourceId: "1",
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{},
+			},
+		})
 
 		Expect(setter1.envelopes).To(HaveLen(1))
 		Expect(setter1.envelopes[0].SourceId).To(Equal("1"))
@@ -63,9 +94,23 @@ var _ = Describe("PubSub", func() {
 
 		reqA := &loggregator_v2.EgressBatchRequest{
 			ShardId: "shard-id-A",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
 		}
 		reqB := &loggregator_v2.EgressBatchRequest{
 			ShardId: "shard-id-B",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
 		}
 
 		pubsub.Subscribe(reqA, setter1)
@@ -73,7 +118,12 @@ var _ = Describe("PubSub", func() {
 		pubsub.Subscribe(reqB, setter3)
 
 		for i := 0; i < 10; i++ {
-			pubsub.Publish(&loggregator_v2.Envelope{SourceId: "1"})
+			pubsub.Publish(&loggregator_v2.Envelope{
+				SourceId: "1",
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{},
+				},
+			})
 		}
 
 		Expect(setter1.envelopes).To(Or(HaveLen(0), HaveLen(10)))
@@ -125,29 +175,18 @@ var _ = Describe("PubSub", func() {
 			}, &loggregator_v2.Envelope_Event{}),
 		)
 
-		It("selects all types with no selector", func() {
-			req := &loggregator_v2.EgressBatchRequest{}
-			setter := newSpyDataSetter()
-
-			pubsub.Subscribe(req, setter)
-			publishAllTypes(pubsub, "some-id")
-
-			Expect(setter.envelopes).To(HaveLen(5))
-		})
-
-		It("selects by source ID", func() {
+		It("selects no types with no envelope type selector", func() {
 			req := &loggregator_v2.EgressBatchRequest{
 				Selectors: []*loggregator_v2.Selector{
-					{SourceId: "a"},
+					{SourceId: "some-id"},
 				},
 			}
 			setter := newSpyDataSetter()
 
 			pubsub.Subscribe(req, setter)
-			publishAllTypes(pubsub, "a")
-			publishAllTypes(pubsub, "b")
+			publishAllTypes(pubsub, "some-id")
 
-			Expect(setter.envelopes).To(HaveLen(5))
+			Expect(setter.envelopes).To(HaveLen(0))
 		})
 
 		It("supports multiple selectors", func() {
@@ -225,7 +264,18 @@ var _ = Describe("PubSub", func() {
 			req2 := &loggregator_v2.EgressBatchRequest{
 				ShardId: "a-shard-id",
 				Selectors: []*loggregator_v2.Selector{
-					{SourceId: "a"},
+					{
+						SourceId: "a",
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
+						},
+					},
+					{
+						SourceId: "a",
+						Message: &loggregator_v2.Selector_Counter{
+							Counter: &loggregator_v2.CounterSelector{},
+						},
+					},
 				},
 			}
 
@@ -239,7 +289,7 @@ var _ = Describe("PubSub", func() {
 			publishAllTypes(pubsub, "b")
 
 			Expect(setter1.envelopes).To(HaveLen(2))
-			Expect(setter2.envelopes).To(HaveLen(5))
+			Expect(setter2.envelopes).To(HaveLen(2))
 		})
 	})
 })
