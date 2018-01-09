@@ -261,6 +261,7 @@ func initV2Metrics(c *Config) *metricemitter.Client {
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(credentials)),
 		metricemitter.WithOrigin("loggregator.doppler"),
 		metricemitter.WithPulseInterval(batchInterval),
+		metricemitter.WithSourceID("doppler"),
 	)
 	if err != nil {
 		log.Fatalf("Could not configure metric emitter: %s", err)

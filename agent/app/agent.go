@@ -88,6 +88,7 @@ func (a *Agent) Start() {
 		metricemitter.WithOrigin("loggregator.metron"),
 		metricemitter.WithDeployment(a.config.Deployment, a.config.Job, a.config.Index),
 		metricemitter.WithPulseInterval(batchInterval),
+		metricemitter.WithSourceID("metron"),
 	)
 	if err != nil {
 		log.Fatalf("Could not configure metric emitter: %s", err)

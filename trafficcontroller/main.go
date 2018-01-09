@@ -40,6 +40,7 @@ func main() {
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(credentials)),
 		metricemitter.WithOrigin("loggregator.trafficcontroller"),
 		metricemitter.WithPulseInterval(conf.MetricEmitterInterval),
+		metricemitter.WithSourceID("traffic_controller"),
 	)
 	if err != nil {
 		log.Fatalf("Couldn't connect to metric emitter: %s", err)
