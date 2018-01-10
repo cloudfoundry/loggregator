@@ -15,11 +15,11 @@ import (
 
 var _ = Describe("IngressServer", func() {
 	var (
-		v1Buf           *diodes.ManyToOneEnvelope
-		v2Buf           *diodes.ManyToOneEnvelopeV2
-		mockSender      *mockDopplerIngress_SenderServer
-		mockBatchSender *mockBatcherSenderServer
-		healthRegistrar *SpyHealthRegistrar
+		v1Buf                *diodes.ManyToOneEnvelope
+		v2Buf                *diodes.ManyToOneEnvelopeV2
+		spySenderServer      *spyIngressSender
+		spyBatchSenderServer *spyIngressBatchSender
+		healthRegistrar      *SpyHealthRegistrar
 
 		ingestor *v2.IngressServer
 	)
@@ -27,8 +27,8 @@ var _ = Describe("IngressServer", func() {
 	BeforeEach(func() {
 		v1Buf = diodes.NewManyToOneEnvelope(5, nil)
 		v2Buf = diodes.NewManyToOneEnvelopeV2(5, nil)
-		mockSender = newMockDopplerIngress_SenderServer()
-		mockBatchSender = newMockBatcherSenderServer()
+		spyBatchSenderServer = newSpyIngressBatchSender(false)
+		spySenderServer = newSpyIngressSender(false)
 		healthRegistrar = newSpyHealthRegistrar()
 
 		ingestor = v2.NewIngressServer(
@@ -40,30 +40,25 @@ var _ = Describe("IngressServer", func() {
 	})
 
 	It("writes batches to the data setter", func() {
-		mockBatchSender.RecvOutput.Ret0 <- &plumbing.EnvelopeBatch{
-			Batch: []*plumbing.Envelope{
-				{
-					Message: &plumbing.Envelope_Log{
-						Log: &plumbing.Log{
-							Payload: []byte("hello-1"),
-						},
+		spyBatchSenderServer.recvCount = 1
+		spyBatchSenderServer.envelopes = []*plumbing.Envelope{
+			{
+				Message: &plumbing.Envelope_Log{
+					Log: &plumbing.Log{
+						Payload: []byte("hello-1"),
 					},
 				},
-				{
-					Message: &plumbing.Envelope_Log{
-						Log: &plumbing.Log{
-							Payload: []byte("hello-2"),
-						},
+			},
+			{
+				Message: &plumbing.Envelope_Log{
+					Log: &plumbing.Log{
+						Payload: []byte("hello-2"),
 					},
 				},
 			},
 		}
 
-		mockBatchSender.RecvOutput.Ret1 <- nil
-		mockBatchSender.RecvOutput.Ret0 <- nil
-		mockBatchSender.RecvOutput.Ret1 <- io.EOF
-
-		ingestor.BatchSender(mockBatchSender)
+		ingestor.BatchSender(spyBatchSenderServer)
 
 		_, ok := v1Buf.TryNext()
 		Expect(ok).To(BeTrue())
@@ -76,19 +71,17 @@ var _ = Describe("IngressServer", func() {
 		Expect(ok).To(BeTrue())
 	})
 
-	It("writes a single envelope to the data setter", func() {
-		mockSender.RecvOutput.Ret0 <- &plumbing.Envelope{
+	It("writes a single envelope to the data setter via stream", func() {
+		spySenderServer.recvCount = 1
+		spySenderServer.envelope = &plumbing.Envelope{
 			Message: &plumbing.Envelope_Log{
 				Log: &plumbing.Log{
 					Payload: []byte("hello"),
 				},
 			},
 		}
-		mockSender.RecvOutput.Ret1 <- nil
-		mockSender.RecvOutput.Ret0 <- nil
-		mockSender.RecvOutput.Ret1 <- io.EOF
 
-		ingestor.Sender(mockSender)
+		ingestor.Sender(spySenderServer)
 
 		_, ok := v1Buf.TryNext()
 		Expect(ok).To(BeTrue())
@@ -97,12 +90,10 @@ var _ = Describe("IngressServer", func() {
 	})
 
 	It("throws invalid envelopes on the ground", func() {
-		mockSender.RecvOutput.Ret0 <- &plumbing.Envelope{}
-		mockSender.RecvOutput.Ret1 <- nil
-		mockSender.RecvOutput.Ret0 <- nil
-		mockSender.RecvOutput.Ret1 <- io.EOF
+		spySenderServer.recvCount = 1
+		spySenderServer.envelope = &plumbing.Envelope{}
 
-		ingestor.Sender(mockSender)
+		ingestor.Sender(spySenderServer)
 		_, ok := v1Buf.TryNext()
 		Expect(ok).ToNot(BeTrue())
 	})
@@ -110,14 +101,14 @@ var _ = Describe("IngressServer", func() {
 	Describe("health monitoring", func() {
 		Describe("Sender()", func() {
 			It("increments and decrements the number of ingress streams", func() {
-				go ingestor.Sender(mockSender)
+				spySenderServer = newSpyIngressSender(true)
+				go ingestor.Sender(spySenderServer)
 
 				Eventually(func() float64 {
 					return healthRegistrar.Get("ingressStreamCount")
 				}).Should(Equal(1.0))
 
-				mockSender.RecvOutput.Ret0 <- nil
-				mockSender.RecvOutput.Ret1 <- io.EOF
+				close(spySenderServer.done)
 
 				Eventually(func() float64 {
 					return healthRegistrar.Get("ingressStreamCount")
@@ -127,14 +118,14 @@ var _ = Describe("IngressServer", func() {
 
 		Describe("BatchSender()", func() {
 			It("increments and decrements the number of ingress streams", func() {
-				go ingestor.BatchSender(mockBatchSender)
+				spyBatchSenderServer = newSpyIngressBatchSender(true)
+				go ingestor.BatchSender(spyBatchSenderServer)
 
 				Eventually(func() float64 {
 					return healthRegistrar.Get("ingressStreamCount")
 				}).Should(Equal(1.0))
 
-				mockBatchSender.RecvOutput.Ret0 <- nil
-				mockBatchSender.RecvOutput.Ret1 <- io.EOF
+				close(spyBatchSenderServer.done)
 
 				Eventually(func() float64 {
 					return healthRegistrar.Get("ingressStreamCount")
@@ -171,4 +162,68 @@ func (s *SpyHealthRegistrar) Get(name string) float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.values[name]
+}
+
+type spyIngressBatchSender struct {
+	plumbing.Ingress_BatchSenderServer
+
+	envelopes []*plumbing.Envelope
+	recvCount int
+	done      chan struct{}
+}
+
+func newSpyIngressBatchSender(blockingRecv bool) *spyIngressBatchSender {
+	done := make(chan struct{})
+
+	if !blockingRecv {
+		close(done)
+	}
+
+	return &spyIngressBatchSender{
+		done: done,
+	}
+}
+
+func (s *spyIngressBatchSender) Recv() (*plumbing.EnvelopeBatch, error) {
+	<-s.done
+
+	if s.recvCount == 0 {
+		return nil, io.EOF
+	}
+
+	s.recvCount--
+
+	return &plumbing.EnvelopeBatch{Batch: s.envelopes}, nil
+}
+
+type spyIngressSender struct {
+	plumbing.Ingress_SenderServer
+
+	envelope  *plumbing.Envelope
+	recvCount int
+	done      chan struct{}
+}
+
+func newSpyIngressSender(blockingRecv bool) *spyIngressSender {
+	done := make(chan struct{})
+
+	if !blockingRecv {
+		close(done)
+	}
+
+	return &spyIngressSender{
+		done: done,
+	}
+}
+
+func (s *spyIngressSender) Recv() (*plumbing.Envelope, error) {
+	<-s.done
+
+	if s.recvCount == 0 {
+		return nil, io.EOF
+	}
+
+	s.recvCount--
+
+	return s.envelope, nil
 }

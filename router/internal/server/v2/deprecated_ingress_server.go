@@ -5,43 +5,28 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 )
 
-// HealthRegistrar describes the health interface for keeping track of various
-// values.
-type HealthRegistrar interface {
-	Inc(name string)
-	Dec(name string)
-}
-
-// MetricClient creates new CounterMetrics to be emitted periodically.
-type MetricClient interface {
-	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
-}
-
-type IngressServer struct {
+type DeprecatedIngressServer struct {
 	v1Buf         *diodes.ManyToOneEnvelope
 	v2Buf         *diodes.ManyToOneEnvelopeV2
 	ingressMetric *metricemitter.Counter
 	health        HealthRegistrar
 }
 
-func NewIngressServer(
+func NewDeprecatedIngressServer(
 	v1Buf *diodes.ManyToOneEnvelope,
 	v2Buf *diodes.ManyToOneEnvelopeV2,
 	metricClient MetricClient,
 	health HealthRegistrar,
-) *IngressServer {
+) *DeprecatedIngressServer {
 	// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
 	// envelopes from Metron on Doppler's v2 gRPC server
 	ingressMetric := metricClient.NewCounter("ingress",
 		metricemitter.WithVersion(2, 0),
 	)
 
-	return &IngressServer{
+	return &DeprecatedIngressServer{
 		v1Buf:         v1Buf,
 		v2Buf:         v2Buf,
 		ingressMetric: ingressMetric,
@@ -49,14 +34,7 @@ func NewIngressServer(
 	}
 }
 
-func (i IngressServer) Send(
-	_ context.Context,
-	_ *plumbing.EnvelopeBatch,
-) (*plumbing.SendResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "this endpoint is not yet implemented")
-}
-
-func (i IngressServer) BatchSender(s plumbing.Ingress_BatchSenderServer) error {
+func (i DeprecatedIngressServer) BatchSender(s plumbing.DopplerIngress_BatchSenderServer) error {
 	i.health.Inc("ingressStreamCount")
 	defer i.health.Dec("ingressStreamCount")
 
@@ -84,7 +62,7 @@ func (i IngressServer) BatchSender(s plumbing.Ingress_BatchSenderServer) error {
 
 // TODO Remove the Sender method onces we are certain all Metrons are using
 // the BatchSender method
-func (i IngressServer) Sender(s plumbing.Ingress_SenderServer) error {
+func (i DeprecatedIngressServer) Sender(s plumbing.DopplerIngress_SenderServer) error {
 	i.health.Inc("ingressStreamCount")
 	defer i.health.Dec("ingressStreamCount")
 

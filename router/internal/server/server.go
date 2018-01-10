@@ -28,7 +28,8 @@ func NewServer(
 	port uint16,
 	v1Ingress plumbingv1.DopplerIngestorServer,
 	v1Egress plumbingv1.DopplerServer,
-	v2Ingress plumbingv2.DopplerIngressServer,
+	v2DeprecatedIngress plumbingv2.DopplerIngressServer,
+	v2Ingress plumbingv2.IngressServer,
 	v2Egress plumbingv2.EgressServer,
 	srvOpts ...grpc.ServerOption,
 ) (*Server, error) {
@@ -42,7 +43,8 @@ func NewServer(
 	grpcServer := grpc.NewServer(srvOpts...)
 	plumbingv1.RegisterDopplerIngestorServer(grpcServer, v1Ingress)
 	plumbingv1.RegisterDopplerServer(grpcServer, v1Egress)
-	plumbingv2.RegisterDopplerIngressServer(grpcServer, v2Ingress)
+	plumbingv2.RegisterDopplerIngressServer(grpcServer, v2DeprecatedIngress)
+	plumbingv2.RegisterIngressServer(grpcServer, v2Ingress)
 	plumbingv2.RegisterEgressServer(grpcServer, v2Egress)
 
 	s := &Server{

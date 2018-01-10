@@ -162,6 +162,12 @@ func (d *Router) Start() {
 		100*time.Millisecond,
 		100,
 	)
+	v2DeprecatedIngress := v2.NewDeprecatedIngressServer(
+		v1Buf,
+		v2Buf,
+		metricClient,
+		healthRegistrar,
+	)
 	v2Ingress := v2.NewIngressServer(
 		v1Buf,
 		v2Buf,
@@ -195,6 +201,7 @@ func (d *Router) Start() {
 		d.c.GRPC.Port,
 		v1Ingress,
 		v1Egress,
+		v2DeprecatedIngress,
 		v2Ingress,
 		v2Egress,
 		grpc.Creds(credentials.NewTLS(tlsConfig)),
