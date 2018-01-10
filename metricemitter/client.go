@@ -129,6 +129,7 @@ func (c *Client) EmitEvent(title, body string) {
 
 	err = senderClient.Send(&v2.Envelope{
 		Timestamp: time.Now().UnixNano(),
+		SourceId:  c.sourceID,
 		Message: &v2.Envelope_Event{
 			Event: &v2.Event{
 				Title: title,

@@ -80,6 +80,7 @@ var _ = Describe("Emitter Client", func() {
 			grpcServer.addr,
 			metricemitter.WithGRPCDialOptions(grpc.WithInsecure()),
 			metricemitter.WithPulseInterval(50*time.Millisecond),
+			metricemitter.WithSourceID("some-id"),
 		)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -90,6 +91,7 @@ var _ = Describe("Emitter Client", func() {
 		Expect(e.GetEvent().GetTitle()).To(Equal("some-title"))
 		Expect(e.GetEvent().GetBody()).To(Equal("some-body"))
 		Expect(e.GetTimestamp()).To(BeNumerically("~", time.Now().UnixNano(), time.Second))
+		Expect(e.GetSourceId()).To(Equal("some-id"))
 	})
 
 	It("does not try to emit an event when loggregator is not available", func() {
