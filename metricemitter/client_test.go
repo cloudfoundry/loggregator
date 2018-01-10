@@ -89,6 +89,7 @@ var _ = Describe("Emitter Client", func() {
 		Eventually(grpcServer.envelopes).Should(Receive(&e))
 		Expect(e.GetEvent().GetTitle()).To(Equal("some-title"))
 		Expect(e.GetEvent().GetBody()).To(Equal("some-body"))
+		Expect(e.GetTimestamp()).To(BeNumerically("~", time.Now().UnixNano(), time.Second))
 	})
 
 	It("does not try to emit an event when loggregator is not available", func() {

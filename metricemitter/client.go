@@ -128,6 +128,7 @@ func (c *Client) EmitEvent(title, body string) {
 	defer senderClient.CloseAndRecv()
 
 	err = senderClient.Send(&v2.Envelope{
+		Timestamp: time.Now().UnixNano(),
 		Message: &v2.Envelope_Event{
 			Event: &v2.Event{
 				Title: title,
