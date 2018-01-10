@@ -22,7 +22,7 @@ type SpyConnector struct {
 	called_ int
 }
 
-func (s *SpyConnector) Connect() (io.Closer, plumbing.DopplerIngress_BatchSenderClient, error) {
+func (s *SpyConnector) Connect() (io.Closer, plumbing.Ingress_BatchSenderClient, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.called_++

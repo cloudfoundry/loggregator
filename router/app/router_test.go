@@ -26,7 +26,9 @@ var _ = Describe("Router", func() {
 			CertFile: testservers.Cert("doppler.crt"),
 			KeyFile:  testservers.Cert("doppler.key"),
 		}
-		router = app.NewRouter(grpcConfig)
+		router = app.NewRouter(grpcConfig,
+			app.WithMetricReporting("localhost:0", app.Agent{}, 100000),
+		)
 		router.Start()
 	})
 

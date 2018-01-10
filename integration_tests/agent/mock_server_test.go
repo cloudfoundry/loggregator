@@ -19,7 +19,7 @@ type Server struct {
 	server   *grpc.Server
 	listener net.Listener
 	V1       *mockDopplerIngestorServerV1
-	V2       *mockDopplerIngressServerV2
+	V2       *mockIngressServerV2
 }
 
 func NewServer() (*Server, error) {
@@ -33,7 +33,7 @@ func NewServer() (*Server, error) {
 	}
 	transportCreds := credentials.NewTLS(tlsConfig)
 	mockDopplerV1 := newMockDopplerIngestorServerV1()
-	mockDopplerV2 := newMockDopplerIngressServerV2()
+	mockDopplerV2 := newMockIngressServerV2()
 
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -42,7 +42,7 @@ func NewServer() (*Server, error) {
 
 	s := grpc.NewServer(grpc.Creds(transportCreds))
 	plumbing.RegisterDopplerIngestorServer(s, mockDopplerV1)
-	v2.RegisterDopplerIngressServer(s, mockDopplerV2)
+	v2.RegisterIngressServer(s, mockDopplerV2)
 
 	go s.Serve(lis)
 

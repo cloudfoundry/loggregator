@@ -20,7 +20,9 @@ type SpyFetcher struct {
 	Client loggregator_v2.DopplerIngress_BatchSenderClient
 }
 
-func (f *SpyFetcher) Fetch(addr string) (conn io.Closer, client loggregator_v2.DopplerIngress_BatchSenderClient, err error) {
+func (f *SpyFetcher) Fetch(
+	addr string,
+) (conn io.Closer, client loggregator_v2.Ingress_BatchSenderClient, err error) {
 	f.Addr = addr
 	return f.Closer, f.Client, nil
 }

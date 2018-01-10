@@ -96,7 +96,12 @@ var _ = Describe("Agent", func() {
 			}
 		}()
 
-		var rx v2.DopplerIngress_BatchSenderServer
+		var rx v2.Ingress_BatchSenderServer
+		numDopplerConnections := 5
+		for i := 0; i < numDopplerConnections; i++ {
+			Eventually(consumerServer.V2.BatchSenderInput.Arg0).Should(Receive(&rx))
+			consumerServer.V2.BatchSenderOutput.Ret0 <- nil
+		}
 		Eventually(consumerServer.V2.BatchSenderInput.Arg0).Should(Receive(&rx))
 
 		var envBatch *v2.EnvelopeBatch
@@ -116,7 +121,7 @@ var _ = Describe("Agent", func() {
 
 			return nil
 		}
-		Eventually(f).ShouldNot(BeNil())
+		Eventually(f, 10).ShouldNot(BeNil())
 
 		Expect(len(envBatch.Batch)).ToNot(BeZero())
 

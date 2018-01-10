@@ -12,7 +12,7 @@ import (
 )
 
 type Connector interface {
-	Connect() (io.Closer, plumbing.DopplerIngress_BatchSenderClient, error)
+	Connect() (io.Closer, plumbing.Ingress_BatchSenderClient, error)
 }
 
 type v2GRPCConn struct {
