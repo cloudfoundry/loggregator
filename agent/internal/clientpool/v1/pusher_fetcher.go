@@ -36,7 +36,6 @@ func (p *PusherFetcher) Fetch(addr string) (io.Closer, plumbing.DopplerIngestor_
 	p.health.Inc("dopplerConnections")
 
 	client := plumbing.NewDopplerIngestorClient(conn)
-	log.Printf("successfully connected to doppler %s", addr)
 
 	pusher, err := client.Pusher(context.Background())
 	if err != nil {
