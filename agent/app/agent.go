@@ -94,7 +94,7 @@ func (a *Agent) Start() {
 		log.Fatalf("Could not configure metric emitter: %s", err)
 	}
 
-	healthRegistrar := startHealthEndpoint(fmt.Sprintf(":%d", a.config.HealthEndpointPort))
+	healthRegistrar := startHealthEndpoint(fmt.Sprintf("localhost:%d", a.config.HealthEndpointPort))
 
 	appV1 := NewV1App(a.config, healthRegistrar, clientCreds, metricClient)
 	go appV1.Start()
