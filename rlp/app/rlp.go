@@ -68,7 +68,7 @@ func NewRLP(m MetricClient, opts ...RLPOption) *RLP {
 		egressServerOpts:     []grpc.ServerOption{},
 		maxEgressConnections: 500,
 		metricClient:         m,
-		healthAddr:           "localhost:33333",
+		healthAddr:           "localhost:0",
 		ctx:                  ctx,
 		ctxCancel:            cancel,
 	}
