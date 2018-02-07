@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"code.cloudfoundry.org/loggregator/diodes"
-	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
+	"code.cloudfoundry.org/loggregator/metricemitter"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
@@ -33,7 +33,7 @@ var _ = Describe("DeprecatedIngressServer", func() {
 		ingestor = v2.NewDeprecatedIngressServer(
 			v1Buf,
 			v2Buf,
-			testhelper.NewMetricClient(),
+			metricemitter.NewCounter("ingress", "doppler"),
 			healthRegistrar,
 		)
 	})

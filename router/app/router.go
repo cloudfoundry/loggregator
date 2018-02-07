@@ -121,11 +121,16 @@ func (d *Router) Start() {
 	// Egress  (gRPC v1 and v2)
 	//------------------------------
 
-	// metric-documentation-v2: (loggregator.doppler.dropped) Number of envelopes dropped by the
-	// diode inbound from metron
+	// metric-documentation-v2: (loggregator.doppler.dropped) Number of
+	// envelopes dropped by the diode inbound from metron
 	droppedMetric := metricClient.NewCounter("dropped",
 		metricemitter.WithVersion(2, 0),
 		metricemitter.WithTags(map[string]string{"direction": "ingress"}),
+	)
+	// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
+	// envelopes from Metron on Doppler's v2 gRPC server
+	ingressMetric := metricClient.NewCounter("ingress",
+		metricemitter.WithVersion(2, 0),
 	)
 
 	v1Buf := diodes.NewManyToOneEnvelope(10000, gendiodes.AlertFunc(func(missed int) {
@@ -149,7 +154,7 @@ func (d *Router) Start() {
 	v1Ingress := v1.NewIngestorServer(
 		v1Buf,
 		v2Buf,
-		metricClient,
+		ingressMetric,
 		healthRegistrar,
 	)
 	v1Router := v1.NewRouter()
@@ -165,13 +170,13 @@ func (d *Router) Start() {
 	v2DeprecatedIngress := v2.NewDeprecatedIngressServer(
 		v1Buf,
 		v2Buf,
-		metricClient,
+		ingressMetric,
 		healthRegistrar,
 	)
 	v2Ingress := v2.NewIngressServer(
 		v1Buf,
 		v2Buf,
-		metricClient,
+		ingressMetric,
 		healthRegistrar,
 	)
 	v2PubSub := v2.NewPubSub()

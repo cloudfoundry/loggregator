@@ -29,13 +29,9 @@ type IngestorGRPCServer interface {
 func NewIngestorServer(
 	v1Buf *diodes.ManyToOneEnvelope,
 	v2Buf *diodes.ManyToOneEnvelopeV2,
-	metricClient MetricClient,
+	ingressMetric *metricemitter.Counter,
 	health HealthRegistrar,
 ) *IngestorServer {
-	ingressMetric := metricClient.NewCounter("ingress",
-		metricemitter.WithVersion(2, 0),
-	)
-
 	return &IngestorServer{
 		v1Buf:         v1Buf,
 		v2Buf:         v2Buf,

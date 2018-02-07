@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"code.cloudfoundry.org/loggregator/diodes"
-	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
+	"code.cloudfoundry.org/loggregator/metricemitter"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
@@ -21,7 +21,8 @@ var _ = Describe("IngressServer", func() {
 		spyBatchSenderServer *spyIngressBatchSender
 		healthRegistrar      *SpyHealthRegistrar
 
-		ingestor *v2.IngressServer
+		ingressMetric *metricemitter.Counter
+		ingestor      *v2.IngressServer
 	)
 
 	BeforeEach(func() {
@@ -31,10 +32,12 @@ var _ = Describe("IngressServer", func() {
 		spySenderServer = newSpyIngressSender(false)
 		healthRegistrar = newSpyHealthRegistrar()
 
+		ingressMetric = metricemitter.NewCounter("ingress", "doppler")
+
 		ingestor = v2.NewIngressServer(
 			v1Buf,
 			v2Buf,
-			testhelper.NewMetricClient(),
+			ingressMetric,
 			healthRegistrar,
 		)
 	})
@@ -69,6 +72,8 @@ var _ = Describe("IngressServer", func() {
 		Expect(ok).To(BeTrue())
 		_, ok = v2Buf.TryNext()
 		Expect(ok).To(BeTrue())
+
+		Expect(ingressMetric.GetDelta()).To(Equal(uint64(2)))
 	})
 
 	It("writes a single envelope to the data setter via stream", func() {
@@ -87,6 +92,8 @@ var _ = Describe("IngressServer", func() {
 		Expect(ok).To(BeTrue())
 		_, ok = v2Buf.TryNext()
 		Expect(ok).To(BeTrue())
+
+		Expect(ingressMetric.GetDelta()).To(Equal(uint64(1)))
 	})
 
 	It("throws invalid envelopes on the ground", func() {

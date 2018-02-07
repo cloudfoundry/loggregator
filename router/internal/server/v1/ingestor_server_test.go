@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	"code.cloudfoundry.org/loggregator/diodes"
-	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
+	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
@@ -47,15 +47,22 @@ var _ = Describe("IngestorServer", func() {
 		connCloser      io.Closer
 		dopplerClient   plumbing.DopplerIngestorClient
 		healthRegistrar *SpyHealthRegistrar
+		ingressMetric   *metricemitter.Counter
 	)
 
 	BeforeEach(func() {
 		var grpcAddr string
 		v1Buf = diodes.NewManyToOneEnvelope(5, nil)
 		v2Buf = diodes.NewManyToOneEnvelopeV2(5, nil)
+		ingressMetric = metricemitter.NewCounter("ingress", "doppler")
 		healthRegistrar = newSpyHealthRegistrar()
 
-		manager = v1.NewIngestorServer(v1Buf, v2Buf, testhelper.NewMetricClient(), healthRegistrar)
+		manager = v1.NewIngestorServer(
+			v1Buf,
+			v2Buf,
+			ingressMetric,
+			healthRegistrar,
+		)
 		server, grpcAddr = startGRPCServer(manager)
 		dopplerClient, connCloser = establishClient(grpcAddr)
 	})
@@ -81,6 +88,7 @@ var _ = Describe("IngestorServer", func() {
 			return env
 		}
 		Eventually(f).Should(Equal(someEnvelope))
+		Expect(ingressMetric.GetDelta()).To(BeNumerically(">", 0))
 	})
 
 	It("reads envelopes from ingestor client into the v2 Buffer", func() {

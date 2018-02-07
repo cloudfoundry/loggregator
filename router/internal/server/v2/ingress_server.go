@@ -32,15 +32,9 @@ type IngressServer struct {
 func NewIngressServer(
 	v1Buf *diodes.ManyToOneEnvelope,
 	v2Buf *diodes.ManyToOneEnvelopeV2,
-	metricClient MetricClient,
+	ingressMetric *metricemitter.Counter,
 	health HealthRegistrar,
 ) *IngressServer {
-	// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
-	// envelopes from Metron on Doppler's v2 gRPC server
-	ingressMetric := metricClient.NewCounter("ingress",
-		metricemitter.WithVersion(2, 0),
-	)
-
 	return &IngressServer{
 		v1Buf:         v1Buf,
 		v2Buf:         v2Buf,
