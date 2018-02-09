@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/go-batching"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 // V2EnvelopeBatcher batches slices of bytes.
@@ -16,24 +16,24 @@ type V2EnvelopeBatcher struct {
 // batch may be partial if the interval lapsed instead of filling the batch.
 type V2EnvelopeWriter interface {
 	// Write submits the batch.
-	Write(batch []*v2.Envelope)
+	Write(batch []*loggregator_v2.Envelope)
 }
 
 // V2EnvelopeWriterFunc is an adapter to allow ordinary functions to be a
 // V2EnvelopeWriter.
-type V2EnvelopeWriterFunc func(batch []*v2.Envelope)
+type V2EnvelopeWriterFunc func(batch []*loggregator_v2.Envelope)
 
 // Write implements V2EnvelopeWriter.
-func (f V2EnvelopeWriterFunc) Write(batch []*v2.Envelope) {
+func (f V2EnvelopeWriterFunc) Write(batch []*loggregator_v2.Envelope) {
 	f(batch)
 }
 
 // NewV2EnvelopeBatcher creates a new ByteBatcher.
 func NewV2EnvelopeBatcher(size int, interval time.Duration, writer V2EnvelopeWriter) *V2EnvelopeBatcher {
 	genWriter := batching.WriterFunc(func(batch []interface{}) {
-		envBatch := make([]*v2.Envelope, 0, len(batch))
+		envBatch := make([]*loggregator_v2.Envelope, 0, len(batch))
 		for _, element := range batch {
-			envBatch = append(envBatch, element.(*v2.Envelope))
+			envBatch = append(envBatch, element.(*loggregator_v2.Envelope))
 		}
 		writer.Write(envBatch)
 	})
@@ -46,6 +46,6 @@ func NewV2EnvelopeBatcher(size int, interval time.Duration, writer V2EnvelopeWri
 // until either the batch has been filled, or the interval has lapsed. NOTE:
 // Write is *not* thread safe and should be called by the same goroutine that
 // calls Flush.
-func (b *V2EnvelopeBatcher) Write(data *v2.Envelope) {
+func (b *V2EnvelopeBatcher) Write(data *loggregator_v2.Envelope) {
 	b.Batcher.Write(data)
 }

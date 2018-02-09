@@ -1,8 +1,8 @@
 package conversion_test
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -15,17 +15,17 @@ import (
 var _ = Describe("LogMessage", func() {
 	Context("given a v2 envelope", func() {
 		It("converts messages to a v1 envelope", func() {
-			envelope := &v2.Envelope{
+			envelope := &loggregator_v2.Envelope{
 				Timestamp:  99,
 				SourceId:   "uuid",
 				InstanceId: "test-source-instance",
-				DeprecatedTags: map[string]*v2.Value{
-					"source_type": {&v2.Value_Text{"test-source-type"}},
+				DeprecatedTags: map[string]*loggregator_v2.Value{
+					"source_type": {&loggregator_v2.Value_Text{"test-source-type"}},
 				},
-				Message: &v2.Envelope_Log{
-					Log: &v2.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("Hello World"),
-						Type:    v2.Log_OUT,
+						Type:    loggregator_v2.Log_OUT,
 					},
 				},
 			}
@@ -67,22 +67,22 @@ var _ = Describe("LogMessage", func() {
 				},
 			}
 
-			expectedV2Envelope := &v2.Envelope{
+			expectedV2Envelope := &loggregator_v2.Envelope{
 				SourceId:   "uuid",
 				InstanceId: "test-source-instance",
-				DeprecatedTags: map[string]*v2.Value{
-					"__v1_type":   {&v2.Value_Text{"LogMessage"}},
-					"source_type": {&v2.Value_Text{"test-source-type"}},
-					"origin":      {&v2.Value_Text{"some-origin"}},
-					"deployment":  {&v2.Value_Text{"some-deployment"}},
-					"job":         {&v2.Value_Text{"some-job"}},
-					"index":       {&v2.Value_Text{"some-index"}},
-					"ip":          {&v2.Value_Text{"some-ip"}},
+				DeprecatedTags: map[string]*loggregator_v2.Value{
+					"__v1_type":   {&loggregator_v2.Value_Text{"LogMessage"}},
+					"source_type": {&loggregator_v2.Value_Text{"test-source-type"}},
+					"origin":      {&loggregator_v2.Value_Text{"some-origin"}},
+					"deployment":  {&loggregator_v2.Value_Text{"some-deployment"}},
+					"job":         {&loggregator_v2.Value_Text{"some-job"}},
+					"index":       {&loggregator_v2.Value_Text{"some-index"}},
+					"ip":          {&loggregator_v2.Value_Text{"some-ip"}},
 				},
-				Message: &v2.Envelope_Log{
-					Log: &v2.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("Hello World"),
-						Type:    v2.Log_OUT,
+						Type:    loggregator_v2.Log_OUT,
 					},
 				},
 			}
@@ -103,7 +103,7 @@ var _ = Describe("LogMessage", func() {
 				LogMessage: &events.LogMessage{},
 			}
 
-			expectedV2Envelope := &v2.Envelope{
+			expectedV2Envelope := &loggregator_v2.Envelope{
 				SourceId: "some-deployment/some-job",
 			}
 

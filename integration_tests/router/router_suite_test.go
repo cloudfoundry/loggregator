@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/integration_tests/binaries"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -136,7 +137,7 @@ func dopplerIngressV1Client(addr string) (func(), plumbing.DopplerIngestor_Pushe
 	}, pusherClient
 }
 
-func dopplerIngressV2Client(addr string) (func(), loggregator_v2.DopplerIngress_SenderClient) {
+func dopplerIngressV2Client(addr string) (func(), plumbingv2.DopplerIngress_SenderClient) {
 	creds, err := plumbing.NewClientCredentials(
 		testservers.Cert("doppler.crt"),
 		testservers.Cert("doppler.key"),
@@ -147,10 +148,10 @@ func dopplerIngressV2Client(addr string) (func(), loggregator_v2.DopplerIngress_
 
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	Expect(err).ToNot(HaveOccurred())
-	client := loggregator_v2.NewDopplerIngressClient(conn)
+	client := plumbingv2.NewDopplerIngressClient(conn)
 
 	var (
-		senderClient loggregator_v2.DopplerIngress_SenderClient
+		senderClient plumbingv2.DopplerIngress_SenderClient
 		cancel       func()
 	)
 	f := func() func() {
@@ -353,7 +354,7 @@ func primePumpV1(ingressClient plumbing.DopplerIngestor_PusherClient, subscribeC
 	Expect(err).ToNot(HaveOccurred())
 }
 
-func primePumpV2(ingressClient loggregator_v2.DopplerIngress_SenderClient, subscribeClient plumbing.Doppler_SubscribeClient) {
+func primePumpV2(ingressClient plumbingv2.DopplerIngress_SenderClient, subscribeClient plumbing.Doppler_SubscribeClient) {
 	message := buildV2PrimerLogMessage()
 
 	// emit a bunch of primer messages

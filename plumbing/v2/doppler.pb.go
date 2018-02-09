@@ -6,38 +6,17 @@ Package loggregator_v2 is a generated protocol buffer package.
 
 It is generated from these files:
 	doppler.proto
-	egress.proto
-	envelope.proto
-	ingress.proto
 
 It has these top-level messages:
 	SenderResponse
-	EgressRequest
-	EgressBatchRequest
-	Selector
-	LogSelector
-	GaugeSelector
-	CounterSelector
-	TimerSelector
-	EventSelector
-	Envelope
-	EnvelopeBatch
-	Value
-	Log
-	Counter
-	Gauge
-	GaugeValue
-	Timer
-	Event
-	IngressResponse
-	BatchSenderResponse
-	SendResponse
 */
 package loggregator_v2
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import loggregator_v21 "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+import loggregator_v22 "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 
 import (
 	context "golang.org/x/net/context"
@@ -100,7 +79,7 @@ func (c *dopplerIngressClient) Sender(ctx context.Context, opts ...grpc.CallOpti
 }
 
 type DopplerIngress_SenderClient interface {
-	Send(*Envelope) error
+	Send(*loggregator_v21.Envelope) error
 	CloseAndRecv() (*SenderResponse, error)
 	grpc.ClientStream
 }
@@ -109,7 +88,7 @@ type dopplerIngressSenderClient struct {
 	grpc.ClientStream
 }
 
-func (x *dopplerIngressSenderClient) Send(m *Envelope) error {
+func (x *dopplerIngressSenderClient) Send(m *loggregator_v21.Envelope) error {
 	return x.ClientStream.SendMsg(m)
 }
 
@@ -134,8 +113,8 @@ func (c *dopplerIngressClient) BatchSender(ctx context.Context, opts ...grpc.Cal
 }
 
 type DopplerIngress_BatchSenderClient interface {
-	Send(*EnvelopeBatch) error
-	CloseAndRecv() (*BatchSenderResponse, error)
+	Send(*loggregator_v21.EnvelopeBatch) error
+	CloseAndRecv() (*loggregator_v22.BatchSenderResponse, error)
 	grpc.ClientStream
 }
 
@@ -143,15 +122,15 @@ type dopplerIngressBatchSenderClient struct {
 	grpc.ClientStream
 }
 
-func (x *dopplerIngressBatchSenderClient) Send(m *EnvelopeBatch) error {
+func (x *dopplerIngressBatchSenderClient) Send(m *loggregator_v21.EnvelopeBatch) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *dopplerIngressBatchSenderClient) CloseAndRecv() (*BatchSenderResponse, error) {
+func (x *dopplerIngressBatchSenderClient) CloseAndRecv() (*loggregator_v22.BatchSenderResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(BatchSenderResponse)
+	m := new(loggregator_v22.BatchSenderResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -175,7 +154,7 @@ func _DopplerIngress_Sender_Handler(srv interface{}, stream grpc.ServerStream) e
 
 type DopplerIngress_SenderServer interface {
 	SendAndClose(*SenderResponse) error
-	Recv() (*Envelope, error)
+	Recv() (*loggregator_v21.Envelope, error)
 	grpc.ServerStream
 }
 
@@ -187,8 +166,8 @@ func (x *dopplerIngressSenderServer) SendAndClose(m *SenderResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *dopplerIngressSenderServer) Recv() (*Envelope, error) {
-	m := new(Envelope)
+func (x *dopplerIngressSenderServer) Recv() (*loggregator_v21.Envelope, error) {
+	m := new(loggregator_v21.Envelope)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -200,8 +179,8 @@ func _DopplerIngress_BatchSender_Handler(srv interface{}, stream grpc.ServerStre
 }
 
 type DopplerIngress_BatchSenderServer interface {
-	SendAndClose(*BatchSenderResponse) error
-	Recv() (*EnvelopeBatch, error)
+	SendAndClose(*loggregator_v22.BatchSenderResponse) error
+	Recv() (*loggregator_v21.EnvelopeBatch, error)
 	grpc.ServerStream
 }
 
@@ -209,12 +188,12 @@ type dopplerIngressBatchSenderServer struct {
 	grpc.ServerStream
 }
 
-func (x *dopplerIngressBatchSenderServer) SendAndClose(m *BatchSenderResponse) error {
+func (x *dopplerIngressBatchSenderServer) SendAndClose(m *loggregator_v22.BatchSenderResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *dopplerIngressBatchSenderServer) Recv() (*EnvelopeBatch, error) {
-	m := new(EnvelopeBatch)
+func (x *dopplerIngressBatchSenderServer) Recv() (*loggregator_v21.EnvelopeBatch, error) {
+	m := new(loggregator_v21.EnvelopeBatch)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}

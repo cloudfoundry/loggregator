@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"google.golang.org/grpc"
@@ -31,7 +32,7 @@ func NewSenderFetcher(r HealthRegistrar, opts ...grpc.DialOption) *SenderFetcher
 	}
 }
 
-func (p *SenderFetcher) Fetch(addr string) (io.Closer, plumbing.Ingress_BatchSenderClient, error) {
+func (p *SenderFetcher) Fetch(addr string) (io.Closer, loggregator_v2.Ingress_BatchSenderClient, error) {
 	conn, err := grpc.Dial(addr, p.opts...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error dialing ingestor stream to %s: %s", addr, err)
@@ -55,8 +56,8 @@ func (p *SenderFetcher) Fetch(addr string) (io.Closer, plumbing.Ingress_BatchSen
 	return closer, sender, err
 }
 
-func openStream(conn *grpc.ClientConn) (plumbing.Ingress_BatchSenderClient, error) {
-	client := plumbing.NewIngressClient(conn)
+func openStream(conn *grpc.ClientConn) (loggregator_v2.Ingress_BatchSenderClient, error) {
+	client := loggregator_v2.NewIngressClient(conn)
 	sender, err := client.BatchSender(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("error establishing ingestor stream to: %s", err)

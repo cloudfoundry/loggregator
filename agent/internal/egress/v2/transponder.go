@@ -3,17 +3,17 @@ package v2
 import (
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
 type Nexter interface {
-	TryNext() (*v2.Envelope, bool)
+	TryNext() (*loggregator_v2.Envelope, bool)
 }
 
 type Writer interface {
-	Write(msgs []*v2.Envelope) error
+	Write(msgs []*loggregator_v2.Envelope) error
 }
 
 // MetricClient creates new CounterMetrics to be emitted periodically.
@@ -79,7 +79,7 @@ func (t *Transponder) Start() {
 	}
 }
 
-func (t *Transponder) write(batch []*v2.Envelope) {
+func (t *Transponder) write(batch []*loggregator_v2.Envelope) {
 	for _, e := range batch {
 		t.addTags(e)
 	}
@@ -96,17 +96,17 @@ func (t *Transponder) write(batch []*v2.Envelope) {
 	t.egressMetric.Increment(uint64(len(batch)))
 }
 
-func (t *Transponder) addTags(e *v2.Envelope) {
+func (t *Transponder) addTags(e *loggregator_v2.Envelope) {
 	if e.DeprecatedTags == nil {
-		e.DeprecatedTags = make(map[string]*v2.Value)
+		e.DeprecatedTags = make(map[string]*loggregator_v2.Value)
 	}
 
 	// Move non-deprecated tags to deprecated tags. This is required
 	// for backwards compatibility purposes and should be removed once
 	// deprecated tags are fully removed.
 	for k, v := range e.GetTags() {
-		e.DeprecatedTags[k] = &v2.Value{
-			Data: &v2.Value_Text{
+		e.DeprecatedTags[k] = &loggregator_v2.Value{
+			Data: &loggregator_v2.Value_Text{
 				Text: v,
 			},
 		}
@@ -114,8 +114,8 @@ func (t *Transponder) addTags(e *v2.Envelope) {
 
 	for k, v := range t.tags {
 		if _, ok := e.DeprecatedTags[k]; !ok {
-			e.DeprecatedTags[k] = &v2.Value{
-				Data: &v2.Value_Text{
+			e.DeprecatedTags[k] = &loggregator_v2.Value{
+				Data: &loggregator_v2.Value_Text{
 					Text: v,
 				},
 			}

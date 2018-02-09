@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/egress"
 
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
@@ -31,11 +31,11 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{
-				Selectors: []*v2.Selector{
+			err := server.Receiver(&loggregator_v2.EgressRequest{
+				Selectors: []*loggregator_v2.Selector{
 					{
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -56,12 +56,12 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{}, receiverServer)
+			err := server.Receiver(&loggregator_v2.EgressRequest{}, receiverServer)
 
 			Expect(err).To(HaveOccurred())
 
-			err = server.Receiver(&v2.EgressRequest{
-				Selectors: []*v2.Selector{{}},
+			err = server.Receiver(&loggregator_v2.EgressRequest{
+				Selectors: []*loggregator_v2.Selector{{}},
 			}, receiverServer)
 
 			Expect(err).To(HaveOccurred())
@@ -79,11 +79,11 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{
-				Selectors: []*v2.Selector{
+			err := server.Receiver(&loggregator_v2.EgressRequest{
+				Selectors: []*loggregator_v2.Selector{
 					{
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -104,13 +104,13 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			egressReq := &v2.EgressRequest{
+			egressReq := &loggregator_v2.EgressRequest{
 				ShardId: "a-shard-id",
-				Selectors: []*v2.Selector{
+				Selectors: []*loggregator_v2.Selector{
 					{
 						SourceId: "a-source-id",
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -119,7 +119,7 @@ var _ = Describe("Server", func() {
 			err := server.Receiver(egressReq, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
 
-			var egressBatchReq *v2.EgressBatchRequest
+			var egressBatchReq *loggregator_v2.EgressBatchRequest
 			Eventually(receiver.requests).Should(Receive(&egressBatchReq))
 			Expect(egressBatchReq.GetShardId()).To(Equal(egressReq.GetShardId()))
 			Expect(egressBatchReq.GetSelectors()).To(Equal(egressReq.GetSelectors()))
@@ -138,28 +138,28 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{
-				LegacySelector: &v2.Selector{
+			err := server.Receiver(&loggregator_v2.EgressRequest{
+				LegacySelector: &loggregator_v2.Selector{
 					SourceId: "source-id",
 				},
-				Selectors: []*v2.Selector{
+				Selectors: []*loggregator_v2.Selector{
 					{
 						SourceId: "source-id",
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 					{
 						SourceId: "other-source-id",
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
 
-			var req *v2.EgressBatchRequest
+			var req *loggregator_v2.EgressBatchRequest
 			Expect(receiver.requests).Should(Receive(&req))
 			Expect(req.Selectors).Should(HaveLen(2))
 
@@ -178,17 +178,17 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.Receiver(&v2.EgressRequest{
-				LegacySelector: &v2.Selector{
+			err := server.Receiver(&loggregator_v2.EgressRequest{
+				LegacySelector: &loggregator_v2.Selector{
 					SourceId: "legacy-source-id",
-					Message: &v2.Selector_Log{
-						Log: &v2.LogSelector{},
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
 					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
 
-			var req *v2.EgressBatchRequest
+			var req *loggregator_v2.EgressBatchRequest
 			Expect(receiver.requests).Should(Receive(&req))
 			Expect(req.Selectors).Should(HaveLen(1))
 
@@ -210,11 +210,11 @@ var _ = Describe("Server", func() {
 			)
 
 			go func() {
-				err := server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				err := server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -242,11 +242,11 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			go server.Receiver(&v2.EgressRequest{
-				Selectors: []*v2.Selector{
+			go server.Receiver(&loggregator_v2.EgressRequest{
+				Selectors: []*loggregator_v2.Selector{
 					{
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -267,23 +267,23 @@ var _ = Describe("Server", func() {
 			BeforeEach(func() {
 				receiverServer = newSpyReceiverServer(nil)
 				receiver = newSpyReceiver(10)
-				receiver.envelope = &v2.Envelope{
+				receiver.envelope = &loggregator_v2.Envelope{
 					Tags: map[string]string{
 						"a": "value-a",
 					},
-					DeprecatedTags: map[string]*v2.Value{
+					DeprecatedTags: map[string]*loggregator_v2.Value{
 						"b": {
-							Data: &v2.Value_Decimal{
+							Data: &loggregator_v2.Value_Decimal{
 								Decimal: 0.8,
 							},
 						},
 						"c": {
-							Data: &v2.Value_Integer{
+							Data: &loggregator_v2.Value_Integer{
 								Integer: 18,
 							},
 						},
 						"d": {
-							Data: &v2.Value_Text{
+							Data: &loggregator_v2.Value_Text{
 								Text: "value-d",
 							},
 						},
@@ -300,11 +300,11 @@ var _ = Describe("Server", func() {
 			})
 
 			It("sends deprecated tags", func() {
-				err := server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				err := server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -312,7 +312,7 @@ var _ = Describe("Server", func() {
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
-				var e *v2.Envelope
+				var e *loggregator_v2.Envelope
 				Eventually(receiverServer.envelopes).Should(Receive(&e))
 				Expect(e.GetTags()).To(BeEmpty())
 				Expect(e.GetDeprecatedTags()).To(HaveLen(4))
@@ -325,11 +325,11 @@ var _ = Describe("Server", func() {
 			})
 
 			It("sends preferred tags", func() {
-				err := server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				err := server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -337,7 +337,7 @@ var _ = Describe("Server", func() {
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
-				var e *v2.Envelope
+				var e *loggregator_v2.Envelope
 				Eventually(receiverServer.envelopes).Should(Receive(&e))
 				Expect(e.GetDeprecatedTags()).To(BeEmpty())
 				Expect(e.GetTags()).To(HaveLen(4))
@@ -350,22 +350,22 @@ var _ = Describe("Server", func() {
 			})
 
 			It("works if deprecated tags is nil when requesting preferred tags", func() {
-				receiver.envelope = &v2.Envelope{
+				receiver.envelope = &loggregator_v2.Envelope{
 					Tags: nil,
-					DeprecatedTags: map[string]*v2.Value{
+					DeprecatedTags: map[string]*loggregator_v2.Value{
 						"a": {
-							Data: &v2.Value_Text{
+							Data: &loggregator_v2.Value_Text{
 								Text: "value-a",
 							},
 						},
 					},
 				}
 
-				err := server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				err := server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -373,25 +373,25 @@ var _ = Describe("Server", func() {
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
-				var e *v2.Envelope
+				var e *loggregator_v2.Envelope
 				Eventually(receiverServer.envelopes).Should(Receive(&e))
 				Expect(e.GetTags()).To(HaveLen(1))
 				Expect(e.GetDeprecatedTags()).To(BeEmpty())
 			})
 
 			It("works if tags is nil when requesting deprecated tags", func() {
-				receiver.envelope = &v2.Envelope{
+				receiver.envelope = &loggregator_v2.Envelope{
 					DeprecatedTags: nil,
 					Tags: map[string]string{
 						"a": "value-a",
 					},
 				}
 
-				err := server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				err := server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -399,7 +399,7 @@ var _ = Describe("Server", func() {
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
-				var e *v2.Envelope
+				var e *loggregator_v2.Envelope
 				Eventually(receiverServer.envelopes).Should(Receive(&e))
 				Expect(e.GetTags()).To(BeEmpty())
 				Expect(e.GetDeprecatedTags()).To(HaveLen(1))
@@ -420,11 +420,11 @@ var _ = Describe("Server", func() {
 					time.Nanosecond,
 				)
 
-				err := server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				err := server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -452,11 +452,11 @@ var _ = Describe("Server", func() {
 					time.Nanosecond,
 				)
 
-				go server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				go server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -482,11 +482,11 @@ var _ = Describe("Server", func() {
 					1,
 					time.Nanosecond,
 				)
-				go server.Receiver(&v2.EgressRequest{
-					Selectors: []*v2.Selector{
+				go server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -517,11 +517,11 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{
-				Selectors: []*v2.Selector{
+			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
 					{
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -541,12 +541,12 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{}, receiverServer)
+			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, receiverServer)
 
 			Expect(err).To(HaveOccurred())
 
-			err = server.BatchedReceiver(&v2.EgressBatchRequest{
-				Selectors: []*v2.Selector{{}},
+			err = server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{{}},
 			}, receiverServer)
 
 			Expect(err).To(HaveOccurred())
@@ -563,11 +563,11 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{
-				Selectors: []*v2.Selector{
+			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
 					{
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -589,31 +589,31 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{
-				LegacySelector: &v2.Selector{
+			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				LegacySelector: &loggregator_v2.Selector{
 					SourceId: "source-id",
-					Message: &v2.Selector_Log{
-						Log: &v2.LogSelector{},
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
 					},
 				},
-				Selectors: []*v2.Selector{
+				Selectors: []*loggregator_v2.Selector{
 					{
 						SourceId: "source-id",
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 					{
 						SourceId: "other-source-id",
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
 
-			var req *v2.EgressBatchRequest
+			var req *loggregator_v2.EgressBatchRequest
 			Expect(receiver.requests).Should(Receive(&req))
 			Expect(req.Selectors).Should(HaveLen(2))
 
@@ -632,17 +632,17 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			err := server.BatchedReceiver(&v2.EgressBatchRequest{
-				LegacySelector: &v2.Selector{
+			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				LegacySelector: &loggregator_v2.Selector{
 					SourceId: "legacy-source-id",
-					Message: &v2.Selector_Log{
-						Log: &v2.LogSelector{},
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
 					},
 				},
 			}, receiverServer)
 			Expect(err).ToNot(HaveOccurred())
 
-			var req *v2.EgressBatchRequest
+			var req *loggregator_v2.EgressBatchRequest
 			Expect(receiver.requests).Should(Receive(&req))
 			Expect(req.Selectors).Should(HaveLen(1))
 
@@ -662,13 +662,13 @@ var _ = Describe("Server", func() {
 				time.Nanosecond,
 			)
 
-			expectedReq := &v2.EgressBatchRequest{
+			expectedReq := &loggregator_v2.EgressBatchRequest{
 				ShardId: "a-shard-id",
-				Selectors: []*v2.Selector{
+				Selectors: []*loggregator_v2.Selector{
 					{
 						SourceId: "a-source-id",
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -695,11 +695,11 @@ var _ = Describe("Server", func() {
 			)
 
 			go func() {
-				err := server.BatchedReceiver(&v2.EgressBatchRequest{
-					Selectors: []*v2.Selector{
+				err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
@@ -725,11 +725,11 @@ var _ = Describe("Server", func() {
 				1,
 				time.Nanosecond,
 			)
-			go server.BatchedReceiver(&v2.EgressBatchRequest{
-				Selectors: []*v2.Selector{
+			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
 					{
-						Message: &v2.Selector_Log{
-							Log: &v2.LogSelector{},
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
 						},
 					},
 				},
@@ -750,23 +750,23 @@ var _ = Describe("Server", func() {
 			BeforeEach(func() {
 				receiverServer = newSpyBatchedReceiverServer(nil)
 				receiver = newSpyReceiver(10)
-				receiver.envelope = &v2.Envelope{
+				receiver.envelope = &loggregator_v2.Envelope{
 					Tags: map[string]string{
 						"a": "value-a",
 					},
-					DeprecatedTags: map[string]*v2.Value{
+					DeprecatedTags: map[string]*loggregator_v2.Value{
 						"b": {
-							Data: &v2.Value_Decimal{
+							Data: &loggregator_v2.Value_Decimal{
 								Decimal: 0.8,
 							},
 						},
 						"c": {
-							Data: &v2.Value_Integer{
+							Data: &loggregator_v2.Value_Integer{
 								Integer: 18,
 							},
 						},
 						"d": {
-							Data: &v2.Value_Text{
+							Data: &loggregator_v2.Value_Text{
 								Text: "value-d",
 							},
 						},
@@ -783,19 +783,19 @@ var _ = Describe("Server", func() {
 			})
 
 			It("sends deprecated tags", func() {
-				err := server.BatchedReceiver(&v2.EgressBatchRequest{
+				err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
 					UsePreferredTags: false,
-					Selectors: []*v2.Selector{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
-				var e *v2.Envelope
+				var e *loggregator_v2.Envelope
 				Eventually(receiverServer.envelopes).Should(Receive(&e))
 				Expect(e.GetTags()).To(BeEmpty())
 				Expect(e.GetDeprecatedTags()).To(HaveLen(4))
@@ -808,19 +808,19 @@ var _ = Describe("Server", func() {
 			})
 
 			It("sends preferred tags", func() {
-				err := server.BatchedReceiver(&v2.EgressBatchRequest{
+				err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
 					UsePreferredTags: true,
-					Selectors: []*v2.Selector{
+					Selectors: []*loggregator_v2.Selector{
 						{
-							Message: &v2.Selector_Log{
-								Log: &v2.LogSelector{},
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
 							},
 						},
 					},
 				}, receiverServer)
 				Expect(err).ToNot(HaveOccurred())
 
-				var e *v2.Envelope
+				var e *loggregator_v2.Envelope
 				Eventually(receiverServer.envelopes).Should(Receive(&e))
 				Expect(e.GetDeprecatedTags()).To(BeEmpty())
 				Expect(e.GetTags()).To(HaveLen(4))
@@ -847,11 +847,11 @@ var _ = Describe("Server", func() {
 				)
 
 				err := server.BatchedReceiver(
-					&v2.EgressBatchRequest{
-						Selectors: []*v2.Selector{
+					&loggregator_v2.EgressBatchRequest{
+						Selectors: []*loggregator_v2.Selector{
 							{
-								Message: &v2.Selector_Log{
-									Log: &v2.LogSelector{},
+								Message: &loggregator_v2.Selector_Log{
+									Log: &loggregator_v2.LogSelector{},
 								},
 							},
 						},
@@ -879,11 +879,11 @@ var _ = Describe("Server", func() {
 					time.Nanosecond,
 				)
 				go server.BatchedReceiver(
-					&v2.EgressBatchRequest{
-						Selectors: []*v2.Selector{
+					&loggregator_v2.EgressBatchRequest{
+						Selectors: []*loggregator_v2.Selector{
 							{
-								Message: &v2.Selector_Log{
-									Log: &v2.LogSelector{},
+								Message: &loggregator_v2.Selector_Log{
+									Log: &loggregator_v2.LogSelector{},
 								},
 							},
 						},
@@ -910,11 +910,11 @@ var _ = Describe("Server", func() {
 				)
 
 				go server.BatchedReceiver(
-					&v2.EgressBatchRequest{
-						Selectors: []*v2.Selector{
+					&loggregator_v2.EgressBatchRequest{
+						Selectors: []*loggregator_v2.Selector{
 							{
-								Message: &v2.Selector_Log{
-									Log: &v2.LogSelector{},
+								Message: &loggregator_v2.Selector_Log{
+									Log: &loggregator_v2.LogSelector{},
 								},
 							},
 						},
@@ -939,14 +939,14 @@ var _ = Describe("Server", func() {
 type spyReceiverServer struct {
 	err       error
 	wait      chan struct{}
-	envelopes chan *v2.Envelope
+	envelopes chan *loggregator_v2.Envelope
 
 	grpc.ServerStream
 }
 
 func newSpyReceiverServer(err error) *spyReceiverServer {
 	return &spyReceiverServer{
-		envelopes: make(chan *v2.Envelope, 100),
+		envelopes: make(chan *loggregator_v2.Envelope, 100),
 		err:       err,
 	}
 }
@@ -955,7 +955,7 @@ func (*spyReceiverServer) Context() context.Context {
 	return context.Background()
 }
 
-func (s *spyReceiverServer) Send(e *v2.Envelope) error {
+func (s *spyReceiverServer) Send(e *loggregator_v2.Envelope) error {
 	if s.wait != nil {
 		<-s.wait
 		return nil
@@ -975,14 +975,14 @@ func (s *spyReceiverServer) stopWait() {
 
 type spyBatchedReceiverServer struct {
 	err       error
-	envelopes chan *v2.Envelope
+	envelopes chan *loggregator_v2.Envelope
 
 	grpc.ServerStream
 }
 
 func newSpyBatchedReceiverServer(err error) *spyBatchedReceiverServer {
 	return &spyBatchedReceiverServer{
-		envelopes: make(chan *v2.Envelope, 1000),
+		envelopes: make(chan *loggregator_v2.Envelope, 1000),
 		err:       err,
 	}
 }
@@ -991,7 +991,7 @@ func (*spyBatchedReceiverServer) Context() context.Context {
 	return context.Background()
 }
 
-func (s *spyBatchedReceiverServer) Send(b *v2.EnvelopeBatch) error {
+func (s *spyBatchedReceiverServer) Send(b *loggregator_v2.EnvelopeBatch) error {
 	for _, e := range b.GetBatch() {
 		select {
 		case s.envelopes <- e:
@@ -1003,29 +1003,29 @@ func (s *spyBatchedReceiverServer) Send(b *v2.EnvelopeBatch) error {
 }
 
 type spyReceiver struct {
-	envelope       *v2.Envelope
+	envelope       *loggregator_v2.Envelope
 	envelopeRepeat int
 
 	stopCh   chan struct{}
 	ctx      chan context.Context
-	requests chan *v2.EgressBatchRequest
+	requests chan *loggregator_v2.EgressBatchRequest
 }
 
 func newSpyReceiver(envelopeCount int) *spyReceiver {
 	return &spyReceiver{
-		envelope:       &v2.Envelope{},
+		envelope:       &loggregator_v2.Envelope{},
 		envelopeRepeat: envelopeCount,
 		stopCh:         make(chan struct{}),
 		ctx:            make(chan context.Context, 1),
-		requests:       make(chan *v2.EgressBatchRequest, 100),
+		requests:       make(chan *loggregator_v2.EgressBatchRequest, 100),
 	}
 }
 
-func (s *spyReceiver) Subscribe(ctx context.Context, req *v2.EgressBatchRequest) (func() (*v2.Envelope, error), error) {
+func (s *spyReceiver) Subscribe(ctx context.Context, req *loggregator_v2.EgressBatchRequest) (func() (*loggregator_v2.Envelope, error), error) {
 	s.ctx <- ctx
 	s.requests <- req
 
-	return func() (*v2.Envelope, error) {
+	return func() (*loggregator_v2.Envelope, error) {
 		if s.envelopeRepeat > 0 {
 			select {
 			case <-s.stopCh:
@@ -1042,9 +1042,9 @@ func (s *spyReceiver) Subscribe(ctx context.Context, req *v2.EgressBatchRequest)
 
 type stubReceiver struct{}
 
-func (s *stubReceiver) Subscribe(ctx context.Context, req *v2.EgressBatchRequest) (func() (*v2.Envelope, error), error) {
-	rx := func() (*v2.Envelope, error) {
-		return &v2.Envelope{}, nil
+func (s *stubReceiver) Subscribe(ctx context.Context, req *loggregator_v2.EgressBatchRequest) (func() (*loggregator_v2.Envelope, error), error) {
+	rx := func() (*loggregator_v2.Envelope, error) {
+		return &loggregator_v2.Envelope{}, nil
 	}
 	return rx, nil
 }

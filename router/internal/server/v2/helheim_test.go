@@ -6,7 +6,8 @@
 package v2_test
 
 import (
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 )
@@ -14,14 +15,14 @@ import (
 type mockDopplerIngress_SenderServer struct {
 	SendAndCloseCalled chan bool
 	SendAndCloseInput  struct {
-		Arg0 chan *v2.SenderResponse
+		Arg0 chan *plumbingv2.SenderResponse
 	}
 	SendAndCloseOutput struct {
 		Ret0 chan error
 	}
 	RecvCalled chan bool
 	RecvOutput struct {
-		Ret0 chan *v2.Envelope
+		Ret0 chan *loggregator_v2.Envelope
 		Ret1 chan error
 	}
 	SetHeaderCalled chan bool
@@ -65,10 +66,10 @@ type mockDopplerIngress_SenderServer struct {
 func newMockDopplerIngress_SenderServer() *mockDopplerIngress_SenderServer {
 	m := &mockDopplerIngress_SenderServer{}
 	m.SendAndCloseCalled = make(chan bool, 100)
-	m.SendAndCloseInput.Arg0 = make(chan *v2.SenderResponse, 100)
+	m.SendAndCloseInput.Arg0 = make(chan *plumbingv2.SenderResponse, 100)
 	m.SendAndCloseOutput.Ret0 = make(chan error, 100)
 	m.RecvCalled = make(chan bool, 100)
-	m.RecvOutput.Ret0 = make(chan *v2.Envelope, 100)
+	m.RecvOutput.Ret0 = make(chan *loggregator_v2.Envelope, 100)
 	m.RecvOutput.Ret1 = make(chan error, 100)
 	m.SetHeaderCalled = make(chan bool, 100)
 	m.SetHeaderInput.Arg0 = make(chan metadata.MD, 100)
@@ -88,12 +89,12 @@ func newMockDopplerIngress_SenderServer() *mockDopplerIngress_SenderServer {
 	m.RecvMsgOutput.Ret0 = make(chan error, 100)
 	return m
 }
-func (m *mockDopplerIngress_SenderServer) SendAndClose(arg0 *v2.SenderResponse) error {
+func (m *mockDopplerIngress_SenderServer) SendAndClose(arg0 *plumbingv2.SenderResponse) error {
 	m.SendAndCloseCalled <- true
 	m.SendAndCloseInput.Arg0 <- arg0
 	return <-m.SendAndCloseOutput.Ret0
 }
-func (m *mockDopplerIngress_SenderServer) Recv() (*v2.Envelope, error) {
+func (m *mockDopplerIngress_SenderServer) Recv() (*loggregator_v2.Envelope, error) {
 	m.RecvCalled <- true
 	return <-m.RecvOutput.Ret0, <-m.RecvOutput.Ret1
 }
@@ -129,14 +130,14 @@ func (m *mockDopplerIngress_SenderServer) RecvMsg(m_ interface{}) error {
 type mockBatcherSenderServer struct {
 	SendAndCloseCalled chan bool
 	SendAndCloseInput  struct {
-		Arg0 chan *v2.BatchSenderResponse
+		Arg0 chan *loggregator_v2.BatchSenderResponse
 	}
 	SendAndCloseOutput struct {
 		Ret0 chan error
 	}
 	RecvCalled chan bool
 	RecvOutput struct {
-		Ret0 chan *v2.EnvelopeBatch
+		Ret0 chan *loggregator_v2.EnvelopeBatch
 		Ret1 chan error
 	}
 	SetHeaderCalled chan bool
@@ -180,10 +181,10 @@ type mockBatcherSenderServer struct {
 func newMockBatcherSenderServer() *mockBatcherSenderServer {
 	m := &mockBatcherSenderServer{}
 	m.SendAndCloseCalled = make(chan bool, 100)
-	m.SendAndCloseInput.Arg0 = make(chan *v2.BatchSenderResponse, 100)
+	m.SendAndCloseInput.Arg0 = make(chan *loggregator_v2.BatchSenderResponse, 100)
 	m.SendAndCloseOutput.Ret0 = make(chan error, 100)
 	m.RecvCalled = make(chan bool, 100)
-	m.RecvOutput.Ret0 = make(chan *v2.EnvelopeBatch, 100)
+	m.RecvOutput.Ret0 = make(chan *loggregator_v2.EnvelopeBatch, 100)
 	m.RecvOutput.Ret1 = make(chan error, 100)
 	m.SetHeaderCalled = make(chan bool, 100)
 	m.SetHeaderInput.Arg0 = make(chan metadata.MD, 100)
@@ -203,12 +204,12 @@ func newMockBatcherSenderServer() *mockBatcherSenderServer {
 	m.RecvMsgOutput.Ret0 = make(chan error, 100)
 	return m
 }
-func (m *mockBatcherSenderServer) SendAndClose(arg0 *v2.BatchSenderResponse) error {
+func (m *mockBatcherSenderServer) SendAndClose(arg0 *loggregator_v2.BatchSenderResponse) error {
 	m.SendAndCloseCalled <- true
 	m.SendAndCloseInput.Arg0 <- arg0
 	return <-m.SendAndCloseOutput.Ret0
 }
-func (m *mockBatcherSenderServer) Recv() (*v2.EnvelopeBatch, error) {
+func (m *mockBatcherSenderServer) Recv() (*loggregator_v2.EnvelopeBatch, error) {
 	m.RecvCalled <- true
 	return <-m.RecvOutput.Ret0, <-m.RecvOutput.Ret1
 }

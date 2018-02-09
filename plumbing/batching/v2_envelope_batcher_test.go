@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
 var _ = Describe("V2EnvelopeBatcher", func() {
@@ -15,7 +15,7 @@ var _ = Describe("V2EnvelopeBatcher", func() {
 		writer := &spyV2EnvelopeWriter{}
 		b := batching.NewV2EnvelopeBatcher(1, time.Minute, writer)
 
-		b.Write(&v2.Envelope{
+		b.Write(&loggregator_v2.Envelope{
 			SourceId: "test-source-id",
 		})
 
@@ -25,11 +25,11 @@ var _ = Describe("V2EnvelopeBatcher", func() {
 })
 
 type spyV2EnvelopeWriter struct {
-	batch  []*v2.Envelope
+	batch  []*loggregator_v2.Envelope
 	called int
 }
 
-func (w *spyV2EnvelopeWriter) Write(batch []*v2.Envelope) {
+func (w *spyV2EnvelopeWriter) Write(batch []*loggregator_v2.Envelope) {
 	w.batch = batch
 	w.called++
 }

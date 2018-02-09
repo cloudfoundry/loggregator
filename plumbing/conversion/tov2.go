@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
-
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
@@ -15,8 +14,8 @@ import (
 // conversion and share pointers with the resulting v2 envelope for efficiency
 // in creating the v2 envelope. As a result the envelope you pass in should no
 // longer be used.
-func ToV2(e *events.Envelope, usePreferredTags bool) *v2.Envelope {
-	v2e := &v2.Envelope{
+func ToV2(e *events.Envelope, usePreferredTags bool) *loggregator_v2.Envelope {
+	v2e := &loggregator_v2.Envelope{
 		Timestamp: e.GetTimestamp(),
 	}
 
@@ -55,7 +54,7 @@ func ToV2(e *events.Envelope, usePreferredTags bool) *v2.Envelope {
 }
 
 // TODO: Do we still need to do an interface?
-func setV2Tag(e *v2.Envelope, key string, value interface{}, usePreferredTags bool) {
+func setV2Tag(e *loggregator_v2.Envelope, key string, value interface{}, usePreferredTags bool) {
 	if usePreferredTags {
 		if s, ok := value.(string); ok {
 			e.GetTags()[key] = s
@@ -69,12 +68,12 @@ func setV2Tag(e *v2.Envelope, key string, value interface{}, usePreferredTags bo
 	e.GetDeprecatedTags()[key] = valueText(fmt.Sprintf("%v", value))
 }
 
-func unsetV2Tag(e *v2.Envelope, key string) {
+func unsetV2Tag(e *loggregator_v2.Envelope, key string) {
 	delete(e.GetDeprecatedTags(), key)
 	delete(e.GetTags(), key)
 }
 
-func initTags(v1e *events.Envelope, v2e *v2.Envelope, usePreferredTags bool) {
+func initTags(v1e *events.Envelope, v2e *loggregator_v2.Envelope, usePreferredTags bool) {
 	if usePreferredTags {
 		v2e.Tags = v1e.Tags
 		if v2e.Tags == nil {
@@ -84,22 +83,22 @@ func initTags(v1e *events.Envelope, v2e *v2.Envelope, usePreferredTags bool) {
 		return
 	}
 
-	v2e.DeprecatedTags = make(map[string]*v2.Value)
+	v2e.DeprecatedTags = make(map[string]*loggregator_v2.Value)
 
 	for k, v := range v1e.GetTags() {
 		setV2Tag(v2e, k, v, usePreferredTags)
 	}
 }
 
-func convertError(v2e *v2.Envelope, v1e *events.Envelope, usePreferredTags bool) {
+func convertError(v2e *loggregator_v2.Envelope, v1e *events.Envelope, usePreferredTags bool) {
 	t := v1e.GetError()
 	setV2Tag(v2e, "source", t.GetSource(), usePreferredTags)
 	setV2Tag(v2e, "code", t.GetCode(), usePreferredTags)
 
-	v2e.Message = &v2.Envelope_Log{
-		Log: &v2.Log{
+	v2e.Message = &loggregator_v2.Envelope_Log{
+		Log: &loggregator_v2.Log{
 			Payload: []byte(t.GetMessage()),
-			Type:    v2.Log_OUT,
+			Type:    loggregator_v2.Log_OUT,
 		},
 	}
 }
@@ -118,12 +117,12 @@ func convertAppID(appID, sourceID string) string {
 	return appID
 }
 
-func convertHTTPStartStop(v2e *v2.Envelope, v1e *events.Envelope, usePreferredTags bool) {
+func convertHTTPStartStop(v2e *loggregator_v2.Envelope, v1e *events.Envelope, usePreferredTags bool) {
 	t := v1e.GetHttpStartStop()
 	v2e.SourceId = convertAppUUID(t.GetApplicationId(), v2e.SourceId)
 	v2e.InstanceId = strconv.Itoa(int(t.GetInstanceIndex()))
-	v2e.Message = &v2.Envelope_Timer{
-		Timer: &v2.Timer{
+	v2e.Message = &loggregator_v2.Envelope_Timer{
+		Timer: &loggregator_v2.Timer{
 			Name:  "http",
 			Start: t.GetStartTimestamp(),
 			Stop:  t.GetStopTimestamp(),
@@ -141,31 +140,31 @@ func convertHTTPStartStop(v2e *v2.Envelope, v1e *events.Envelope, usePreferredTa
 	setV2Tag(v2e, "forwarded", strings.Join(t.GetForwarded(), "\n"), usePreferredTags)
 }
 
-func convertLogMessageType(t events.LogMessage_MessageType) v2.Log_Type {
+func convertLogMessageType(t events.LogMessage_MessageType) loggregator_v2.Log_Type {
 	name := events.LogMessage_MessageType_name[int32(t)]
-	return v2.Log_Type(v2.Log_Type_value[name])
+	return loggregator_v2.Log_Type(loggregator_v2.Log_Type_value[name])
 }
 
-func convertLogMessage(v2e *v2.Envelope, e *events.Envelope, usePreferredTags bool) {
+func convertLogMessage(v2e *loggregator_v2.Envelope, e *events.Envelope, usePreferredTags bool) {
 	t := e.GetLogMessage()
 	setV2Tag(v2e, "source_type", t.GetSourceType(), usePreferredTags)
 	v2e.InstanceId = t.GetSourceInstance()
 	v2e.SourceId = convertAppID(t.GetAppId(), v2e.SourceId)
 
-	v2e.Message = &v2.Envelope_Log{
-		Log: &v2.Log{
+	v2e.Message = &loggregator_v2.Envelope_Log{
+		Log: &loggregator_v2.Log{
 			Payload: t.GetMessage(),
 			Type:    convertLogMessageType(t.GetMessageType()),
 		},
 	}
 }
 
-func convertValueMetric(v2e *v2.Envelope, e *events.Envelope) {
+func convertValueMetric(v2e *loggregator_v2.Envelope, e *events.Envelope) {
 	t := e.GetValueMetric()
 	v2e.InstanceId = e.GetTags()["instance_id"]
-	v2e.Message = &v2.Envelope_Gauge{
-		Gauge: &v2.Gauge{
-			Metrics: map[string]*v2.GaugeValue{
+	v2e.Message = &loggregator_v2.Envelope_Gauge{
+		Gauge: &loggregator_v2.Gauge{
+			Metrics: map[string]*loggregator_v2.GaugeValue{
 				t.GetName(): {
 					Unit:  t.GetUnit(),
 					Value: t.GetValue(),
@@ -175,12 +174,12 @@ func convertValueMetric(v2e *v2.Envelope, e *events.Envelope) {
 	}
 }
 
-func convertCounterEvent(v2e *v2.Envelope, e *events.Envelope) {
+func convertCounterEvent(v2e *loggregator_v2.Envelope, e *events.Envelope) {
 	t := e.GetCounterEvent()
 	v2e.InstanceId = e.GetTags()["instance_id"]
 	unsetV2Tag(v2e, "instance_id")
-	v2e.Message = &v2.Envelope_Counter{
-		Counter: &v2.Counter{
+	v2e.Message = &loggregator_v2.Envelope_Counter{
+		Counter: &loggregator_v2.Counter{
 			Name:  t.GetName(),
 			Delta: t.GetDelta(),
 			Total: t.GetTotal(),
@@ -188,13 +187,13 @@ func convertCounterEvent(v2e *v2.Envelope, e *events.Envelope) {
 	}
 }
 
-func convertContainerMetric(v2e *v2.Envelope, e *events.Envelope) {
+func convertContainerMetric(v2e *loggregator_v2.Envelope, e *events.Envelope) {
 	t := e.GetContainerMetric()
 	v2e.SourceId = convertAppID(t.GetApplicationId(), v2e.SourceId)
 	v2e.InstanceId = strconv.Itoa(int(t.GetInstanceIndex()))
-	v2e.Message = &v2.Envelope_Gauge{
-		Gauge: &v2.Gauge{
-			Metrics: map[string]*v2.GaugeValue{
+	v2e.Message = &loggregator_v2.Envelope_Gauge{
+		Gauge: &loggregator_v2.Gauge{
+			Metrics: map[string]*loggregator_v2.GaugeValue{
 				"cpu": {
 					Unit:  "percentage",
 					Value: t.GetCpuPercentage(),
@@ -220,8 +219,8 @@ func convertContainerMetric(v2e *v2.Envelope, e *events.Envelope) {
 	}
 }
 
-func valueText(s string) *v2.Value {
-	return &v2.Value{&v2.Value_Text{Text: s}}
+func valueText(s string) *loggregator_v2.Value {
+	return &loggregator_v2.Value{&loggregator_v2.Value_Text{Text: s}}
 }
 
 func uuidToString(uuid *events.UUID) string {

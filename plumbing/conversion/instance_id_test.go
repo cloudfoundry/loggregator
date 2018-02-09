@@ -1,8 +1,8 @@
 package conversion_test
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
@@ -28,12 +28,12 @@ var _ = Describe("Converting Instance IDs", func() {
 		})
 
 		It("writes into the v1 source_instance field when converting to v1", func() {
-			v2Envelope := &v2.Envelope{
+			v2Envelope := &loggregator_v2.Envelope{
 				InstanceId: "test-source-instance",
-				Message: &v2.Envelope_Log{
-					Log: &v2.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("Hello World"),
-						Type:    v2.Log_OUT,
+						Type:    loggregator_v2.Log_OUT,
 					},
 				},
 			}
@@ -67,10 +67,10 @@ var _ = Describe("Converting Instance IDs", func() {
 		})
 
 		It("writes into the v1 instance_index field when converting to v1", func() {
-			v2Envelope := &v2.Envelope{
+			v2Envelope := &loggregator_v2.Envelope{
 				InstanceId: "1234",
-				Message: &v2.Envelope_Timer{
-					Timer: &v2.Timer{},
+				Message: &loggregator_v2.Envelope_Timer{
+					Timer: &loggregator_v2.Timer{},
 				},
 			}
 			envelopes := conversion.ToV1(v2Envelope)
@@ -79,10 +79,10 @@ var _ = Describe("Converting Instance IDs", func() {
 		})
 
 		It("writes 0 into the v1 instance_index field if instance_id is not an int", func() {
-			v2Envelope := &v2.Envelope{
+			v2Envelope := &loggregator_v2.Envelope{
 				InstanceId: "garbage",
-				Message: &v2.Envelope_Timer{
-					Timer: &v2.Timer{},
+				Message: &loggregator_v2.Envelope_Timer{
+					Timer: &loggregator_v2.Timer{},
 				},
 			}
 			envelopes := conversion.ToV1(v2Envelope)
@@ -109,11 +109,11 @@ var _ = Describe("Converting Instance IDs", func() {
 		})
 
 		It("writes into the v1 instance_index field when converting to v1", func() {
-			v2Envelope := &v2.Envelope{
+			v2Envelope := &loggregator_v2.Envelope{
 				InstanceId: "4321",
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"cpu":          {Unit: "percent"},
 							"memory":       {Unit: "percent"},
 							"disk":         {Unit: "percent"},
@@ -129,11 +129,11 @@ var _ = Describe("Converting Instance IDs", func() {
 		})
 
 		It("writes 0 into the v1 instance_index field if instance_id is not an int", func() {
-			v2Envelope := &v2.Envelope{
+			v2Envelope := &loggregator_v2.Envelope{
 				InstanceId: "garbage",
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"cpu":          {Unit: "percent"},
 							"memory":       {Unit: "percent"},
 							"disk":         {Unit: "percent"},
@@ -179,22 +179,22 @@ var _ = Describe("Converting Instance IDs", func() {
 			}),
 		)
 
-		DescribeTable("writes into the v1 instance_id tag when converting to v1", func(v2Envelope *v2.Envelope) {
+		DescribeTable("writes into the v1 instance_id tag when converting to v1", func(v2Envelope *loggregator_v2.Envelope) {
 			envelopes := conversion.ToV1(v2Envelope)
 			Expect(len(envelopes)).To(Equal(1))
 			Expect(envelopes[0].Tags["instance_id"]).To(Equal("test-source-instance"))
 		},
-			Entry("CounterEvent", &v2.Envelope{
+			Entry("CounterEvent", &loggregator_v2.Envelope{
 				InstanceId: "test-source-instance",
-				Message: &v2.Envelope_Counter{
-					Counter: &v2.Counter{},
+				Message: &loggregator_v2.Envelope_Counter{
+					Counter: &loggregator_v2.Counter{},
 				},
 			}),
-			Entry("ValueMetric", &v2.Envelope{
+			Entry("ValueMetric", &loggregator_v2.Envelope{
 				InstanceId: "test-source-instance",
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"some-metric": {
 								Unit:  "test",
 								Value: 123.4,

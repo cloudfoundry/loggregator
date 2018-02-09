@@ -12,10 +12,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/egress"
 	"code.cloudfoundry.org/loggregator/rlp/internal/ingress"
 
@@ -193,7 +193,7 @@ func (r *RLP) startEgressListener() {
 
 func (r *RLP) setupEgress() {
 	r.egressServer = grpc.NewServer(r.egressServerOpts...)
-	v2.RegisterEgressServer(
+	loggregator_v2.RegisterEgressServer(
 		r.egressServer,
 		egress.NewServer(r.v2Connector, r.metricClient, r.health, r.ctx, 100, 100*time.Millisecond),
 	)

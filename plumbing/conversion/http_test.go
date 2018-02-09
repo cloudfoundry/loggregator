@@ -1,8 +1,8 @@
 package conversion_test
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -14,22 +14,22 @@ import (
 var _ = Describe("HTTP", func() {
 	Context("given a v2 envelope", func() {
 		var (
-			v2Envelope         *v2.Envelope
+			v2Envelope         *loggregator_v2.Envelope
 			expectedV1Envelope *events.Envelope
 		)
 
 		BeforeEach(func() {
-			v2Envelope = &v2.Envelope{
+			v2Envelope = &loggregator_v2.Envelope{
 				SourceId:   "b3015d69-09cd-476d-aace-ad2d824d5ab7",
 				InstanceId: "10",
-				Message: &v2.Envelope_Timer{
-					Timer: &v2.Timer{
+				Message: &loggregator_v2.Envelope_Timer{
+					Timer: &loggregator_v2.Timer{
 						Name:  "http",
 						Start: 99,
 						Stop:  100,
 					},
 				},
-				DeprecatedTags: map[string]*v2.Value{
+				DeprecatedTags: map[string]*loggregator_v2.Value{
 					"request_id":          ValueText("954f61c4-ac84-44be-9217-cdfa3117fb41"),
 					"peer_type":           ValueText("Client"),
 					"method":              ValueText("GET"),
@@ -133,16 +133,16 @@ var _ = Describe("HTTP", func() {
 					},
 				}
 
-				expectedV2Envelope := &v2.Envelope{
+				expectedV2Envelope := &loggregator_v2.Envelope{
 					SourceId: "b3015d69-09cd-476d-aace-ad2d824d5ab7",
-					Message: &v2.Envelope_Timer{
-						Timer: &v2.Timer{
+					Message: &loggregator_v2.Envelope_Timer{
+						Timer: &loggregator_v2.Timer{
 							Name:  "http",
 							Start: 99,
 							Stop:  100,
 						},
 					},
-					DeprecatedTags: map[string]*v2.Value{
+					DeprecatedTags: map[string]*loggregator_v2.Value{
 						"__v1_type":           ValueText("HttpStartStop"),
 						"origin":              ValueText("some-origin"),
 						"request_id":          ValueText("954f61c4-ac84-44be-9217-cdfa3117fb41"),
@@ -183,7 +183,7 @@ var _ = Describe("HTTP", func() {
 					Job:        proto.String("some-job"),
 				}
 
-				expectedV2Envelope := &v2.Envelope{
+				expectedV2Envelope := &loggregator_v2.Envelope{
 					SourceId: "some-deployment/some-job",
 				}
 
@@ -228,10 +228,10 @@ var _ = Describe("HTTP", func() {
 					},
 				}
 
-				expectedV2Envelope := &v2.Envelope{
+				expectedV2Envelope := &loggregator_v2.Envelope{
 					SourceId: "b3015d69-09cd-476d-aace-ad2d824d5ab7",
-					Message: &v2.Envelope_Timer{
-						Timer: &v2.Timer{
+					Message: &loggregator_v2.Envelope_Timer{
+						Timer: &loggregator_v2.Timer{
 							Name:  "http",
 							Start: 99,
 							Stop:  100,

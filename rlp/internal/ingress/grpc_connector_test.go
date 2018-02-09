@@ -4,9 +4,9 @@ import (
 	"log"
 	"net"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/ingress"
 
 	"golang.org/x/net/context"
@@ -20,7 +20,7 @@ import (
 
 var _ = Describe("GRPCConnector", func() {
 	var (
-		req       *v2.EgressBatchRequest
+		req       *loggregator_v2.EgressBatchRequest
 		connector *ingress.GRPCConnector
 
 		mockDopplerServerA *MockDopplerServer
@@ -37,9 +37,9 @@ var _ = Describe("GRPCConnector", func() {
 
 		pool := ingress.NewPool(2, grpc.WithInsecure())
 
-		req = &v2.EgressBatchRequest{
+		req = &loggregator_v2.EgressBatchRequest{
 			ShardId: "test-sub-id",
-			LegacySelector: &v2.Selector{
+			LegacySelector: &loggregator_v2.Selector{
 				SourceId: "test-app-id",
 			},
 		}
@@ -65,7 +65,7 @@ var _ = Describe("GRPCConnector", func() {
 		Context("when no dopplers are available", func() {
 			Context("when a doppler comes online after stream is established", func() {
 				var (
-					data <-chan *v2.Envelope
+					data <-chan *loggregator_v2.Envelope
 					errs <-chan error
 				)
 
@@ -91,19 +91,19 @@ var _ = Describe("GRPCConnector", func() {
 					senderA := captureSubscribeSender(mockDopplerServerA)
 					senderB := captureSubscribeSender(mockDopplerServerB)
 
-					err := senderA.Send(&v2.EnvelopeBatch{
-						Batch: []*v2.Envelope{{SourceId: "A"}, {SourceId: "B"}},
+					err := senderA.Send(&loggregator_v2.EnvelopeBatch{
+						Batch: []*loggregator_v2.Envelope{{SourceId: "A"}, {SourceId: "B"}},
 					})
 					Expect(err).ToNot(HaveOccurred())
-					Eventually(data).Should(Receive(Equal(&v2.Envelope{SourceId: "A"})))
-					Eventually(data).Should(Receive(Equal(&v2.Envelope{SourceId: "B"})))
+					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "A"})))
+					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "B"})))
 
-					err = senderB.Send(&v2.EnvelopeBatch{
-						Batch: []*v2.Envelope{{SourceId: "C"}, {SourceId: "D"}},
+					err = senderB.Send(&loggregator_v2.EnvelopeBatch{
+						Batch: []*loggregator_v2.Envelope{{SourceId: "C"}, {SourceId: "D"}},
 					})
 					Expect(err).ToNot(HaveOccurred())
-					Eventually(data).Should(Receive(Equal(&v2.Envelope{SourceId: "C"})))
-					Eventually(data).Should(Receive(Equal(&v2.Envelope{SourceId: "D"})))
+					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "C"})))
+					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "D"})))
 				})
 
 				It("does not close the doppler connection when a client exits", func() {
@@ -115,8 +115,8 @@ var _ = Describe("GRPCConnector", func() {
 					Eventually(mockDopplerServerA.requests).Should(HaveLen(2))
 
 					senderA := captureSubscribeSender(mockDopplerServerA)
-					err := senderA.Send(&v2.EnvelopeBatch{
-						Batch: []*v2.Envelope{{SourceId: "A"}},
+					err := senderA.Send(&loggregator_v2.EnvelopeBatch{
+						Batch: []*loggregator_v2.Envelope{{SourceId: "A"}},
 					})
 					Expect(err).ToNot(HaveOccurred())
 
@@ -153,8 +153,8 @@ var _ = Describe("GRPCConnector", func() {
 type MockDopplerServer struct {
 	addr       net.Addr
 	grpcServer *grpc.Server
-	requests   chan *v2.EgressBatchRequest
-	servers    chan v2.Egress_BatchedReceiverServer
+	requests   chan *loggregator_v2.EgressBatchRequest
+	servers    chan loggregator_v2.Egress_BatchedReceiverServer
 }
 
 func startMockDopplerServer() *MockDopplerServer {
@@ -164,11 +164,11 @@ func startMockDopplerServer() *MockDopplerServer {
 	mockServer := &MockDopplerServer{
 		addr:       lis.Addr(),
 		grpcServer: grpc.NewServer(),
-		requests:   make(chan *v2.EgressBatchRequest, 100),
-		servers:    make(chan v2.Egress_BatchedReceiverServer, 100),
+		requests:   make(chan *loggregator_v2.EgressBatchRequest, 100),
+		servers:    make(chan loggregator_v2.Egress_BatchedReceiverServer, 100),
 	}
 
-	v2.RegisterEgressServer(mockServer.grpcServer, mockServer)
+	loggregator_v2.RegisterEgressServer(mockServer.grpcServer, mockServer)
 
 	go func() {
 		log.Println(mockServer.grpcServer.Serve(lis))
@@ -177,11 +177,11 @@ func startMockDopplerServer() *MockDopplerServer {
 	return mockServer
 }
 
-func (m *MockDopplerServer) Receiver(*v2.EgressRequest, v2.Egress_ReceiverServer) error {
+func (m *MockDopplerServer) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
 	return grpc.Errorf(codes.Unimplemented, "Use batched receiver")
 }
 
-func (m *MockDopplerServer) BatchedReceiver(req *v2.EgressBatchRequest, s v2.Egress_BatchedReceiverServer) error {
+func (m *MockDopplerServer) BatchedReceiver(req *loggregator_v2.EgressBatchRequest, s loggregator_v2.Egress_BatchedReceiverServer) error {
 	m.requests <- req
 	m.servers <- s
 
@@ -194,8 +194,8 @@ func (m *MockDopplerServer) Stop() {
 	m.grpcServer.Stop()
 }
 
-func readFromSubscription(ctx context.Context, req *v2.EgressBatchRequest, connector *ingress.GRPCConnector) (<-chan *v2.Envelope, <-chan error, chan struct{}) {
-	data := make(chan *v2.Envelope, 100)
+func readFromSubscription(ctx context.Context, req *loggregator_v2.EgressBatchRequest, connector *ingress.GRPCConnector) (<-chan *loggregator_v2.Envelope, <-chan error, chan struct{}) {
+	data := make(chan *loggregator_v2.Envelope, 100)
 	errs := make(chan error, 100)
 	ready := make(chan struct{})
 
@@ -222,8 +222,8 @@ func createGrpcURIs(ms ...*MockDopplerServer) []string {
 	return results
 }
 
-func captureSubscribeSender(doppler *MockDopplerServer) v2.Egress_BatchedReceiverServer {
-	var server v2.Egress_BatchedReceiverServer
+func captureSubscribeSender(doppler *MockDopplerServer) loggregator_v2.Egress_BatchedReceiverServer {
+	var server loggregator_v2.Egress_BatchedReceiverServer
 	EventuallyWithOffset(1, doppler.servers, 5).Should(Receive(&server))
 	return server
 }

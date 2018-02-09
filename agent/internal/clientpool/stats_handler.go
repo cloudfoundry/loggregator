@@ -1,8 +1,8 @@
 package clientpool
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	v1 "code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc/stats"
@@ -43,9 +43,9 @@ func (s *StatsHandler) HandleRPC(ctx context.Context, stat stats.RPCStats) {
 	switch v := out.Payload.(type) {
 	case *v1.EnvelopeData:
 		s.tracker.Track(1, len(v.Payload))
-	case *v2.Envelope:
+	case *loggregator_v2.Envelope:
 		s.tracker.Track(1, out.Length)
-	case *v2.EnvelopeBatch:
+	case *loggregator_v2.EnvelopeBatch:
 		s.tracker.Track(len(v.Batch), out.Length)
 	}
 }

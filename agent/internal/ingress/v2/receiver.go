@@ -3,13 +3,13 @@ package v2
 import (
 	"log"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 )
 
 type DataSetter interface {
-	Set(e *v2.Envelope)
+	Set(e *loggregator_v2.Envelope)
 }
 
 // MetricClient creates new CounterMetrics to be emitted periodically.
@@ -35,7 +35,7 @@ func NewReceiver(dataSetter DataSetter, metricClient MetricClient) *Receiver {
 	}
 }
 
-func (s *Receiver) Sender(sender v2.Ingress_SenderServer) error {
+func (s *Receiver) Sender(sender loggregator_v2.Ingress_SenderServer) error {
 	for {
 		e, err := sender.Recv()
 		if err != nil {
@@ -50,7 +50,7 @@ func (s *Receiver) Sender(sender v2.Ingress_SenderServer) error {
 	return nil
 }
 
-func (s *Receiver) BatchSender(sender v2.Ingress_BatchSenderServer) error {
+func (s *Receiver) BatchSender(sender loggregator_v2.Ingress_BatchSenderServer) error {
 	for {
 		envelopes, err := sender.Recv()
 		if err != nil {
@@ -67,12 +67,12 @@ func (s *Receiver) BatchSender(sender v2.Ingress_BatchSenderServer) error {
 	return nil
 }
 
-func (s *Receiver) Send(_ context.Context, b *v2.EnvelopeBatch) (*v2.SendResponse, error) {
+func (s *Receiver) Send(_ context.Context, b *loggregator_v2.EnvelopeBatch) (*loggregator_v2.SendResponse, error) {
 	for _, e := range b.Batch {
 		s.dataSetter.Set(e)
 	}
 
 	s.ingressMetric.Increment(uint64(len(b.Batch)))
 
-	return &v2.SendResponse{}, nil
+	return &loggregator_v2.SendResponse{}, nil
 }

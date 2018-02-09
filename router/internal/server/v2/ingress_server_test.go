@@ -4,9 +4,9 @@ import (
 	"io"
 	"sync"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
 	. "github.com/onsi/ginkgo"
@@ -44,17 +44,17 @@ var _ = Describe("IngressServer", func() {
 
 	It("writes batches to the data setter", func() {
 		spyBatchSenderServer.recvCount = 1
-		spyBatchSenderServer.envelopes = []*plumbing.Envelope{
+		spyBatchSenderServer.envelopes = []*loggregator_v2.Envelope{
 			{
-				Message: &plumbing.Envelope_Log{
-					Log: &plumbing.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("hello-1"),
 					},
 				},
 			},
 			{
-				Message: &plumbing.Envelope_Log{
-					Log: &plumbing.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("hello-2"),
 					},
 				},
@@ -78,9 +78,9 @@ var _ = Describe("IngressServer", func() {
 
 	It("writes a single envelope to the data setter via stream", func() {
 		spySenderServer.recvCount = 1
-		spySenderServer.envelope = &plumbing.Envelope{
-			Message: &plumbing.Envelope_Log{
-				Log: &plumbing.Log{
+		spySenderServer.envelope = &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{
 					Payload: []byte("hello"),
 				},
 			},
@@ -98,7 +98,7 @@ var _ = Describe("IngressServer", func() {
 
 	It("throws invalid envelopes on the ground", func() {
 		spySenderServer.recvCount = 1
-		spySenderServer.envelope = &plumbing.Envelope{}
+		spySenderServer.envelope = &loggregator_v2.Envelope{}
 
 		ingestor.Sender(spySenderServer)
 		_, ok := v1Buf.TryNext()
@@ -172,9 +172,9 @@ func (s *SpyHealthRegistrar) Get(name string) float64 {
 }
 
 type spyIngressBatchSender struct {
-	plumbing.Ingress_BatchSenderServer
+	loggregator_v2.Ingress_BatchSenderServer
 
-	envelopes []*plumbing.Envelope
+	envelopes []*loggregator_v2.Envelope
 	recvCount int
 	done      chan struct{}
 }
@@ -191,7 +191,7 @@ func newSpyIngressBatchSender(blockingRecv bool) *spyIngressBatchSender {
 	}
 }
 
-func (s *spyIngressBatchSender) Recv() (*plumbing.EnvelopeBatch, error) {
+func (s *spyIngressBatchSender) Recv() (*loggregator_v2.EnvelopeBatch, error) {
 	<-s.done
 
 	if s.recvCount == 0 {
@@ -200,13 +200,13 @@ func (s *spyIngressBatchSender) Recv() (*plumbing.EnvelopeBatch, error) {
 
 	s.recvCount--
 
-	return &plumbing.EnvelopeBatch{Batch: s.envelopes}, nil
+	return &loggregator_v2.EnvelopeBatch{Batch: s.envelopes}, nil
 }
 
 type spyIngressSender struct {
-	plumbing.Ingress_SenderServer
+	loggregator_v2.Ingress_SenderServer
 
-	envelope  *plumbing.Envelope
+	envelope  *loggregator_v2.Envelope
 	recvCount int
 	done      chan struct{}
 }
@@ -223,7 +223,7 @@ func newSpyIngressSender(blockingRecv bool) *spyIngressSender {
 	}
 }
 
-func (s *spyIngressSender) Recv() (*plumbing.Envelope, error) {
+func (s *spyIngressSender) Recv() (*loggregator_v2.Envelope, error) {
 	<-s.done
 
 	if s.recvCount == 0 {

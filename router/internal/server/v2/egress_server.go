@@ -4,10 +4,10 @@ import (
 	"log"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )

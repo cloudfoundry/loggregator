@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 // Counter stores data about a counter metric to be used by the metric emitter
@@ -20,7 +20,7 @@ type Counter struct {
 // Tagged is a struct that is embedded into metrics to give them common
 // functionality around tags.
 type Tagged struct {
-	tags map[string]*v2.Value
+	tags map[string]*loggregator_v2.Value
 }
 
 // MetricOption is a function that can be passed to a metric on initialization
@@ -35,7 +35,7 @@ func NewCounter(name, sourceID string, opts ...MetricOption) *Counter {
 		name:     name,
 		sourceID: sourceID,
 	}
-	m.Tagged.tags = make(map[string]*v2.Value)
+	m.Tagged.tags = make(map[string]*loggregator_v2.Value)
 
 	for _, opt := range opts {
 		opt(m.Tagged)
@@ -59,7 +59,7 @@ func (m *Counter) GetDelta() uint64 {
 // IngressClient. When WithEnvelope is called the Counters delta is reset to
 // 0, if an error is returned by the given function, the delta will be
 // atomically added back to the Counters delta.
-func (m *Counter) WithEnvelope(fn func(*v2.Envelope) error) error {
+func (m *Counter) WithEnvelope(fn func(*loggregator_v2.Envelope) error) error {
 	d := atomic.SwapUint64(&m.delta, 0)
 
 	if err := fn(m.toEnvelope(d)); err != nil {
@@ -70,12 +70,12 @@ func (m *Counter) WithEnvelope(fn func(*v2.Envelope) error) error {
 	return nil
 }
 
-func (m *Counter) toEnvelope(delta uint64) *v2.Envelope {
-	return &v2.Envelope{
+func (m *Counter) toEnvelope(delta uint64) *loggregator_v2.Envelope {
+	return &loggregator_v2.Envelope{
 		SourceId:  m.sourceID,
 		Timestamp: time.Now().UnixNano(),
-		Message: &v2.Envelope_Counter{
-			Counter: &v2.Counter{
+		Message: &loggregator_v2.Envelope_Counter{
+			Counter: &loggregator_v2.Counter{
 				Name:  m.name,
 				Delta: delta,
 			},
@@ -96,8 +96,8 @@ func WithVersion(major, minor uint) MetricOption {
 func WithTags(tags map[string]string) MetricOption {
 	return func(m Tagged) {
 		for k, v := range tags {
-			m.tags[k] = &v2.Value{
-				Data: &v2.Value_Text{
+			m.tags[k] = &loggregator_v2.Value{
+				Data: &loggregator_v2.Value_Text{
 					Text: v,
 				},
 			}

@@ -5,9 +5,8 @@ import (
 	"errors"
 	"io"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
-
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	ingress "code.cloudfoundry.org/loggregator/agent/internal/ingress/v2"
 
@@ -38,7 +37,7 @@ var _ = Describe("Receiver", func() {
 		})
 
 		It("calls set on the data setter with the data", func() {
-			e := &v2.Envelope{
+			e := &loggregator_v2.Envelope{
 				SourceId: "some-id",
 			}
 
@@ -69,7 +68,7 @@ var _ = Describe("Receiver", func() {
 		})
 
 		It("increments the ingress metric", func() {
-			e := &v2.Envelope{
+			e := &loggregator_v2.Envelope{
 				SourceId: "some-id",
 			}
 
@@ -99,12 +98,12 @@ var _ = Describe("Receiver", func() {
 		})
 
 		It("calls set on the datasetting with all the envelopes", func() {
-			e := &v2.Envelope{
+			e := &loggregator_v2.Envelope{
 				SourceId: "some-id",
 			}
 
 			spyBatchSender.recvResponses <- BatchSenderRecvResponse{
-				envelopes: []*v2.Envelope{e, e, e, e, e},
+				envelopes: []*loggregator_v2.Envelope{e, e, e, e, e},
 			}
 			spyBatchSender.recvResponses <- BatchSenderRecvResponse{
 				err: io.EOF,
@@ -126,12 +125,12 @@ var _ = Describe("Receiver", func() {
 		})
 
 		It("increments the ingress metric", func() {
-			e := &v2.Envelope{
+			e := &loggregator_v2.Envelope{
 				SourceId: "some-id",
 			}
 
 			spyBatchSender.recvResponses <- BatchSenderRecvResponse{
-				envelopes: []*v2.Envelope{e, e, e, e, e},
+				envelopes: []*loggregator_v2.Envelope{e, e, e, e, e},
 			}
 			spyBatchSender.recvResponses <- BatchSenderRecvResponse{
 				err: io.EOF,
@@ -147,15 +146,15 @@ var _ = Describe("Receiver", func() {
 
 	Describe("Send()", func() {
 		It("calls set on the setter with the given envelopes", func() {
-			e1 := &v2.Envelope{
+			e1 := &loggregator_v2.Envelope{
 				SourceId: "some-id-1",
 			}
-			e2 := &v2.Envelope{
+			e2 := &loggregator_v2.Envelope{
 				SourceId: "some-id-2",
 			}
 
-			rx.Send(context.Background(), &v2.EnvelopeBatch{
-				Batch: []*v2.Envelope{e1, e2},
+			rx.Send(context.Background(), &loggregator_v2.EnvelopeBatch{
+				Batch: []*loggregator_v2.Envelope{e1, e2},
 			})
 
 			Expect(spySetter.envelopes).To(Receive(Equal(e1)))
@@ -163,12 +162,12 @@ var _ = Describe("Receiver", func() {
 		})
 
 		It("increments the ingress metric", func() {
-			e := &v2.Envelope{
+			e := &loggregator_v2.Envelope{
 				SourceId: "some-id",
 			}
 
-			rx.Send(context.Background(), &v2.EnvelopeBatch{
-				Batch: []*v2.Envelope{e},
+			rx.Send(context.Background(), &loggregator_v2.EnvelopeBatch{
+				Batch: []*loggregator_v2.Envelope{e},
 			})
 
 			Expect(metricClient.GetDelta("ingress")).To(Equal(uint64(1)))
@@ -177,17 +176,17 @@ var _ = Describe("Receiver", func() {
 })
 
 type SenderRecvResponse struct {
-	envelope *v2.Envelope
+	envelope *loggregator_v2.Envelope
 	err      error
 }
 
 type BatchSenderRecvResponse struct {
-	envelopes []*v2.Envelope
+	envelopes []*loggregator_v2.Envelope
 	err       error
 }
 
 type SpySender struct {
-	v2.Ingress_SenderServer
+	loggregator_v2.Ingress_SenderServer
 	recvResponses chan SenderRecvResponse
 }
 
@@ -197,14 +196,14 @@ func NewSpySender() *SpySender {
 	}
 }
 
-func (s *SpySender) Recv() (*v2.Envelope, error) {
+func (s *SpySender) Recv() (*loggregator_v2.Envelope, error) {
 	resp := <-s.recvResponses
 
 	return resp.envelope, resp.err
 }
 
 type SpyBatchSender struct {
-	v2.Ingress_BatchSenderServer
+	loggregator_v2.Ingress_BatchSenderServer
 	recvResponses chan BatchSenderRecvResponse
 }
 
@@ -214,22 +213,22 @@ func NewSpyBatchSender() *SpyBatchSender {
 	}
 }
 
-func (s *SpyBatchSender) Recv() (*v2.EnvelopeBatch, error) {
+func (s *SpyBatchSender) Recv() (*loggregator_v2.EnvelopeBatch, error) {
 	resp := <-s.recvResponses
 
-	return &v2.EnvelopeBatch{Batch: resp.envelopes}, resp.err
+	return &loggregator_v2.EnvelopeBatch{Batch: resp.envelopes}, resp.err
 }
 
 type SpySetter struct {
-	envelopes chan *v2.Envelope
+	envelopes chan *loggregator_v2.Envelope
 }
 
 func NewSpySetter() *SpySetter {
 	return &SpySetter{
-		envelopes: make(chan *v2.Envelope, 100),
+		envelopes: make(chan *loggregator_v2.Envelope, 100),
 	}
 }
 
-func (s *SpySetter) Set(e *v2.Envelope) {
+func (s *SpySetter) Set(e *loggregator_v2.Envelope) {
 	s.envelopes <- e
 }

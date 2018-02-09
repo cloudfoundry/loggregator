@@ -3,9 +3,9 @@ package v2
 import (
 	"math/rand"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/go-pubsub"
 	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
 //go:generate ./generate.sh

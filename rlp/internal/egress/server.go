@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
@@ -27,7 +27,7 @@ type HealthRegistrar interface {
 
 // Receiver creates a function which will receive envelopes on a stream.
 type Receiver interface {
-	Subscribe(ctx context.Context, req *v2.EgressBatchRequest) (rx func() (*v2.Envelope, error), err error)
+	Subscribe(ctx context.Context, req *loggregator_v2.EgressBatchRequest) (rx func() (*loggregator_v2.Envelope, error), err error)
 }
 
 // MetricClient creates new CounterMetrics to be emitted periodically.
@@ -80,14 +80,14 @@ func NewServer(
 
 // Receiver implements the loggregator-api V2 gRPC interface for receiving
 // envelopes from upstream connections.
-func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) error {
+func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Egress_ReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
-	buffer := make(chan *v2.Envelope, envelopeBufferSize)
+	buffer := make(chan *loggregator_v2.Envelope, envelopeBufferSize)
 
 	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
 	r.LegacySelector = nil
@@ -110,7 +110,7 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 		}
 	}()
 
-	br := &v2.EgressBatchRequest{
+	br := &loggregator_v2.EgressBatchRequest{
 		ShardId:          r.GetShardId(),
 		Selectors:        r.GetSelectors(),
 		UsePreferredTags: r.GetUsePreferredTags(),
@@ -142,7 +142,7 @@ func (s *Server) Receiver(r *v2.EgressRequest, srv v2.Egress_ReceiverServer) err
 // receiving batches of envelopes. Envelopes will be written to the egress
 // batched receiver server whenever the configured interval or configured
 // batch size is exceeded.
-func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_BatchedReceiverServer) error {
+func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggregator_v2.Egress_BatchedReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
@@ -161,7 +161,7 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
-	buffer := make(chan *v2.Envelope, envelopeBufferSize)
+	buffer := make(chan *loggregator_v2.Envelope, envelopeBufferSize)
 
 	go func() {
 		select {
@@ -218,7 +218,10 @@ func (s *Server) BatchedReceiver(r *v2.EgressBatchRequest, srv v2.Egress_Batched
 // convergeSelectors takes in any LegacySelector on the request as well as
 // Selectors and converts LegacySelector into a Selector based on Selector
 // hierarchy.
-func (s *Server) convergeSelectors(legacy *v2.Selector, selectors []*v2.Selector) []*v2.Selector {
+func (s *Server) convergeSelectors(
+	legacy *loggregator_v2.Selector,
+	selectors []*loggregator_v2.Selector,
+) []*loggregator_v2.Selector {
 	if legacy != nil && len(selectors) > 0 {
 		// Both would be set by the consumer for upgrade path purposes.
 		// The contract should be to assume that the Selectors encompasses
@@ -227,20 +230,20 @@ func (s *Server) convergeSelectors(legacy *v2.Selector, selectors []*v2.Selector
 	}
 
 	if legacy != nil {
-		return []*v2.Selector{legacy}
+		return []*loggregator_v2.Selector{legacy}
 	}
 
 	return selectors
 }
 
 type batchWriter struct {
-	srv          v2.Egress_BatchedReceiverServer
+	srv          loggregator_v2.Egress_BatchedReceiverServer
 	errStream    chan<- error
 	egressMetric *metricemitter.Counter
 }
 
-func (b *batchWriter) Write(batch []*v2.Envelope) {
-	err := b.srv.Send(&v2.EnvelopeBatch{Batch: batch})
+func (b *batchWriter) Write(batch []*loggregator_v2.Envelope) {
+	err := b.srv.Send(&loggregator_v2.EnvelopeBatch{Batch: batch})
 	if err != nil {
 		select {
 		case b.errStream <- err:
@@ -256,9 +259,9 @@ func (b *batchWriter) Write(batch []*v2.Envelope) {
 
 func (s *Server) consumeBatchReceiver(
 	usePreferred bool,
-	buffer chan<- *v2.Envelope,
+	buffer chan<- *loggregator_v2.Envelope,
 	errorStream chan<- error,
-	rx func() (*v2.Envelope, error),
+	rx func() (*loggregator_v2.Envelope, error),
 	cancel func(),
 ) {
 
@@ -291,8 +294,8 @@ func (s *Server) consumeBatchReceiver(
 
 func (s *Server) consumeReceiver(
 	usePreferred bool,
-	buffer chan<- *v2.Envelope,
-	rx func() (*v2.Envelope, error),
+	buffer chan<- *loggregator_v2.Envelope,
+	rx func() (*loggregator_v2.Envelope, error),
 	cancel func(),
 ) {
 
@@ -322,7 +325,7 @@ func (s *Server) consumeReceiver(
 	}
 }
 
-func (s *Server) convergeTags(usePreferred bool, e *v2.Envelope) {
+func (s *Server) convergeTags(usePreferred bool, e *loggregator_v2.Envelope) {
 	if usePreferred {
 		if e.Tags == nil {
 			e.Tags = make(map[string]string)
@@ -330,11 +333,11 @@ func (s *Server) convergeTags(usePreferred bool, e *v2.Envelope) {
 
 		for name, value := range e.GetDeprecatedTags() {
 			switch x := value.Data.(type) {
-			case *v2.Value_Decimal:
+			case *loggregator_v2.Value_Decimal:
 				e.GetTags()[name] = fmt.Sprint(x.Decimal)
-			case *v2.Value_Integer:
+			case *loggregator_v2.Value_Integer:
 				e.GetTags()[name] = fmt.Sprint(x.Integer)
-			case *v2.Value_Text:
+			case *loggregator_v2.Value_Text:
 				e.GetTags()[name] = x.Text
 			}
 		}
@@ -343,12 +346,12 @@ func (s *Server) convergeTags(usePreferred bool, e *v2.Envelope) {
 	}
 
 	if e.DeprecatedTags == nil {
-		e.DeprecatedTags = make(map[string]*v2.Value)
+		e.DeprecatedTags = make(map[string]*loggregator_v2.Value)
 	}
 
 	for name, value := range e.GetTags() {
-		e.GetDeprecatedTags()[name] = &v2.Value{
-			Data: &v2.Value_Text{
+		e.GetDeprecatedTags()[name] = &loggregator_v2.Value{
+			Data: &loggregator_v2.Value_Text{
 				Text: value,
 			},
 		}

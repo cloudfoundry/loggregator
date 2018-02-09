@@ -3,8 +3,7 @@ package v2_test
 import (
 	"fmt"
 
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
-
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v2"
 
 	. "github.com/onsi/ginkgo"
@@ -16,19 +15,19 @@ var _ = Describe("Counteraggregator", func() {
 		mockWriter := newMockWriter()
 		close(mockWriter.WriteOutput.Ret0)
 
-		logEnvelope := &plumbing.Envelope{
-			Message: &plumbing.Envelope_Log{
-				Log: &plumbing.Log{
+		logEnvelope := &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{
 					Payload: []byte("some-message"),
-					Type:    plumbing.Log_OUT,
+					Type:    loggregator_v2.Log_OUT,
 				},
 			},
 		}
 
 		aggregator := egress.NewCounterAggregator(mockWriter)
-		aggregator.Write([]*plumbing.Envelope{logEnvelope})
+		aggregator.Write([]*loggregator_v2.Envelope{logEnvelope})
 
-		Expect(mockWriter.WriteInput.Msg).To(Receive(Equal([]*plumbing.Envelope{logEnvelope})))
+		Expect(mockWriter.WriteInput.Msg).To(Receive(Equal([]*loggregator_v2.Envelope{logEnvelope})))
 	})
 
 	It("calculates totals for same counter envelopes", func() {
@@ -39,7 +38,7 @@ var _ = Describe("Counteraggregator", func() {
 		aggregator.Write(buildCounterEnvelope(10, "name-1", "origin-1"))
 		aggregator.Write(buildCounterEnvelope(15, "name-1", "origin-1"))
 
-		var receivedEnvelope []*plumbing.Envelope
+		var receivedEnvelope []*loggregator_v2.Envelope
 		Expect(mockWriter.WriteInput.Msg).To(Receive(&receivedEnvelope))
 		Expect(receivedEnvelope).To(HaveLen(1))
 		Expect(receivedEnvelope[0].GetCounter().GetTotal()).To(Equal(uint64(10)))
@@ -58,7 +57,7 @@ var _ = Describe("Counteraggregator", func() {
 		aggregator.Write(buildCounterEnvelope(15, "name-2", "origin-1"))
 		aggregator.Write(buildCounterEnvelope(20, "name-3", "origin-1"))
 
-		var receivedEnvelope []*plumbing.Envelope
+		var receivedEnvelope []*loggregator_v2.Envelope
 		Expect(mockWriter.WriteInput.Msg).To(Receive(&receivedEnvelope))
 		Expect(receivedEnvelope).To(HaveLen(1))
 		Expect(receivedEnvelope[0].GetCounter().GetTotal()).To(Equal(uint64(10)))
@@ -81,7 +80,7 @@ var _ = Describe("Counteraggregator", func() {
 		aggregator.Write(buildCounterEnvelope(15, "name-1", "origin-1"))
 		aggregator.Write(buildCounterEnvelope(20, "name-1", "origin-2"))
 
-		var receivedEnvelope []*plumbing.Envelope
+		var receivedEnvelope []*loggregator_v2.Envelope
 		Expect(mockWriter.WriteInput.Msg).To(Receive(&receivedEnvelope))
 		Expect(receivedEnvelope).To(HaveLen(1))
 		Expect(receivedEnvelope[0].GetCounter().GetTotal()).To(Equal(uint64(10)))
@@ -103,7 +102,7 @@ var _ = Describe("Counteraggregator", func() {
 		aggregator.Write(buildCounterEnvelope(10, "name-1", "origin-1"))
 		aggregator.Write(buildCounterEnvelopeWithTotal(5000, "name-1", "origin-1"))
 
-		var receivedEnvelope []*plumbing.Envelope
+		var receivedEnvelope []*loggregator_v2.Envelope
 		Expect(mockWriter.WriteInput.Msg).To(Receive(&receivedEnvelope))
 		Expect(receivedEnvelope).To(HaveLen(1))
 		Expect(receivedEnvelope[0].GetCounter().GetTotal()).To(Equal(uint64(10)))
@@ -121,7 +120,7 @@ var _ = Describe("Counteraggregator", func() {
 
 		aggregator.Write(buildCounterEnvelope(500, "unique-name", "origin-1"))
 
-		var receivedEnvelope []*plumbing.Envelope
+		var receivedEnvelope []*loggregator_v2.Envelope
 		Expect(mockWriter.WriteInput.Msg).To(Receive(&receivedEnvelope))
 		Expect(receivedEnvelope).To(HaveLen(1))
 		Expect(receivedEnvelope[0].GetCounter().GetTotal()).To(Equal(uint64(500)))
@@ -146,37 +145,37 @@ var _ = Describe("Counteraggregator", func() {
 		aggregator := egress.NewCounterAggregator(mockWriter)
 		aggregator.Write(buildCounterEnvelope(10, "name-1", "origin-1"))
 
-		var receivedEnvelopes []*plumbing.Envelope
+		var receivedEnvelopes []*loggregator_v2.Envelope
 		Expect(mockWriter.WriteInput.Msg).To(Receive(&receivedEnvelopes))
 		Expect(receivedEnvelopes).To(HaveLen(1))
 		Expect(receivedEnvelopes[0].GetCounter().GetDelta()).To(Equal(uint64(10)))
 	})
 })
 
-func buildCounterEnvelope(delta uint64, name, origin string) []*plumbing.Envelope {
-	return []*plumbing.Envelope{{
-		Message: &plumbing.Envelope_Counter{
-			Counter: &plumbing.Counter{
+func buildCounterEnvelope(delta uint64, name, origin string) []*loggregator_v2.Envelope {
+	return []*loggregator_v2.Envelope{{
+		Message: &loggregator_v2.Envelope_Counter{
+			Counter: &loggregator_v2.Counter{
 				Name:  name,
 				Delta: delta,
 			},
 		},
-		DeprecatedTags: map[string]*plumbing.Value{
-			"origin": {Data: &plumbing.Value_Text{origin}},
+		DeprecatedTags: map[string]*loggregator_v2.Value{
+			"origin": {Data: &loggregator_v2.Value_Text{origin}},
 		},
 	}}
 }
 
-func buildCounterEnvelopeWithTotal(total uint64, name, origin string) []*plumbing.Envelope {
-	return []*plumbing.Envelope{{
-		Message: &plumbing.Envelope_Counter{
-			Counter: &plumbing.Counter{
+func buildCounterEnvelopeWithTotal(total uint64, name, origin string) []*loggregator_v2.Envelope {
+	return []*loggregator_v2.Envelope{{
+		Message: &loggregator_v2.Envelope_Counter{
+			Counter: &loggregator_v2.Counter{
 				Name:  name,
 				Total: total,
 			},
 		},
-		DeprecatedTags: map[string]*plumbing.Value{
-			"origin": {Data: &plumbing.Value_Text{origin}},
+		DeprecatedTags: map[string]*loggregator_v2.Value{
+			"origin": {Data: &loggregator_v2.Value_Text{origin}},
 		},
 	}}
 }

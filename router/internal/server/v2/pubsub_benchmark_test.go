@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 )
 

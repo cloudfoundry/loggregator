@@ -1,8 +1,7 @@
 package conversion_test
 
 import (
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
-
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 
 	"github.com/cloudfoundry/sonde-go/events"
@@ -16,12 +15,12 @@ import (
 var _ = Describe("ContainerMetric", func() {
 	Context("given a v2 envelope", func() {
 		It("converts to a v1 envelope", func() {
-			envelope := &v2.Envelope{
+			envelope := &loggregator_v2.Envelope{
 				SourceId:   "some-id",
 				InstanceId: "123",
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"cpu": {
 								Unit:  "percentage",
 								Value: 11,
@@ -64,11 +63,11 @@ var _ = Describe("ContainerMetric", func() {
 		})
 
 		It("sets InstanceIndex from GaugeValue if present", func() {
-			envelope := &v2.Envelope{
+			envelope := &loggregator_v2.Envelope{
 				InstanceId: "123",
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"instance_index": {
 								Unit:  "",
 								Value: 19,
@@ -99,14 +98,14 @@ var _ = Describe("ContainerMetric", func() {
 			}))
 		})
 
-		DescribeTable("it is resilient to malformed envelopes", func(v2e *v2.Envelope) {
+		DescribeTable("it is resilient to malformed envelopes", func(v2e *loggregator_v2.Envelope) {
 			Expect(conversion.ToV1(v2e)).To(HaveLen(0))
 		},
-			Entry("bare envelope", &v2.Envelope{}),
-			Entry("with empty fields", &v2.Envelope{
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+			Entry("bare envelope", &loggregator_v2.Envelope{}),
+			Entry("with empty fields", &loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"cpu":          nil,
 							"memory":       nil,
 							"disk":         nil,
@@ -122,7 +121,7 @@ var _ = Describe("ContainerMetric", func() {
 	Context("given a v1 envelope", func() {
 		var (
 			v1Envelope      *events.Envelope
-			expectedMessage *v2.Envelope_Gauge
+			expectedMessage *loggregator_v2.Envelope_Gauge
 		)
 
 		BeforeEach(func() {
@@ -147,9 +146,9 @@ var _ = Describe("ContainerMetric", func() {
 					"custom_tag": "custom-value",
 				},
 			}
-			expectedMessage = &v2.Envelope_Gauge{
-				Gauge: &v2.Gauge{
-					Metrics: map[string]*v2.GaugeValue{
+			expectedMessage = &loggregator_v2.Envelope_Gauge{
+				Gauge: &loggregator_v2.Gauge{
+					Metrics: map[string]*loggregator_v2.GaugeValue{
 						"cpu": {
 							Unit:  "percentage",
 							Value: 11,
@@ -182,14 +181,14 @@ var _ = Describe("ContainerMetric", func() {
 					"SourceId":   Equal("some-id"),
 					"Message":    Equal(expectedMessage),
 					"InstanceId": Equal("123"),
-					"DeprecatedTags": Equal(map[string]*v2.Value{
-						"origin":     {Data: &v2.Value_Text{Text: "an-origin"}},
-						"deployment": {Data: &v2.Value_Text{Text: "a-deployment"}},
-						"job":        {Data: &v2.Value_Text{Text: "a-job"}},
-						"index":      {Data: &v2.Value_Text{Text: "an-index"}},
-						"ip":         {Data: &v2.Value_Text{Text: "an-ip"}},
-						"__v1_type":  {Data: &v2.Value_Text{Text: "ContainerMetric"}},
-						"custom_tag": {Data: &v2.Value_Text{Text: "custom-value"}},
+					"DeprecatedTags": Equal(map[string]*loggregator_v2.Value{
+						"origin":     {Data: &loggregator_v2.Value_Text{Text: "an-origin"}},
+						"deployment": {Data: &loggregator_v2.Value_Text{Text: "a-deployment"}},
+						"job":        {Data: &loggregator_v2.Value_Text{Text: "a-job"}},
+						"index":      {Data: &loggregator_v2.Value_Text{Text: "an-index"}},
+						"ip":         {Data: &loggregator_v2.Value_Text{Text: "an-ip"}},
+						"__v1_type":  {Data: &loggregator_v2.Value_Text{Text: "ContainerMetric"}},
+						"custom_tag": {Data: &loggregator_v2.Value_Text{Text: "custom-value"}},
 					}),
 					"Tags": BeNil(),
 				}))
@@ -203,7 +202,7 @@ var _ = Describe("ContainerMetric", func() {
 					ContainerMetric: &events.ContainerMetric{},
 				}
 
-				expectedV2Envelope := &v2.Envelope{
+				expectedV2Envelope := &loggregator_v2.Envelope{
 					SourceId: "some-deployment/some-job",
 				}
 

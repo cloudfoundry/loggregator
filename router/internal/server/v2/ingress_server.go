@@ -1,10 +1,10 @@
 package v2
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -45,12 +45,12 @@ func NewIngressServer(
 
 func (i IngressServer) Send(
 	_ context.Context,
-	_ *plumbing.EnvelopeBatch,
-) (*plumbing.SendResponse, error) {
+	_ *loggregator_v2.EnvelopeBatch,
+) (*loggregator_v2.SendResponse, error) {
 	return nil, grpc.Errorf(codes.Unimplemented, "this endpoint is not yet implemented")
 }
 
-func (i IngressServer) BatchSender(s plumbing.Ingress_BatchSenderServer) error {
+func (i IngressServer) BatchSender(s loggregator_v2.Ingress_BatchSenderServer) error {
 	i.health.Inc("ingressStreamCount")
 	defer i.health.Dec("ingressStreamCount")
 
@@ -78,7 +78,7 @@ func (i IngressServer) BatchSender(s plumbing.Ingress_BatchSenderServer) error {
 
 // TODO Remove the Sender method onces we are certain all Metrons are using
 // the BatchSender method
-func (i IngressServer) Sender(s plumbing.Ingress_SenderServer) error {
+func (i IngressServer) Sender(s loggregator_v2.Ingress_SenderServer) error {
 	i.health.Inc("ingressStreamCount")
 	defer i.health.Dec("ingressStreamCount")
 

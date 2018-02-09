@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 // Gauge stores data about a gauge metric to be used by the metric emitter
@@ -27,7 +27,7 @@ func NewGauge(name, unit, sourceID string, opts ...MetricOption) *Gauge {
 		unit:     unit,
 		sourceID: sourceID,
 	}
-	m.Tagged.tags = make(map[string]*v2.Value)
+	m.Tagged.tags = make(map[string]*loggregator_v2.Value)
 
 	for _, opt := range opts {
 		opt(m.Tagged)
@@ -59,19 +59,19 @@ func (m *Gauge) GetValue() float64 {
 // WithEnvelope will take in a function that will receive a V2 Envelope. This
 // is used by the metric emitter Client when the Gauge metric is send to the
 // IngressClient.
-func (m *Gauge) WithEnvelope(fn func(*v2.Envelope) error) error {
+func (m *Gauge) WithEnvelope(fn func(*loggregator_v2.Envelope) error) error {
 	v := m.GetValue()
 
 	return fn(m.toEnvelope(v))
 }
 
-func (m *Gauge) toEnvelope(value float64) *v2.Envelope {
-	return &v2.Envelope{
+func (m *Gauge) toEnvelope(value float64) *loggregator_v2.Envelope {
+	return &loggregator_v2.Envelope{
 		SourceId:  m.sourceID,
 		Timestamp: time.Now().UnixNano(),
-		Message: &v2.Envelope_Gauge{
-			Gauge: &v2.Gauge{
-				Metrics: map[string]*v2.GaugeValue{
+		Message: &loggregator_v2.Envelope_Gauge{
+			Gauge: &loggregator_v2.Gauge{
+				Metrics: map[string]*loggregator_v2.GaugeValue{
 					m.name: {
 						Unit:  m.unit,
 						Value: m.GetValue(),

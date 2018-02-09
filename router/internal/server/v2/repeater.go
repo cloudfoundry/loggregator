@@ -1,8 +1,6 @@
 package v2
 
-import (
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
-)
+import "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 
 // Repeater connects a reader to a writer.
 type Repeater struct {

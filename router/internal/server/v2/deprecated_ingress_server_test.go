@@ -3,9 +3,9 @@ package v2_test
 import (
 	"io"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
 
 	. "github.com/onsi/ginkgo"
@@ -39,18 +39,18 @@ var _ = Describe("DeprecatedIngressServer", func() {
 	})
 
 	It("writes batches to the data setter", func() {
-		mockBatchSender.RecvOutput.Ret0 <- &plumbing.EnvelopeBatch{
-			Batch: []*plumbing.Envelope{
+		mockBatchSender.RecvOutput.Ret0 <- &loggregator_v2.EnvelopeBatch{
+			Batch: []*loggregator_v2.Envelope{
 				{
-					Message: &plumbing.Envelope_Log{
-						Log: &plumbing.Log{
+					Message: &loggregator_v2.Envelope_Log{
+						Log: &loggregator_v2.Log{
 							Payload: []byte("hello-1"),
 						},
 					},
 				},
 				{
-					Message: &plumbing.Envelope_Log{
-						Log: &plumbing.Log{
+					Message: &loggregator_v2.Envelope_Log{
+						Log: &loggregator_v2.Log{
 							Payload: []byte("hello-2"),
 						},
 					},
@@ -76,9 +76,9 @@ var _ = Describe("DeprecatedIngressServer", func() {
 	})
 
 	It("writes a single envelope to the data setter", func() {
-		mockSender.RecvOutput.Ret0 <- &plumbing.Envelope{
-			Message: &plumbing.Envelope_Log{
-				Log: &plumbing.Log{
+		mockSender.RecvOutput.Ret0 <- &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{
 					Payload: []byte("hello"),
 				},
 			},
@@ -96,7 +96,7 @@ var _ = Describe("DeprecatedIngressServer", func() {
 	})
 
 	It("throws invalid envelopes on the ground", func() {
-		mockSender.RecvOutput.Ret0 <- &plumbing.Envelope{}
+		mockSender.RecvOutput.Ret0 <- &loggregator_v2.Envelope{}
 		mockSender.RecvOutput.Ret1 <- nil
 		mockSender.RecvOutput.Ret0 <- nil
 		mockSender.RecvOutput.Ret1 <- io.EOF

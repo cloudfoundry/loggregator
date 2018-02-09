@@ -6,11 +6,11 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 type Conn interface {
-	Write(data []*plumbing.Envelope) (err error)
+	Write(data []*loggregator_v2.Envelope) (err error)
 }
 
 type ClientPool struct {
@@ -28,7 +28,7 @@ func New(conns ...Conn) *ClientPool {
 	return pool
 }
 
-func (c *ClientPool) Write(msgs []*plumbing.Envelope) error {
+func (c *ClientPool) Write(msgs []*loggregator_v2.Envelope) error {
 	seed := rand.Int()
 	for i := range c.conns {
 		idx := (i + seed) % len(c.conns)

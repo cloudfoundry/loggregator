@@ -4,8 +4,8 @@ import (
 	"io"
 	"net"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/agent/internal/clientpool/v2"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -24,7 +24,7 @@ var _ = Describe("PusherFetcher", func() {
 		closer, sender, err := fetcher.Fetch(server.addr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = sender.Send(&plumbing.EnvelopeBatch{})
+		err = sender.Send(&loggregator_v2.EnvelopeBatch{})
 		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(server.batch).Should(Receive())
@@ -40,7 +40,7 @@ var _ = Describe("PusherFetcher", func() {
 		closer, sender, err := fetcher.Fetch(server.addr)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = sender.Send(&plumbing.EnvelopeBatch{})
+		err = sender.Send(&loggregator_v2.EnvelopeBatch{})
 		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(server.deprecatedBatch).Should(Receive())
@@ -116,16 +116,16 @@ type SpyIngestorServer struct {
 	addr             string
 	server           *grpc.Server
 	stop             chan struct{}
-	deprecatedBatch  chan *plumbing.EnvelopeBatch
-	batch            chan *plumbing.EnvelopeBatch
+	deprecatedBatch  chan *loggregator_v2.EnvelopeBatch
+	batch            chan *loggregator_v2.EnvelopeBatch
 	includeV2Ingress bool
 }
 
 func newSpyIngestorServer(includeV2Ingress bool) *SpyIngestorServer {
 	return &SpyIngestorServer{
 		stop:             make(chan struct{}),
-		batch:            make(chan *plumbing.EnvelopeBatch),
-		deprecatedBatch:  make(chan *plumbing.EnvelopeBatch),
+		batch:            make(chan *loggregator_v2.EnvelopeBatch),
+		deprecatedBatch:  make(chan *loggregator_v2.EnvelopeBatch),
 		includeV2Ingress: includeV2Ingress,
 	}
 }
@@ -141,7 +141,7 @@ func (s *SpyIngestorServer) Start() error {
 	plumbing.RegisterDopplerIngressServer(s.server, &spyV2DeprecatedIngressServer{s})
 
 	if s.includeV2Ingress {
-		plumbing.RegisterIngressServer(s.server, &spyV2IngressServer{s})
+		loggregator_v2.RegisterIngressServer(s.server, &spyV2IngressServer{s})
 	}
 
 	go s.server.Serve(lis)
@@ -186,11 +186,11 @@ func (s *spyV2IngressServer) Send(context.Context, *loggregator_v2.EnvelopeBatch
 	return nil, nil
 }
 
-func (s *spyV2IngressServer) Sender(srv plumbing.Ingress_SenderServer) error {
+func (s *spyV2IngressServer) Sender(srv loggregator_v2.Ingress_SenderServer) error {
 	return nil
 }
 
-func (s *spyV2IngressServer) BatchSender(srv plumbing.Ingress_BatchSenderServer) error {
+func (s *spyV2IngressServer) BatchSender(srv loggregator_v2.Ingress_BatchSenderServer) error {
 	for {
 		select {
 		case <-srv.Context().Done():

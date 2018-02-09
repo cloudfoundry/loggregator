@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
@@ -224,10 +224,10 @@ var _ = Describe("Firehose test", func() {
 			defer subscribeClient.CloseSend()
 			primePumpV2(ingressClient, subscribeClient)
 
-			err = ingressClient.Send(&v2.Envelope{
+			err = ingressClient.Send(&loggregator_v2.Envelope{
 				Timestamp: time.Now().UnixNano(),
-				Message: &v2.Envelope_Log{
-					Log: &v2.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("hello world"),
 					},
 				},
@@ -290,10 +290,10 @@ var _ = Describe("Firehose test", func() {
 			defer subscribeClient.CloseSend()
 			primePumpV2(ingressClient, subscribeClient)
 
-			err = ingressClient.Send(&v2.Envelope{
+			err = ingressClient.Send(&loggregator_v2.Envelope{
 				Timestamp: time.Now().UnixNano(),
-				Message: &v2.Envelope_Log{
-					Log: &v2.Log{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
 						Payload: []byte("hello world"),
 					},
 				},

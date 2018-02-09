@@ -3,9 +3,9 @@ package clientpool_test
 import (
 	"context"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/agent/internal/clientpool"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"google.golang.org/grpc/stats"
 
 	. "github.com/onsi/ginkgo"

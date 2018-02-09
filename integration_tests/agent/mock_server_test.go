@@ -3,8 +3,8 @@ package agent_test
 import (
 	"net"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -42,7 +42,7 @@ func NewServer() (*Server, error) {
 
 	s := grpc.NewServer(grpc.Creds(transportCreds))
 	plumbing.RegisterDopplerIngestorServer(s, mockDopplerV1)
-	v2.RegisterIngressServer(s, mockDopplerV2)
+	loggregator_v2.RegisterIngressServer(s, mockDopplerV2)
 
 	go s.Serve(lis)
 

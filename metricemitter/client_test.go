@@ -5,8 +5,8 @@ import (
 	"net"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -86,7 +86,7 @@ var _ = Describe("Emitter Client", func() {
 
 		client.EmitEvent("some-title", "some-body")
 
-		var e *v2.Envelope
+		var e *loggregator_v2.Envelope
 		Eventually(grpcServer.envelopes).Should(Receive(&e))
 		Expect(e.GetEvent().GetTitle()).To(Equal("some-title"))
 		Expect(e.GetEvent().GetBody()).To(Equal("some-body"))
@@ -124,7 +124,7 @@ var _ = Describe("Emitter Client", func() {
 			client.NewCounter("some-name")
 			Eventually(grpcServer.senders).Should(HaveLen(1))
 
-			var env *v2.Envelope
+			var env *loggregator_v2.Envelope
 			Consistently(func() uint64 {
 				Eventually(grpcServer.envelopes).Should(Receive(&env))
 				Expect(env.SourceId).To(Equal("a-source"))
@@ -159,13 +159,13 @@ var _ = Describe("Emitter Client", func() {
 			)
 			Eventually(grpcServer.senders).Should(HaveLen(1))
 
-			var env *v2.Envelope
-			text := func(s string) *v2.Value {
-				return &v2.Value{Data: &v2.Value_Text{Text: s}}
+			var env *loggregator_v2.Envelope
+			text := func(s string) *loggregator_v2.Value {
+				return &loggregator_v2.Value{Data: &loggregator_v2.Value_Text{Text: s}}
 			}
 
 			Eventually(grpcServer.envelopes).Should(Receive(&env))
-			Expect(env.DeprecatedTags).To(Equal(map[string]*v2.Value{
+			Expect(env.DeprecatedTags).To(Equal(map[string]*loggregator_v2.Value{
 				//client tags
 				"origin":     text("a-origin"),
 				"deployment": text("a-deployment"),
@@ -195,7 +195,7 @@ var _ = Describe("Emitter Client", func() {
 				metric.Increment(5)
 				metric.Increment(6)
 
-				var env *v2.Envelope
+				var env *loggregator_v2.Envelope
 				Eventually(func() uint64 {
 					Eventually(grpcServer.envelopes).Should(Receive(&env))
 					return env.GetCounter().GetDelta()
@@ -221,12 +221,12 @@ func newgRPCServerWithAddr(addr string) *SpyIngressServer {
 	s := grpc.NewServer()
 	spyIngressServer := &SpyIngressServer{
 		addr:      lis.Addr().String(),
-		senders:   make(chan v2.Ingress_SenderServer, 100),
-		envelopes: make(chan *v2.Envelope, 100),
+		senders:   make(chan loggregator_v2.Ingress_SenderServer, 100),
+		envelopes: make(chan *loggregator_v2.Envelope, 100),
 		server:    s,
 	}
 
-	v2.RegisterIngressServer(s, spyIngressServer)
+	loggregator_v2.RegisterIngressServer(s, spyIngressServer)
 	go func() {
 		log.Println(s.Serve(lis))
 	}()
@@ -236,12 +236,12 @@ func newgRPCServerWithAddr(addr string) *SpyIngressServer {
 
 type SpyIngressServer struct {
 	addr      string
-	senders   chan v2.Ingress_SenderServer
+	senders   chan loggregator_v2.Ingress_SenderServer
 	server    *grpc.Server
-	envelopes chan *v2.Envelope
+	envelopes chan *loggregator_v2.Envelope
 }
 
-func (s *SpyIngressServer) Sender(sender v2.Ingress_SenderServer) error {
+func (s *SpyIngressServer) Sender(sender loggregator_v2.Ingress_SenderServer) error {
 	s.senders <- sender
 
 	for {
@@ -253,11 +253,11 @@ func (s *SpyIngressServer) Sender(sender v2.Ingress_SenderServer) error {
 	}
 }
 
-func (s *SpyIngressServer) BatchSender(sender v2.Ingress_BatchSenderServer) error {
+func (s *SpyIngressServer) BatchSender(sender loggregator_v2.Ingress_BatchSenderServer) error {
 	return nil
 }
 
-func (s *SpyIngressServer) Send(context.Context, *v2.EnvelopeBatch) (*v2.SendResponse, error) {
+func (s *SpyIngressServer) Send(context.Context, *loggregator_v2.EnvelopeBatch) (*loggregator_v2.SendResponse, error) {
 	return nil, nil
 }
 

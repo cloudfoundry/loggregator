@@ -6,8 +6,8 @@ import "envelope.proto";
 import "ingress.proto";
 
 service DopplerIngress {
-    rpc Sender(stream Envelope) returns (SenderResponse) {}
-    rpc BatchSender(stream EnvelopeBatch) returns (BatchSenderResponse) {}
+    rpc Sender(stream loggregator.v2.Envelope) returns (SenderResponse) {}
+    rpc BatchSender(stream loggregator.v2.EnvelopeBatch) returns (loggregator.v2.BatchSenderResponse) {}
 }
 
 

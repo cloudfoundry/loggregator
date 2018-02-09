@@ -3,8 +3,8 @@ package ingress_test
 import (
 	"errors"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"code.cloudfoundry.org/loggregator/rlp/internal/ingress"
 
@@ -105,11 +105,11 @@ func buildContainerMetric() (*events.Envelope, []byte) {
 type SpyEnvelopeConverter struct {
 	data             []byte
 	usePreferredTags bool
-	envelope         *v2.Envelope
+	envelope         *loggregator_v2.Envelope
 	err              error
 }
 
-func (s *SpyEnvelopeConverter) Convert(data []byte, usePreferredTags bool) (*v2.Envelope, error) {
+func (s *SpyEnvelopeConverter) Convert(data []byte, usePreferredTags bool) (*loggregator_v2.Envelope, error) {
 	s.data = data
 	s.usePreferredTags = usePreferredTags
 	return s.envelope, s.err

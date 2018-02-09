@@ -1,8 +1,8 @@
 package ingress
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 )
@@ -13,7 +13,7 @@ func NewConverter() EnvelopeConverter {
 
 type envelopeConverter struct{}
 
-func (e envelopeConverter) Convert(payload []byte, usePreferredTags bool) (*v2.Envelope, error) {
+func (e envelopeConverter) Convert(payload []byte, usePreferredTags bool) (*loggregator_v2.Envelope, error) {
 	v1e := &events.Envelope{}
 	err := v1e.Unmarshal(payload)
 	if err != nil {

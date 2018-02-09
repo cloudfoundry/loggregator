@@ -3,8 +3,8 @@ package ingress_test
 import (
 	"net"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/ingress"
 
 	"golang.org/x/net/context"
@@ -75,7 +75,7 @@ var _ = Describe("Pool", func() {
 		var (
 			mockDoppler1 *MockDopplerServer
 			ctx          context.Context
-			req          *v2.EgressBatchRequest
+			req          *loggregator_v2.EgressBatchRequest
 		)
 
 		BeforeEach(func() {
@@ -83,7 +83,7 @@ var _ = Describe("Pool", func() {
 
 			ctx = context.Background()
 
-			req = &v2.EgressBatchRequest{
+			req = &loggregator_v2.EgressBatchRequest{
 				ShardId: "some-shard-id",
 			}
 		})
@@ -94,7 +94,7 @@ var _ = Describe("Pool", func() {
 			})
 
 			It("picks a random connection to subscribe to", func() {
-				data := make(chan []*v2.Envelope, 100)
+				data := make(chan []*loggregator_v2.Envelope, 100)
 				for i := 0; i < 10; i++ {
 					rx := fetchRx(pool, mockDoppler1.addr.String(), ctx, req)
 
@@ -105,8 +105,8 @@ var _ = Describe("Pool", func() {
 				senderB := captureSubscribeSender(mockDoppler1)
 
 				for i := 0; i < 10; i++ {
-					resp := &v2.EnvelopeBatch{
-						Batch: []*v2.Envelope{{SourceId: "A"}},
+					resp := &loggregator_v2.EnvelopeBatch{
+						Batch: []*loggregator_v2.Envelope{{SourceId: "A"}},
 					}
 					senderA.Send(resp)
 					senderB.Send(resp)
@@ -136,7 +136,7 @@ var _ = Describe("Pool", func() {
 	})
 })
 
-func consumeReceiver(rx v2.Egress_BatchedReceiverClient, data chan []*v2.Envelope) {
+func consumeReceiver(rx loggregator_v2.Egress_BatchedReceiverClient, data chan []*loggregator_v2.Envelope) {
 	for {
 		d, err := rx.Recv()
 		if err != nil {
@@ -150,10 +150,10 @@ func fetchRx(
 	pool *ingress.Pool,
 	addr string,
 	ctx context.Context,
-	req *v2.EgressBatchRequest,
-) v2.Egress_BatchedReceiverClient {
+	req *loggregator_v2.EgressBatchRequest,
+) loggregator_v2.Egress_BatchedReceiverClient {
 
-	var rx v2.Egress_BatchedReceiverClient
+	var rx loggregator_v2.Egress_BatchedReceiverClient
 	f := func() error {
 		var err error
 		rx, err = pool.Subscribe(addr, ctx, req)

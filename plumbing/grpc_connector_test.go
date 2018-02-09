@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -482,7 +482,7 @@ var _ = Describe("GRPCConnector", func() {
 					}
 					Eventually(f).Should(ConsistOf([][]byte{testMetricA}))
 
-					var envelope *v2.Envelope
+					var envelope *loggregator_v2.Envelope
 					for _, e := range metricClient.GetEnvelopes("query_error") {
 						if e.DeprecatedTags["query"].GetText() == "container_metrics" {
 							envelope = e
@@ -499,7 +499,7 @@ var _ = Describe("GRPCConnector", func() {
 					}
 					Eventually(f).Should(ConsistOf([][]byte{testRecentLogA}))
 
-					var envelope *v2.Envelope
+					var envelope *loggregator_v2.Envelope
 					for _, e := range metricClient.GetEnvelopes("query_error") {
 						if e.DeprecatedTags["query"].GetText() == "recent_logs" {
 							envelope = e

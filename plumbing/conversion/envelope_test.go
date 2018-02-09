@@ -3,8 +3,8 @@ package conversion_test
 import (
 	"fmt"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -16,19 +16,19 @@ import (
 var _ = Describe("Envelope", func() {
 	Context("given a v2 envelope", func() {
 		It("sets v1 specific properties", func() {
-			envelope := &v2.Envelope{
+			envelope := &loggregator_v2.Envelope{
 				Timestamp: 99,
-				DeprecatedTags: map[string]*v2.Value{
-					"origin":         {&v2.Value_Text{"origin"}},
-					"deployment":     {&v2.Value_Text{"deployment"}},
-					"job":            {&v2.Value_Text{"job"}},
-					"index":          {&v2.Value_Text{"index"}},
-					"ip":             {&v2.Value_Text{"ip"}},
-					"random_text":    {&v2.Value_Text{"random_text"}},
-					"random_int":     {&v2.Value_Integer{123}},
-					"random_decimal": {&v2.Value_Decimal{123}},
+				DeprecatedTags: map[string]*loggregator_v2.Value{
+					"origin":         {&loggregator_v2.Value_Text{"origin"}},
+					"deployment":     {&loggregator_v2.Value_Text{"deployment"}},
+					"job":            {&loggregator_v2.Value_Text{"job"}},
+					"index":          {&loggregator_v2.Value_Text{"index"}},
+					"ip":             {&loggregator_v2.Value_Text{"ip"}},
+					"random_text":    {&loggregator_v2.Value_Text{"random_text"}},
+					"random_int":     {&loggregator_v2.Value_Integer{123}},
+					"random_decimal": {&loggregator_v2.Value_Decimal{123}},
 				},
-				Message: &v2.Envelope_Log{Log: &v2.Log{}},
+				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
 			}
 
 			envelopes := conversion.ToV1(envelope)
@@ -49,12 +49,12 @@ var _ = Describe("Envelope", func() {
 		})
 
 		It("rejects empty tags", func() {
-			envelope := &v2.Envelope{
-				DeprecatedTags: map[string]*v2.Value{
-					"foo": {&v2.Value_Text{"bar"}},
+			envelope := &loggregator_v2.Envelope{
+				DeprecatedTags: map[string]*loggregator_v2.Value{
+					"foo": {&loggregator_v2.Value_Text{"bar"}},
 					"baz": nil,
 				},
-				Message: &v2.Envelope_Log{Log: &v2.Log{}},
+				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
 			}
 
 			envelopes := conversion.ToV1(envelope)
@@ -66,11 +66,11 @@ var _ = Describe("Envelope", func() {
 		})
 
 		It("reads non-text v2 tags", func() {
-			envelope := &v2.Envelope{
-				DeprecatedTags: map[string]*v2.Value{
-					"foo": {&v2.Value_Integer{99}},
+			envelope := &loggregator_v2.Envelope{
+				DeprecatedTags: map[string]*loggregator_v2.Value{
+					"foo": {&loggregator_v2.Value_Integer{99}},
 				},
-				Message: &v2.Envelope_Log{Log: &v2.Log{}},
+				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
 			}
 
 			envelopes := conversion.ToV1(envelope)
@@ -79,11 +79,11 @@ var _ = Describe("Envelope", func() {
 		})
 
 		It("uses non-deprecated v2 tags", func() {
-			envelope := &v2.Envelope{
+			envelope := &loggregator_v2.Envelope{
 				Tags: map[string]string{
 					"foo": "bar",
 				},
-				Message: &v2.Envelope_Log{Log: &v2.Log{}},
+				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
 			}
 
 			envelopes := conversion.ToV1(envelope)
@@ -106,10 +106,10 @@ var _ = Describe("Envelope", func() {
 				},
 			}
 
-			expectedV2Envelope := &v2.Envelope{
+			expectedV2Envelope := &loggregator_v2.Envelope{
 				Timestamp: 99,
 				SourceId:  "some-deployment/some-job",
-				DeprecatedTags: map[string]*v2.Value{
+				DeprecatedTags: map[string]*loggregator_v2.Value{
 					"random-tag": ValueText("random-value"),
 					"origin":     ValueText("origin-value"),
 					"deployment": ValueText("some-deployment"),

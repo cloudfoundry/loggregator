@@ -8,11 +8,12 @@ import (
 	"time"
 	"unsafe"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
 type Connector interface {
-	Connect() (io.Closer, plumbing.Ingress_BatchSenderClient, error)
+	Connect() (io.Closer, loggregator_v2.Ingress_BatchSenderClient, error)
 }
 
 type v2GRPCConn struct {
@@ -43,14 +44,14 @@ func NewConnManager(c Connector, maxWrites int64, pollDuration time.Duration) *C
 	return m
 }
 
-func (m *ConnManager) Write(envelopes []*plumbing.Envelope) error {
+func (m *ConnManager) Write(envelopes []*loggregator_v2.Envelope) error {
 	conn := atomic.LoadPointer(&m.conn)
 	if conn == nil || (*v2GRPCConn)(conn) == nil {
 		return errors.New("no connection to doppler present")
 	}
 
 	gRPCConn := (*v2GRPCConn)(conn)
-	err := gRPCConn.client.Send(&plumbing.EnvelopeBatch{Batch: envelopes})
+	err := gRPCConn.client.Send(&loggregator_v2.EnvelopeBatch{Batch: envelopes})
 
 	if err != nil {
 		log.Printf("error writing to doppler: %s", err)

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	clientpool "code.cloudfoundry.org/loggregator/agent/internal/clientpool/v2"
@@ -22,7 +23,7 @@ type SpyConnector struct {
 	called_ int
 }
 
-func (s *SpyConnector) Connect() (io.Closer, plumbing.Ingress_BatchSenderClient, error) {
+func (s *SpyConnector) Connect() (io.Closer, loggregator_v2.Ingress_BatchSenderClient, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.called_++
@@ -42,11 +43,11 @@ func (s *SpyConnector) called() int {
 type SpyClient struct {
 	plumbing.DopplerIngress_BatchSenderClient
 
-	batch *plumbing.EnvelopeBatch
+	batch *loggregator_v2.EnvelopeBatch
 	err   error
 }
 
-func (s *SpyClient) Send(e *plumbing.EnvelopeBatch) error {
+func (s *SpyClient) Send(e *loggregator_v2.EnvelopeBatch) error {
 	s.batch = e
 	return s.err
 }
@@ -80,9 +81,9 @@ var _ = Describe("ConnManager", func() {
 		})
 
 		It("sends the message down the connection", func() {
-			e := &plumbing.Envelope{SourceId: "some-uuid"}
+			e := &loggregator_v2.Envelope{SourceId: "some-uuid"}
 			f := func() error {
-				return connManager.Write([]*plumbing.Envelope{e})
+				return connManager.Write([]*loggregator_v2.Envelope{e})
 			}
 			Eventually(f).Should(Succeed())
 
@@ -91,9 +92,9 @@ var _ = Describe("ConnManager", func() {
 		})
 
 		It("recycles the connections after max writes", func() {
-			e := &plumbing.Envelope{SourceId: "some-uuid"}
+			e := &loggregator_v2.Envelope{SourceId: "some-uuid"}
 			f := func() int {
-				connManager.Write([]*plumbing.Envelope{e})
+				connManager.Write([]*loggregator_v2.Envelope{e})
 				return connector.called()
 			}
 			Eventually(f).Should(Equal(2))
@@ -112,7 +113,7 @@ var _ = Describe("ConnManager", func() {
 				expectedErr := errors.New("It is the error")
 				senderClient.err = expectedErr
 
-				actualErr := connManager.Write([]*plumbing.Envelope{{SourceId: "some-uuid"}})
+				actualErr := connManager.Write([]*loggregator_v2.Envelope{{SourceId: "some-uuid"}})
 				Expect(actualErr).To(Equal(expectedErr))
 				Expect(closer.called).To(Equal(1))
 			})

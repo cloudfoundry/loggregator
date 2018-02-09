@@ -4,9 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
-
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	egress "code.cloudfoundry.org/loggregator/agent/internal/egress/v2"
 
@@ -16,7 +15,7 @@ import (
 
 var _ = Describe("Transponder", func() {
 	It("reads from the buffer to the writer", func() {
-		envelope := &v2.Envelope{SourceId: "uuid"}
+		envelope := &loggregator_v2.Envelope{SourceId: "uuid"}
 		nexter := newMockNexter()
 		nexter.TryNextOutput.Ret0 <- envelope
 		nexter.TryNextOutput.Ret1 <- true
@@ -27,12 +26,12 @@ var _ = Describe("Transponder", func() {
 		go tx.Start()
 
 		Eventually(nexter.TryNextCalled).Should(Receive())
-		Eventually(writer.WriteInput.Msg).Should(Receive(Equal([]*v2.Envelope{envelope})))
+		Eventually(writer.WriteInput.Msg).Should(Receive(Equal([]*loggregator_v2.Envelope{envelope})))
 	})
 
 	Describe("batching", func() {
 		It("emits once the batch count has been reached", func() {
-			envelope := &v2.Envelope{SourceId: "uuid"}
+			envelope := &loggregator_v2.Envelope{SourceId: "uuid"}
 			nexter := newMockNexter()
 			writer := newMockWriter()
 			close(writer.WriteOutput.Ret0)
@@ -45,13 +44,13 @@ var _ = Describe("Transponder", func() {
 			tx := egress.NewTransponder(nexter, writer, nil, 5, time.Minute, testhelper.NewMetricClient())
 			go tx.Start()
 
-			var batch []*v2.Envelope
+			var batch []*loggregator_v2.Envelope
 			Eventually(writer.WriteInput.Msg).Should(Receive(&batch))
 			Expect(batch).To(HaveLen(5))
 		})
 
 		It("emits once the batch interval has been reached", func() {
-			envelope := &v2.Envelope{SourceId: "uuid"}
+			envelope := &loggregator_v2.Envelope{SourceId: "uuid"}
 			nexter := newMockNexter()
 			writer := newMockWriter()
 			close(writer.WriteOutput.Ret0)
@@ -64,13 +63,13 @@ var _ = Describe("Transponder", func() {
 			tx := egress.NewTransponder(nexter, writer, nil, 5, time.Millisecond, testhelper.NewMetricClient())
 			go tx.Start()
 
-			var batch []*v2.Envelope
+			var batch []*loggregator_v2.Envelope
 			Eventually(writer.WriteInput.Msg).Should(Receive(&batch))
 			Expect(batch).To(HaveLen(1))
 		})
 
 		It("clears batch upon egress failure", func() {
-			envelope := &v2.Envelope{SourceId: "uuid"}
+			envelope := &loggregator_v2.Envelope{SourceId: "uuid"}
 			nexter := newMockNexter()
 			writer := newMockWriter()
 
@@ -93,7 +92,7 @@ var _ = Describe("Transponder", func() {
 		})
 
 		It("emits egress metric", func() {
-			envelope := &v2.Envelope{SourceId: "uuid"}
+			envelope := &loggregator_v2.Envelope{SourceId: "uuid"}
 			nexter := newMockNexter()
 			writer := newMockWriter()
 			close(writer.WriteOutput.Ret0)
@@ -121,7 +120,7 @@ var _ = Describe("Transponder", func() {
 				"tag-one": "value-one",
 				"tag-two": "value-two",
 			}
-			input := &v2.Envelope{SourceId: "uuid"}
+			input := &loggregator_v2.Envelope{SourceId: "uuid"}
 			nexter := newMockNexter()
 			nexter.TryNextOutput.Ret0 <- input
 			nexter.TryNextOutput.Ret1 <- true
@@ -134,7 +133,7 @@ var _ = Describe("Transponder", func() {
 
 			Eventually(nexter.TryNextCalled).Should(Receive())
 
-			var output []*v2.Envelope
+			var output []*loggregator_v2.Envelope
 			Eventually(writer.WriteInput.Msg).Should(Receive(&output))
 
 			Expect(output).To(HaveLen(1))
@@ -146,11 +145,11 @@ var _ = Describe("Transponder", func() {
 			tags := map[string]string{
 				"existing-tag": "some-new-value",
 			}
-			input := &v2.Envelope{
+			input := &loggregator_v2.Envelope{
 				SourceId: "uuid",
-				DeprecatedTags: map[string]*v2.Value{
+				DeprecatedTags: map[string]*loggregator_v2.Value{
 					"existing-tag": {
-						Data: &v2.Value_Text{
+						Data: &loggregator_v2.Value_Text{
 							Text: "existing-value",
 						},
 					},
@@ -168,7 +167,7 @@ var _ = Describe("Transponder", func() {
 
 			Eventually(nexter.TryNextCalled).Should(Receive())
 
-			var output []*v2.Envelope
+			var output []*loggregator_v2.Envelope
 			Eventually(writer.WriteInput.Msg).Should(Receive(&output))
 			Expect(output).To(HaveLen(1))
 
@@ -178,7 +177,7 @@ var _ = Describe("Transponder", func() {
 		// This is required for backwards compatibility purposes.
 		// It should be removed once DeprecatedTags are removed.
 		It("moves Tags to DeprecatedTags", func() {
-			input := &v2.Envelope{
+			input := &loggregator_v2.Envelope{
 				SourceId: "uuid",
 				Tags: map[string]string{
 					"non-deprecated-tag": "some-new-value",
@@ -196,7 +195,7 @@ var _ = Describe("Transponder", func() {
 
 			Eventually(nexter.TryNextCalled).Should(Receive())
 
-			var output []*v2.Envelope
+			var output []*loggregator_v2.Envelope
 			Eventually(writer.WriteInput.Msg).Should(Receive(&output))
 			Expect(output).To(HaveLen(1))
 

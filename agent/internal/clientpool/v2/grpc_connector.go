@@ -4,11 +4,11 @@ import (
 	"errors"
 	"io"
 
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 type ClientFetcher interface {
-	Fetch(addr string) (conn io.Closer, client plumbing.Ingress_BatchSenderClient, err error)
+	Fetch(addr string) (conn io.Closer, client loggregator_v2.Ingress_BatchSenderClient, err error)
 }
 
 type GRPCConnector struct {
@@ -23,7 +23,7 @@ func MakeGRPCConnector(fetcher ClientFetcher, balancers []*Balancer) GRPCConnect
 	}
 }
 
-func (c GRPCConnector) Connect() (io.Closer, plumbing.Ingress_BatchSenderClient, error) {
+func (c GRPCConnector) Connect() (io.Closer, loggregator_v2.Ingress_BatchSenderClient, error) {
 	for _, balancer := range c.balancers {
 		hostPort, err := balancer.NextHostPort()
 		if err != nil {

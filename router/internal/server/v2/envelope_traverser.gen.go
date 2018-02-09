@@ -3,8 +3,8 @@ package v2
 import (
 	"hash/crc64"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/go-pubsub"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
 func envelopeTraverserTraverse(data interface{}) pubsub.Paths {
@@ -47,7 +47,7 @@ func _SourceId(data interface{}) pubsub.Paths {
 				}), true
 		case 1:
 
-			return hashUint64(crc64.Checksum([]byte(data.(*v2.Envelope).SourceId), tableECMA)),
+			return hashUint64(crc64.Checksum([]byte(data.(*loggregator_v2.Envelope).SourceId), tableECMA)),
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return ___Message
 				}), true
@@ -61,24 +61,24 @@ func ___Message(idx int, data interface{}) (path uint64, nextTraverser pubsub.Tr
 	switch idx {
 
 	case 0:
-		switch data.(*v2.Envelope).Message.(type) {
-		case *v2.Envelope_Timer:
+		switch data.(*loggregator_v2.Envelope).Message.(type) {
+		case *loggregator_v2.Envelope_Timer:
 			// Interface implementation with no fields
 			return 5, pubsub.TreeTraverser(done), true
 
-		case *v2.Envelope_Event:
+		case *loggregator_v2.Envelope_Event:
 			// Interface implementation with no fields
 			return 2, pubsub.TreeTraverser(done), true
 
-		case *v2.Envelope_Log:
+		case *loggregator_v2.Envelope_Log:
 			// Interface implementation with no fields
 			return 4, pubsub.TreeTraverser(done), true
 
-		case *v2.Envelope_Counter:
+		case *loggregator_v2.Envelope_Counter:
 			// Interface implementation with no fields
 			return 1, pubsub.TreeTraverser(done), true
 
-		case *v2.Envelope_Gauge:
+		case *loggregator_v2.Envelope_Gauge:
 			// Interface implementation with no fields
 			return 3, pubsub.TreeTraverser(done), true
 
@@ -108,11 +108,11 @@ func ___Message_Envelope_Log_Log(idx int, data interface{}) (path uint64, nextTr
 
 	case 0:
 
-		if data.(*v2.Envelope).Message.(*v2.Envelope_Log).Log == nil {
+		if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Log).Log == nil {
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name (data.(*v2.Envelope).Message.(*v2.Envelope_Log).Log)
+		// Empty field name (data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Log).Log)
 		return 1, pubsub.TreeTraverser(done), true
 
 	default:
@@ -122,7 +122,7 @@ func ___Message_Envelope_Log_Log(idx int, data interface{}) (path uint64, nextTr
 
 func _Message_Envelope_Log_Log(data interface{}) pubsub.Paths {
 
-	if data.(*v2.Envelope).Message.(*v2.Envelope_Log).Log == nil {
+	if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Log).Log == nil {
 		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
@@ -160,11 +160,11 @@ func ___Message_Envelope_Counter_Counter(idx int, data interface{}) (path uint64
 
 	case 0:
 
-		if data.(*v2.Envelope).Message.(*v2.Envelope_Counter).Counter == nil {
+		if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Counter).Counter == nil {
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name (data.(*v2.Envelope).Message.(*v2.Envelope_Counter).Counter)
+		// Empty field name (data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Counter).Counter)
 		return 1, pubsub.TreeTraverser(done), true
 
 	default:
@@ -174,7 +174,7 @@ func ___Message_Envelope_Counter_Counter(idx int, data interface{}) (path uint64
 
 func _Message_Envelope_Counter_Counter(data interface{}) pubsub.Paths {
 
-	if data.(*v2.Envelope).Message.(*v2.Envelope_Counter).Counter == nil {
+	if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Counter).Counter == nil {
 		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
@@ -212,11 +212,11 @@ func ___Message_Envelope_Gauge_Gauge(idx int, data interface{}) (path uint64, ne
 
 	case 0:
 
-		if data.(*v2.Envelope).Message.(*v2.Envelope_Gauge).Gauge == nil {
+		if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Gauge).Gauge == nil {
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name (data.(*v2.Envelope).Message.(*v2.Envelope_Gauge).Gauge)
+		// Empty field name (data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Gauge).Gauge)
 		return 1, pubsub.TreeTraverser(done), true
 
 	default:
@@ -226,7 +226,7 @@ func ___Message_Envelope_Gauge_Gauge(idx int, data interface{}) (path uint64, ne
 
 func _Message_Envelope_Gauge_Gauge(data interface{}) pubsub.Paths {
 
-	if data.(*v2.Envelope).Message.(*v2.Envelope_Gauge).Gauge == nil {
+	if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Gauge).Gauge == nil {
 		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
@@ -264,11 +264,11 @@ func ___Message_Envelope_Timer_Timer(idx int, data interface{}) (path uint64, ne
 
 	case 0:
 
-		if data.(*v2.Envelope).Message.(*v2.Envelope_Timer).Timer == nil {
+		if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Timer).Timer == nil {
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name (data.(*v2.Envelope).Message.(*v2.Envelope_Timer).Timer)
+		// Empty field name (data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Timer).Timer)
 		return 1, pubsub.TreeTraverser(done), true
 
 	default:
@@ -278,7 +278,7 @@ func ___Message_Envelope_Timer_Timer(idx int, data interface{}) (path uint64, ne
 
 func _Message_Envelope_Timer_Timer(data interface{}) pubsub.Paths {
 
-	if data.(*v2.Envelope).Message.(*v2.Envelope_Timer).Timer == nil {
+	if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Timer).Timer == nil {
 		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
@@ -316,7 +316,7 @@ func ___Message_Envelope_Event_Event(idx int, data interface{}) (path uint64, ne
 
 	case 0:
 
-		if data.(*v2.Envelope).Message.(*v2.Envelope_Event).Event == nil {
+		if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Event).Event == nil {
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
@@ -329,7 +329,7 @@ func ___Message_Envelope_Event_Event(idx int, data interface{}) (path uint64, ne
 
 func _Message_Envelope_Event_Event(data interface{}) pubsub.Paths {
 
-	if data.(*v2.Envelope).Message.(*v2.Envelope_Event).Event == nil {
+	if data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Event).Event == nil {
 		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
@@ -358,7 +358,7 @@ func _Message_Envelope_Event_Event_Title(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(_Message_Envelope_Event_Event_Body), true
 		case 1:
 
-			return hashUint64(crc64.Checksum([]byte(data.(*v2.Envelope).Message.(*v2.Envelope_Event).Event.Title), tableECMA)), pubsub.TreeTraverser(_Message_Envelope_Event_Event_Body), true
+			return hashUint64(crc64.Checksum([]byte(data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Event).Event.Title), tableECMA)), pubsub.TreeTraverser(_Message_Envelope_Event_Event_Body), true
 		default:
 			return 0, nil, false
 		}
@@ -373,7 +373,7 @@ func _Message_Envelope_Event_Event_Body(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
 
-			return hashUint64(crc64.Checksum([]byte(data.(*v2.Envelope).Message.(*v2.Envelope_Event).Event.Body), tableECMA)), pubsub.TreeTraverser(done), true
+			return hashUint64(crc64.Checksum([]byte(data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Event).Event.Body), tableECMA)), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}

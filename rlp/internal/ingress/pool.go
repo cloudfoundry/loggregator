@@ -10,7 +10,7 @@ import (
 	"time"
 	"unsafe"
 
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

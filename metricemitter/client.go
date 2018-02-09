@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"google.golang.org/grpc"
 )
 
 // Client is used to initialize and emit metrics on a given pulse interval.
 type Client struct {
-	ingressClient v2.IngressClient
+	ingressClient loggregator_v2.IngressClient
 	pulseInterval time.Duration
 	dialOpts      []grpc.DialOption
 	sourceID      string
@@ -18,7 +18,7 @@ type Client struct {
 }
 
 type sendable interface {
-	WithEnvelope(func(*v2.Envelope) error) error
+	WithEnvelope(func(*loggregator_v2.Envelope) error) error
 }
 
 // ClientOption is a function that can be passed into the NewClient for
@@ -84,7 +84,7 @@ func NewClient(addr string, opts ...ClientOption) (*Client, error) {
 		return nil, err
 	}
 
-	client.ingressClient = v2.NewIngressClient(conn)
+	client.ingressClient = loggregator_v2.NewIngressClient(conn)
 
 	return client, nil
 }
@@ -127,11 +127,11 @@ func (c *Client) EmitEvent(title, body string) {
 	}
 	defer senderClient.CloseAndRecv()
 
-	err = senderClient.Send(&v2.Envelope{
+	err = senderClient.Send(&loggregator_v2.Envelope{
 		Timestamp: time.Now().UnixNano(),
 		SourceId:  c.sourceID,
-		Message: &v2.Envelope_Event{
-			Event: &v2.Event{
+		Message: &loggregator_v2.Envelope_Event{
+			Event: &loggregator_v2.Event{
 				Title: title,
 				Body:  body,
 			},
@@ -142,7 +142,7 @@ func (c *Client) EmitEvent(title, body string) {
 }
 
 func (c *Client) pulse(s sendable) {
-	var senderClient v2.Ingress_SenderClient
+	var senderClient loggregator_v2.Ingress_SenderClient
 	for range time.Tick(c.pulseInterval) {
 		if senderClient == nil {
 			var err error
@@ -152,7 +152,7 @@ func (c *Client) pulse(s sendable) {
 			}
 		}
 
-		err := s.WithEnvelope(func(env *v2.Envelope) error {
+		err := s.WithEnvelope(func(env *loggregator_v2.Envelope) error {
 			return senderClient.Send(env)
 		})
 

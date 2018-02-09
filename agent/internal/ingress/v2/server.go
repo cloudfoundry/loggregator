@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 
 	"google.golang.org/grpc"
 )
@@ -31,7 +31,7 @@ func (s *Server) Start() {
 	log.Printf("grpc bound to: %s", lis.Addr())
 
 	grpcServer := grpc.NewServer(s.opts...)
-	v2.RegisterIngressServer(grpcServer, s.rx)
+	loggregator_v2.RegisterIngressServer(grpcServer, s.rx)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

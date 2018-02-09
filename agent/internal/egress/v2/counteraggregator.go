@@ -6,7 +6,7 @@ import (
 	"io"
 	"sort"
 
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 type counterID struct {
@@ -26,7 +26,7 @@ func NewCounterAggregator(w Writer) *CounterAggregator {
 	}
 }
 
-func (ca *CounterAggregator) Write(msgs []*plumbing.Envelope) error {
+func (ca *CounterAggregator) Write(msgs []*loggregator_v2.Envelope) error {
 	for i := range msgs {
 		if msgs[i].GetCounter() != nil {
 			if len(ca.counterTotals) > 10000 {
@@ -54,7 +54,7 @@ func (ca *CounterAggregator) resetTotals() {
 // hashTags only uses the deprecated tags because agent only egresses
 // the deprecated tags. Therefore, when the deprecated tags are removed,
 // hashTags will have to be updated to receive the preferred tags.
-func hashTags(tags map[string]*plumbing.Value) string {
+func hashTags(tags map[string]*loggregator_v2.Value) string {
 	hash := ""
 	elements := []mapElement{}
 	for k, v := range tags {

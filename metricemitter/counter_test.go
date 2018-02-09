@@ -3,9 +3,8 @@ package metricemitter_test
 import (
 	"errors"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,7 +17,7 @@ var _ = Describe("Counter", func() {
 
 			metric.Increment(10)
 
-			err := metric.WithEnvelope(func(_ *v2.Envelope) error {
+			err := metric.WithEnvelope(func(_ *loggregator_v2.Envelope) error {
 				return nil
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -31,7 +30,7 @@ var _ = Describe("Counter", func() {
 
 			metric.Increment(10)
 
-			err := metric.WithEnvelope(func(_ *v2.Envelope) error {
+			err := metric.WithEnvelope(func(_ *loggregator_v2.Envelope) error {
 				return errors.New("some error")
 			})
 			Expect(err).To(HaveOccurred())

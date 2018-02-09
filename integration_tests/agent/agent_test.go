@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -77,11 +77,11 @@ var _ = Describe("Agent", func() {
 		)
 		defer agentCleanup()
 
-		emitEnvelope := &v2.Envelope{
-			Message: &v2.Envelope_Log{
-				Log: &v2.Log{
+		emitEnvelope := &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{
 					Payload: []byte("some-message"),
-					Type:    v2.Log_OUT,
+					Type:    loggregator_v2.Log_OUT,
 				},
 			},
 		}
@@ -96,7 +96,7 @@ var _ = Describe("Agent", func() {
 			}
 		}()
 
-		var rx v2.Ingress_BatchSenderServer
+		var rx loggregator_v2.Ingress_BatchSenderServer
 		numDopplerConnections := 5
 		for i := 0; i < numDopplerConnections; i++ {
 			Eventually(consumerServer.V2.BatchSenderInput.Arg0).Should(Receive(&rx))
@@ -104,9 +104,9 @@ var _ = Describe("Agent", func() {
 		}
 		Eventually(consumerServer.V2.BatchSenderInput.Arg0).Should(Receive(&rx))
 
-		var envBatch *v2.EnvelopeBatch
+		var envBatch *loggregator_v2.EnvelopeBatch
 		var idx int
-		f := func() *v2.Envelope {
+		f := func() *loggregator_v2.Envelope {
 			batch, err := rx.Recv()
 			Expect(err).ToNot(HaveOccurred())
 
@@ -126,15 +126,15 @@ var _ = Describe("Agent", func() {
 		Expect(len(envBatch.Batch)).ToNot(BeZero())
 
 		Expect(*envBatch.Batch[idx]).To(MatchFields(IgnoreExtras, Fields{
-			"Message": Equal(&v2.Envelope_Log{
-				Log: &v2.Log{Payload: []byte("some-message")},
+			"Message": Equal(&loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{Payload: []byte("some-message")},
 			}),
-			"DeprecatedTags": Equal(map[string]*v2.Value{
+			"DeprecatedTags": Equal(map[string]*loggregator_v2.Value{
 				"auto-tag-1": {
-					Data: &v2.Value_Text{"auto-tag-value-1"},
+					Data: &loggregator_v2.Value_Text{"auto-tag-value-1"},
 				},
 				"auto-tag-2": {
-					Data: &v2.Value_Text{"auto-tag-value-2"},
+					Data: &loggregator_v2.Value_Text{"auto-tag-value-2"},
 				},
 			}),
 		}))
@@ -149,7 +149,7 @@ func HomeAddrToPort(addr net.Addr) int {
 	return port
 }
 
-func agentClient(port int) v2.IngressClient {
+func agentClient(port int) loggregator_v2.IngressClient {
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 
 	tlsConfig, err := plumbing.NewClientMutualTLSConfig(
@@ -166,5 +166,5 @@ func agentClient(port int) v2.IngressClient {
 	if err != nil {
 		panic(err)
 	}
-	return v2.NewIngressClient(conn)
+	return loggregator_v2.NewIngressClient(conn)
 }

@@ -1,9 +1,8 @@
 package metricemitter_test
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,8 +17,8 @@ var _ = Describe("Gauge", func() {
 		)
 		metric.Set(99.9)
 
-		var actualEnv *v2.Envelope
-		err := metric.WithEnvelope(func(env *v2.Envelope) error {
+		var actualEnv *loggregator_v2.Envelope
+		err := metric.WithEnvelope(func(env *loggregator_v2.Envelope) error {
 			actualEnv = env
 			return nil
 		})

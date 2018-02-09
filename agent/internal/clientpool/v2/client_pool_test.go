@@ -3,8 +3,7 @@ package v2_test
 import (
 	"fmt"
 
-	plumbing "code.cloudfoundry.org/loggregator/plumbing/v2"
-
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	clientpool "code.cloudfoundry.org/loggregator/agent/internal/clientpool/v2"
 
 	. "github.com/onsi/ginkgo"
@@ -13,10 +12,10 @@ import (
 
 type SpyConn struct {
 	err  error
-	data []*plumbing.Envelope
+	data []*loggregator_v2.Envelope
 }
 
-func (s *SpyConn) Write(e []*plumbing.Envelope) error {
+func (s *SpyConn) Write(e []*loggregator_v2.Envelope) error {
 	s.data = append(s.data, e...)
 	return s.err
 }
@@ -52,7 +51,7 @@ var _ = Describe("ClientPool", func() {
 			})
 
 			It("tries all conns before erroring", func() {
-				pool.Write([]*plumbing.Envelope{{SourceId: "some-uuid"}})
+				pool.Write([]*loggregator_v2.Envelope{{SourceId: "some-uuid"}})
 
 				for len(conns) > 0 {
 					i, _ := chooseData(conns)
@@ -68,7 +67,7 @@ var _ = Describe("ClientPool", func() {
 			})
 
 			It("writes only to one connection", func() {
-				Expect(pool.Write([]*plumbing.Envelope{{SourceId: "some-uuid"}})).To(Succeed())
+				Expect(pool.Write([]*loggregator_v2.Envelope{{SourceId: "some-uuid"}})).To(Succeed())
 
 				Expect(envelopeCount(conns)).To(Equal(1))
 			})
@@ -76,7 +75,7 @@ var _ = Describe("ClientPool", func() {
 	})
 })
 
-func chooseData(conns []*SpyConn) (idx int, value *plumbing.Envelope) {
+func chooseData(conns []*SpyConn) (idx int, value *loggregator_v2.Envelope) {
 	for i, conn := range conns {
 		if len(conn.data) > 0 {
 			return i, conn.data[0]

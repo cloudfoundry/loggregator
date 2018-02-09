@@ -1,8 +1,8 @@
 package conversion_test
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -15,9 +15,9 @@ var _ = Describe("CounterEvent", func() {
 	Context("given a v2 envelope", func() {
 		Context("with a total", func() {
 			It("converts to a v1 envelope", func() {
-				envelope := &v2.Envelope{
-					Message: &v2.Envelope_Counter{
-						Counter: &v2.Counter{
+				envelope := &loggregator_v2.Envelope{
+					Message: &loggregator_v2.Envelope_Counter{
+						Counter: &loggregator_v2.Counter{
 							Name:  "name",
 							Total: 99,
 						},
@@ -39,9 +39,9 @@ var _ = Describe("CounterEvent", func() {
 
 		Context("with a delta", func() {
 			It("converts to a v1 envelope", func() {
-				envelope := &v2.Envelope{
-					Message: &v2.Envelope_Counter{
-						Counter: &v2.Counter{
+				envelope := &loggregator_v2.Envelope{
+					Message: &loggregator_v2.Envelope_Counter{
+						Counter: &loggregator_v2.Counter{
 							Name:  "name",
 							Delta: 99,
 						},
@@ -65,7 +65,7 @@ var _ = Describe("CounterEvent", func() {
 	Context("given a v1 envelope", func() {
 		var (
 			v1Envelope      *events.Envelope
-			expectedMessage *v2.Envelope_Counter
+			expectedMessage *loggregator_v2.Envelope_Counter
 		)
 
 		BeforeEach(func() {
@@ -88,8 +88,8 @@ var _ = Describe("CounterEvent", func() {
 					"instance_id": "instance-id",
 				},
 			}
-			expectedMessage = &v2.Envelope_Counter{
-				Counter: &v2.Counter{
+			expectedMessage = &loggregator_v2.Envelope_Counter{
+				Counter: &loggregator_v2.Counter{
 					Name:  "name",
 					Delta: 2,
 					Total: 99,
@@ -104,14 +104,14 @@ var _ = Describe("CounterEvent", func() {
 					"SourceId":   Equal("source-id"),
 					"InstanceId": Equal("instance-id"),
 					"Message":    Equal(expectedMessage),
-					"DeprecatedTags": Equal(map[string]*v2.Value{
-						"origin":     {Data: &v2.Value_Text{Text: "an-origin"}},
-						"deployment": {Data: &v2.Value_Text{Text: "a-deployment"}},
-						"job":        {Data: &v2.Value_Text{Text: "a-job"}},
-						"index":      {Data: &v2.Value_Text{Text: "an-index"}},
-						"ip":         {Data: &v2.Value_Text{Text: "an-ip"}},
-						"__v1_type":  {Data: &v2.Value_Text{Text: "CounterEvent"}},
-						"custom_tag": {Data: &v2.Value_Text{Text: "custom-value"}},
+					"DeprecatedTags": Equal(map[string]*loggregator_v2.Value{
+						"origin":     {Data: &loggregator_v2.Value_Text{Text: "an-origin"}},
+						"deployment": {Data: &loggregator_v2.Value_Text{Text: "a-deployment"}},
+						"job":        {Data: &loggregator_v2.Value_Text{Text: "a-job"}},
+						"index":      {Data: &loggregator_v2.Value_Text{Text: "an-index"}},
+						"ip":         {Data: &loggregator_v2.Value_Text{Text: "an-ip"}},
+						"__v1_type":  {Data: &loggregator_v2.Value_Text{Text: "CounterEvent"}},
+						"custom_tag": {Data: &loggregator_v2.Value_Text{Text: "custom-value"}},
 					}),
 					"Tags": BeNil(),
 				}))

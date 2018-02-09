@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"net"
 
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"code.cloudfoundry.org/loggregator/agent/internal/clientpool/v2"
 
@@ -17,7 +18,7 @@ import (
 type SpyFetcher struct {
 	Addr   string
 	Closer io.Closer
-	Client loggregator_v2.DopplerIngress_BatchSenderClient
+	Client plumbingv2.DopplerIngress_BatchSenderClient
 }
 
 func (f *SpyFetcher) Fetch(
@@ -28,7 +29,7 @@ func (f *SpyFetcher) Fetch(
 }
 
 type SpyStream struct {
-	loggregator_v2.DopplerIngress_BatchSenderClient
+	plumbingv2.DopplerIngress_BatchSenderClient
 }
 
 var _ = Describe("GRPCConnector", func() {

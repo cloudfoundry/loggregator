@@ -3,8 +3,8 @@ package testhelper
 import (
 	"sync"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 )
 
 type counterMetric struct {
@@ -97,16 +97,16 @@ func (s *SpyMetricClient) GetDelta(name string) uint64 {
 	return 0
 }
 
-func (s *SpyMetricClient) GetEnvelopes(name string) []*v2.Envelope {
+func (s *SpyMetricClient) GetEnvelopes(name string) []*loggregator_v2.Envelope {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var envs []*v2.Envelope
+	var envs []*loggregator_v2.Envelope
 
 	for _, m := range s.counterMetrics {
 		if m.metricName == name {
-			var env *v2.Envelope
-			_ = m.metric.WithEnvelope(func(e *v2.Envelope) error {
+			var env *loggregator_v2.Envelope
+			_ = m.metric.WithEnvelope(func(e *loggregator_v2.Envelope) error {
 				env = e
 				return nil
 			})
@@ -117,8 +117,8 @@ func (s *SpyMetricClient) GetEnvelopes(name string) []*v2.Envelope {
 
 	for _, m := range s.gaugeMetrics {
 		if m.metricName == name {
-			var env *v2.Envelope
-			_ = m.metric.WithEnvelope(func(e *v2.Envelope) error {
+			var env *loggregator_v2.Envelope
+			_ = m.metric.WithEnvelope(func(e *loggregator_v2.Envelope) error {
 				env = e
 				return nil
 			})

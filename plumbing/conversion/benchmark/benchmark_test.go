@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -61,7 +61,7 @@ func BenchmarkToV1EnvelopeTimer(b *testing.B) {
 
 var (
 	outV1           []*events.Envelope
-	outV2           *v2.Envelope
+	outV2           *loggregator_v2.Envelope
 	resultSlice     []byte
 	err             error
 	httpStartStopV1 = events.Envelope{
@@ -159,14 +159,14 @@ var (
 			"measure": "mkay",
 		},
 	}
-	envelopeLogV2 = &v2.Envelope{
+	envelopeLogV2 = &loggregator_v2.Envelope{
 		Timestamp:  time.Now().UnixNano(),
 		SourceId:   "b3015d69-09cd-476d-aace-ad2d824d5ab7",
 		InstanceId: "99",
-		Message: &v2.Envelope_Log{
-			Log: &v2.Log{
+		Message: &loggregator_v2.Envelope_Log{
+			Log: &loggregator_v2.Log{
 				Payload: []byte("some-payload"),
-				Type:    v2.Log_OUT,
+				Type:    loggregator_v2.Log_OUT,
 			},
 		},
 		Tags: map[string]string{
@@ -179,12 +179,12 @@ var (
 			"__v1_type":   "LogMessage",
 		},
 	}
-	envelopeCounterV2 = &v2.Envelope{
+	envelopeCounterV2 = &loggregator_v2.Envelope{
 		Timestamp:  time.Now().UnixNano(),
 		SourceId:   "b3015d69-09cd-476d-aace-ad2d824d5ab7",
 		InstanceId: "99",
-		Message: &v2.Envelope_Counter{
-			Counter: &v2.Counter{
+		Message: &loggregator_v2.Envelope_Counter{
+			Counter: &loggregator_v2.Counter{
 				Name:  "some-name",
 				Total: 99,
 			},
@@ -198,13 +198,13 @@ var (
 			"__v1_type":  "CounterEvent",
 		},
 	}
-	envelopeGaugeV2 = &v2.Envelope{
+	envelopeGaugeV2 = &loggregator_v2.Envelope{
 		Timestamp:  time.Now().UnixNano(),
 		SourceId:   "b3015d69-09cd-476d-aace-ad2d824d5ab7",
 		InstanceId: "99",
-		Message: &v2.Envelope_Gauge{
-			Gauge: &v2.Gauge{
-				Metrics: map[string]*v2.GaugeValue{
+		Message: &loggregator_v2.Envelope_Gauge{
+			Gauge: &loggregator_v2.Gauge{
+				Metrics: map[string]*loggregator_v2.GaugeValue{
 					"cpu": {
 						Unit: "percentage", Value: 0.18079146710267877,
 					},
@@ -232,12 +232,12 @@ var (
 			"__v1_type":  "ContainerMetric",
 		},
 	}
-	envelopeTimerV2 = &v2.Envelope{
+	envelopeTimerV2 = &loggregator_v2.Envelope{
 		Timestamp:  time.Now().UnixNano(),
 		SourceId:   "b3015d69-09cd-476d-aace-ad2d824d5ab7",
 		InstanceId: "99",
-		Message: &v2.Envelope_Timer{
-			Timer: &v2.Timer{
+		Message: &loggregator_v2.Envelope_Timer{
+			Timer: &loggregator_v2.Timer{
 				Name:  "http",
 				Start: 99,
 				Stop:  100,

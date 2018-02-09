@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -17,16 +17,16 @@ import (
 // mutated during the conversion and share pointers with the new v1 envelope
 // for efficiency in creating the v1 envelope. As a result the envelope you
 // pass in should no longer be used.
-func ToV1(e *v2.Envelope) []*events.Envelope {
+func ToV1(e *loggregator_v2.Envelope) []*events.Envelope {
 	var envelopes []*events.Envelope
 	switch (e.Message).(type) {
-	case *v2.Envelope_Log:
+	case *loggregator_v2.Envelope_Log:
 		envelopes = convertLog(e)
-	case *v2.Envelope_Counter:
+	case *loggregator_v2.Envelope_Counter:
 		envelopes = convertCounter(e)
-	case *v2.Envelope_Gauge:
+	case *loggregator_v2.Envelope_Gauge:
 		envelopes = convertGauge(e)
-	case *v2.Envelope_Timer:
+	case *loggregator_v2.Envelope_Timer:
 		envelopes = convertTimer(e)
 	}
 
@@ -42,7 +42,7 @@ func ToV1(e *v2.Envelope) []*events.Envelope {
 	return envelopes
 }
 
-func createBaseV1(e *v2.Envelope) *events.Envelope {
+func createBaseV1(e *loggregator_v2.Envelope) *events.Envelope {
 	v1e := &events.Envelope{
 		Origin:     proto.String(getV2Tag(e, "origin")),
 		Deployment: proto.String(getV2Tag(e, "deployment")),
@@ -60,7 +60,7 @@ func createBaseV1(e *v2.Envelope) *events.Envelope {
 	return v1e
 }
 
-func getV2Tag(e *v2.Envelope, key string) string {
+func getV2Tag(e *loggregator_v2.Envelope, key string) string {
 	if value, ok := e.GetTags()[key]; ok {
 		return value
 	}
@@ -71,18 +71,18 @@ func getV2Tag(e *v2.Envelope, key string) string {
 	}
 
 	switch v := d.Data.(type) {
-	case *v2.Value_Text:
+	case *loggregator_v2.Value_Text:
 		return v.Text
-	case *v2.Value_Integer:
+	case *loggregator_v2.Value_Integer:
 		return fmt.Sprintf("%d", v.Integer)
-	case *v2.Value_Decimal:
+	case *loggregator_v2.Value_Decimal:
 		return fmt.Sprintf("%f", v.Decimal)
 	default:
 		return ""
 	}
 }
 
-func convertTimer(v2e *v2.Envelope) []*events.Envelope {
+func convertTimer(v2e *loggregator_v2.Envelope) []*events.Envelope {
 	v1e := createBaseV1(v2e)
 	timer := v2e.GetTimer()
 	v1e.EventType = events.Envelope_HttpStartStop.Enum()
@@ -134,7 +134,7 @@ func atoi(s string) int64 {
 	return i
 }
 
-func convertLog(v2e *v2.Envelope) []*events.Envelope {
+func convertLog(v2e *loggregator_v2.Envelope) []*events.Envelope {
 	v1e := createBaseV1(v2e)
 	if getV2Tag(v2e, "__v1_type") == "Error" {
 		recoverError(v1e, v2e)
@@ -155,7 +155,7 @@ func convertLog(v2e *v2.Envelope) []*events.Envelope {
 	return []*events.Envelope{v1e}
 }
 
-func recoverError(v1e *events.Envelope, v2e *v2.Envelope) {
+func recoverError(v1e *events.Envelope, v2e *loggregator_v2.Envelope) {
 	logMessage := v2e.GetLog()
 	v1e.EventType = events.Envelope_Error.Enum()
 	code := int32(atoi(getV2Tag(v2e, "code")))
@@ -168,7 +168,7 @@ func recoverError(v1e *events.Envelope, v2e *v2.Envelope) {
 	delete(v1e.Tags, "code")
 }
 
-func convertCounter(v2e *v2.Envelope) []*events.Envelope {
+func convertCounter(v2e *loggregator_v2.Envelope) []*events.Envelope {
 	v1e := createBaseV1(v2e)
 	counterEvent := v2e.GetCounter()
 	v1e.EventType = events.Envelope_CounterEvent.Enum()
@@ -184,7 +184,7 @@ func convertCounter(v2e *v2.Envelope) []*events.Envelope {
 	return []*events.Envelope{v1e}
 }
 
-func convertGauge(v2e *v2.Envelope) []*events.Envelope {
+func convertGauge(v2e *loggregator_v2.Envelope) []*events.Envelope {
 	if v1e := tryConvertContainerMetric(v2e); v1e != nil {
 		return []*events.Envelope{v1e}
 	}
@@ -214,7 +214,7 @@ func convertGauge(v2e *v2.Envelope) []*events.Envelope {
 	return results
 }
 
-func extractGaugeValues(metric *v2.GaugeValue) (string, float64, bool) {
+func extractGaugeValues(metric *loggregator_v2.GaugeValue) (string, float64, bool) {
 	if metric == nil || (metric.Unit == "" && metric.Value == 0) {
 		return "", 0, false
 	}
@@ -222,7 +222,7 @@ func extractGaugeValues(metric *v2.GaugeValue) (string, float64, bool) {
 	return metric.Unit, metric.Value, true
 }
 
-func instanceIndex(v2e *v2.Envelope) int32 {
+func instanceIndex(v2e *loggregator_v2.Envelope) int32 {
 	defaultIndex, err := strconv.Atoi(v2e.InstanceId)
 	if err != nil {
 		defaultIndex = 0
@@ -235,7 +235,7 @@ func instanceIndex(v2e *v2.Envelope) int32 {
 	return int32(id.Value)
 }
 
-func tryConvertContainerMetric(v2e *v2.Envelope) *events.Envelope {
+func tryConvertContainerMetric(v2e *loggregator_v2.Envelope) *events.Envelope {
 	v1e := createBaseV1(v2e)
 	gaugeEvent := v2e.GetGauge()
 	if len(gaugeEvent.Metrics) == 1 {
@@ -270,7 +270,7 @@ func tryConvertContainerMetric(v2e *v2.Envelope) *events.Envelope {
 	return v1e
 }
 
-func convertTags(e *v2.Envelope) map[string]string {
+func convertTags(e *loggregator_v2.Envelope) map[string]string {
 	oldTags := e.Tags
 	if oldTags == nil {
 		oldTags = make(map[string]string)
@@ -281,11 +281,11 @@ func convertTags(e *v2.Envelope) map[string]string {
 			continue
 		}
 		switch value.Data.(type) {
-		case *v2.Value_Text:
+		case *loggregator_v2.Value_Text:
 			oldTags[key] = value.GetText()
-		case *v2.Value_Integer:
+		case *loggregator_v2.Value_Integer:
 			oldTags[key] = fmt.Sprintf("%d", value.GetInteger())
-		case *v2.Value_Decimal:
+		case *loggregator_v2.Value_Decimal:
 			oldTags[key] = fmt.Sprintf("%f", value.GetDecimal())
 		}
 	}
@@ -293,8 +293,8 @@ func convertTags(e *v2.Envelope) map[string]string {
 	return oldTags
 }
 
-func messageType(log *v2.Log) *events.LogMessage_MessageType {
-	if log.Type == v2.Log_OUT {
+func messageType(log *loggregator_v2.Log) *events.LogMessage_MessageType {
+	if log.Type == loggregator_v2.Log_OUT {
 		return events.LogMessage_OUT.Enum()
 	}
 	return events.LogMessage_ERR.Enum()

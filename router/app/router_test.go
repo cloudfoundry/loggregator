@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/app"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"google.golang.org/grpc"
@@ -220,8 +221,8 @@ func genericLogEnvelope() *loggregator_v2.Envelope {
 	}
 }
 
-func createRouterIngressClient(addr string, g app.GRPC) loggregator_v2.DopplerIngressClient {
-	return loggregator_v2.NewDopplerIngressClient(grpcDial(addr, g))
+func createRouterIngressClient(addr string, g app.GRPC) plumbingv2.DopplerIngressClient {
+	return plumbingv2.NewDopplerIngressClient(grpcDial(addr, g))
 }
 
 func createRouterV2IngressClient(addr string, g app.GRPC) loggregator_v2.IngressClient {

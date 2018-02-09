@@ -3,8 +3,7 @@ package ingress
 import (
 	"log"
 
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
-
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"golang.org/x/net/context"
 )
 
@@ -13,7 +12,7 @@ type ContainerMetricFetcher interface {
 }
 
 type EnvelopeConverter interface {
-	Convert(data []byte, usePreferredTags bool) (*v2.Envelope, error)
+	Convert(data []byte, usePreferredTags bool) (*loggregator_v2.Envelope, error)
 }
 
 type Querier struct {
@@ -28,10 +27,10 @@ func NewQuerier(c EnvelopeConverter, f ContainerMetricFetcher) *Querier {
 	}
 }
 
-func (q *Querier) ContainerMetrics(ctx context.Context, sourceID string, usePreferredTags bool) ([]*v2.Envelope, error) {
+func (q *Querier) ContainerMetrics(ctx context.Context, sourceID string, usePreferredTags bool) ([]*loggregator_v2.Envelope, error) {
 	results := q.fetcher.ContainerMetrics(ctx, sourceID)
 
-	var v2Envs []*v2.Envelope
+	var v2Envs []*loggregator_v2.Envelope
 	for _, envBytes := range results {
 		v2e, err := q.converter.Convert(envBytes, usePreferredTags)
 		if err != nil {

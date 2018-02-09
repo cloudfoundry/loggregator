@@ -5,12 +5,12 @@
 
 package v2_test
 
-import v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
+import "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 
 type mockNexter struct {
 	TryNextCalled chan bool
 	TryNextOutput struct {
-		Ret0 chan *v2.Envelope
+		Ret0 chan *loggregator_v2.Envelope
 		Ret1 chan bool
 	}
 }
@@ -18,11 +18,11 @@ type mockNexter struct {
 func newMockNexter() *mockNexter {
 	m := &mockNexter{}
 	m.TryNextCalled = make(chan bool, 100)
-	m.TryNextOutput.Ret0 = make(chan *v2.Envelope, 100)
+	m.TryNextOutput.Ret0 = make(chan *loggregator_v2.Envelope, 100)
 	m.TryNextOutput.Ret1 = make(chan bool, 100)
 	return m
 }
-func (m *mockNexter) TryNext() (*v2.Envelope, bool) {
+func (m *mockNexter) TryNext() (*loggregator_v2.Envelope, bool) {
 	m.TryNextCalled <- true
 	return <-m.TryNextOutput.Ret0, <-m.TryNextOutput.Ret1
 }
@@ -30,7 +30,7 @@ func (m *mockNexter) TryNext() (*v2.Envelope, bool) {
 type mockWriter struct {
 	WriteCalled chan bool
 	WriteInput  struct {
-		Msg chan []*v2.Envelope
+		Msg chan []*loggregator_v2.Envelope
 	}
 	WriteOutput struct {
 		Ret0 chan error
@@ -40,11 +40,11 @@ type mockWriter struct {
 func newMockWriter() *mockWriter {
 	m := &mockWriter{}
 	m.WriteCalled = make(chan bool, 100)
-	m.WriteInput.Msg = make(chan []*v2.Envelope, 100)
+	m.WriteInput.Msg = make(chan []*loggregator_v2.Envelope, 100)
 	m.WriteOutput.Ret0 = make(chan error, 100)
 	return m
 }
-func (m *mockWriter) Write(msg []*v2.Envelope) error {
+func (m *mockWriter) Write(msg []*loggregator_v2.Envelope) error {
 	m.WriteCalled <- true
 	m.WriteInput.Msg <- msg
 	return <-m.WriteOutput.Ret0

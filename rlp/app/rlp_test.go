@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 
 	app "code.cloudfoundry.org/loggregator/rlp/app"
@@ -80,7 +80,7 @@ var _ = Describe("Start", func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 			defer cancel()
 
-			c, err := egressClient.Receiver(ctx, &v2.EgressRequest{})
+			c, err := egressClient.Receiver(ctx, &loggregator_v2.EgressRequest{})
 			if err != nil {
 				return err
 			}
@@ -110,11 +110,11 @@ var _ = Describe("Start", func() {
 
 		Eventually(func() error {
 			var err error
-			_, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{
-				LegacySelector: &v2.Selector{
+			_, err = egressClient.Receiver(context.Background(), &loggregator_v2.EgressRequest{
+				LegacySelector: &loggregator_v2.Selector{
 					SourceId: "some-id",
-					Message: &v2.Selector_Log{
-						Log: &v2.LogSelector{},
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
 					},
 				},
 			})
@@ -143,16 +143,16 @@ var _ = Describe("Start", func() {
 			egressClient, cleanup := setupRLPClient(egressAddr)
 			defer cleanup()
 
-			var egressStream v2.Egress_ReceiverClient
+			var egressStream loggregator_v2.Egress_ReceiverClient
 			Eventually(func() error {
 				var err error
-				egressStream, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{})
+				egressStream, err = egressClient.Receiver(context.Background(), &loggregator_v2.EgressRequest{})
 				return err
 			}, 5).ShouldNot(HaveOccurred())
 
 			rlp.Stop()
 
-			_, err := egressClient.Receiver(context.Background(), &v2.EgressRequest{})
+			_, err := egressClient.Receiver(context.Background(), &loggregator_v2.EgressRequest{})
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -242,7 +242,7 @@ func setupDoppler() (*mockDopplerServer, *spyDopplerV2, net.Listener) {
 
 	grpcServer := grpc.NewServer(grpc.Creds(tlsCredentials))
 	plumbing.RegisterDopplerServer(grpcServer, dopplerV1)
-	v2.RegisterEgressServer(grpcServer, dopplerV2)
+	loggregator_v2.RegisterEgressServer(grpcServer, dopplerV2)
 	go func() {
 		log.Println(grpcServer.Serve(lis))
 	}()
@@ -279,7 +279,7 @@ func setupRLP(dopplerLis net.Listener, healthAddr string) (addr string, rlp *app
 	return rlp.EgressAddr().String(), rlp
 }
 
-func setupRLPClient(egressAddr string) (v2.EgressClient, func()) {
+func setupRLPClient(egressAddr string) (loggregator_v2.EgressClient, func()) {
 	ingressTLSCredentials, err := plumbing.NewClientCredentials(
 		testservers.Cert("reverselogproxy.crt"),
 		testservers.Cert("reverselogproxy.key"),
@@ -294,24 +294,24 @@ func setupRLPClient(egressAddr string) (v2.EgressClient, func()) {
 	)
 	Expect(err).ToNot(HaveOccurred())
 
-	egressClient := v2.NewEgressClient(conn)
+	egressClient := loggregator_v2.NewEgressClient(conn)
 
 	return egressClient, func() {
 		Expect(conn.Close()).To(Succeed())
 	}
 }
 
-func setupRLPStream(egressAddr string) (v2.Egress_ReceiverClient, func()) {
+func setupRLPStream(egressAddr string) (loggregator_v2.Egress_ReceiverClient, func()) {
 	egressClient, cleanup := setupRLPClient(egressAddr)
 
-	var egressStream v2.Egress_ReceiverClient
+	var egressStream loggregator_v2.Egress_ReceiverClient
 	Eventually(func() error {
 		var err error
-		egressStream, err = egressClient.Receiver(context.Background(), &v2.EgressRequest{
-			Selectors: []*v2.Selector{
+		egressStream, err = egressClient.Receiver(context.Background(), &loggregator_v2.EgressRequest{
+			Selectors: []*loggregator_v2.Selector{
 				{
-					Message: &v2.Selector_Log{
-						Log: &v2.LogSelector{},
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
 					},
 				},
 			},
@@ -322,17 +322,17 @@ func setupRLPStream(egressAddr string) (v2.Egress_ReceiverClient, func()) {
 	return egressStream, cleanup
 }
 
-func setupRLPBatchedStream(egressAddr string) (v2.Egress_BatchedReceiverClient, func()) {
+func setupRLPBatchedStream(egressAddr string) (loggregator_v2.Egress_BatchedReceiverClient, func()) {
 	egressClient, cleanup := setupRLPClient(egressAddr)
 
-	var egressStream v2.Egress_BatchedReceiverClient
+	var egressStream loggregator_v2.Egress_BatchedReceiverClient
 	Eventually(func() error {
 		var err error
-		egressStream, err = egressClient.BatchedReceiver(context.Background(), &v2.EgressBatchRequest{
-			Selectors: []*v2.Selector{
+		egressStream, err = egressClient.BatchedReceiver(context.Background(), &loggregator_v2.EgressBatchRequest{
+			Selectors: []*loggregator_v2.Selector{
 				{
-					Message: &v2.Selector_Log{
-						Log: &v2.LogSelector{},
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
 					},
 				},
 			},
@@ -345,14 +345,14 @@ func setupRLPBatchedStream(egressAddr string) (v2.Egress_BatchedReceiverClient, 
 
 type spyDopplerV2 struct {
 	mu        sync.Mutex
-	_requests []*v2.EgressBatchRequest
+	_requests []*loggregator_v2.EgressBatchRequest
 
-	batch []*v2.Envelope
+	batch []*loggregator_v2.Envelope
 }
 
 func newSpyDopplerV2() *spyDopplerV2 {
 	return &spyDopplerV2{
-		batch: []*v2.Envelope{
+		batch: []*loggregator_v2.Envelope{
 			{SourceId: "a"},
 			{SourceId: "b"},
 			{SourceId: "c"},
@@ -360,11 +360,11 @@ func newSpyDopplerV2() *spyDopplerV2 {
 	}
 }
 
-func (s *spyDopplerV2) Receiver(*v2.EgressRequest, v2.Egress_ReceiverServer) error {
+func (s *spyDopplerV2) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
 	return grpc.Errorf(codes.Unimplemented, "use BatchedReceiver")
 }
 
-func (s *spyDopplerV2) BatchedReceiver(r *v2.EgressBatchRequest, b v2.Egress_BatchedReceiverServer) error {
+func (s *spyDopplerV2) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, b loggregator_v2.Egress_BatchedReceiverServer) error {
 	s.mu.Lock()
 	s._requests = append(s._requests, r)
 	s.mu.Unlock()
@@ -374,7 +374,7 @@ func (s *spyDopplerV2) BatchedReceiver(r *v2.EgressBatchRequest, b v2.Egress_Bat
 		case <-b.Context().Done():
 			return nil
 		default:
-			err := b.Send(&v2.EnvelopeBatch{Batch: s.batch})
+			err := b.Send(&loggregator_v2.EnvelopeBatch{Batch: s.batch})
 			if err != nil {
 				return err
 			}
@@ -383,7 +383,7 @@ func (s *spyDopplerV2) BatchedReceiver(r *v2.EgressBatchRequest, b v2.Egress_Bat
 	}
 }
 
-func (s *spyDopplerV2) requests() []*v2.EgressBatchRequest {
+func (s *spyDopplerV2) requests() []*loggregator_v2.EgressBatchRequest {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

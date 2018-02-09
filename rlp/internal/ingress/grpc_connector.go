@@ -8,9 +8,9 @@ import (
 	"time"
 	"unsafe"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
 	"golang.org/x/net/context"
 )
 

@@ -1,8 +1,8 @@
 package conversion_test
 
 import (
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	v2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -14,10 +14,10 @@ import (
 var _ = Describe("ValueMetric", func() {
 	Context("given a v2 envelope", func() {
 		It("converts to a v1 envelope", func() {
-			envelope := &v2.Envelope{
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+			envelope := &loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"name": {
 								Unit:  "meters",
 								Value: 123,
@@ -42,10 +42,10 @@ var _ = Describe("ValueMetric", func() {
 		})
 
 		It("converts multiple Gauge values", func() {
-			envelope := &v2.Envelope{
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+			envelope := &loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"name": {
 								Unit:  "meters",
 								Value: 123,
@@ -92,10 +92,10 @@ var _ = Describe("ValueMetric", func() {
 		})
 
 		It("is resilient to parial envelopes", func() {
-			envelope := &v2.Envelope{
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+			envelope := &loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"name": nil,
 						},
 					},
@@ -115,10 +115,10 @@ var _ = Describe("ValueMetric", func() {
 					Value: proto.Float64(123),
 				},
 			}
-			expectedV2Envelope := &v2.Envelope{
-				Message: &v2.Envelope_Gauge{
-					Gauge: &v2.Gauge{
-						Metrics: map[string]*v2.GaugeValue{
+			expectedV2Envelope := &loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
 							"name": {
 								Unit:  "meters",
 								Value: 123,
