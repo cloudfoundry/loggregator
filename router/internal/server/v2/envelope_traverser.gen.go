@@ -1,10 +1,9 @@
 package v2
 
 import (
-	"hash/crc64"
-
-	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	loggregator_v2 "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/go-pubsub"
+	"hash/crc64"
 )
 
 func envelopeTraverserTraverse(data interface{}) pubsub.Paths {
@@ -62,25 +61,20 @@ func ___Message(idx int, data interface{}) (path uint64, nextTraverser pubsub.Tr
 
 	case 0:
 		switch data.(*loggregator_v2.Envelope).Message.(type) {
-		case *loggregator_v2.Envelope_Timer:
-			// Interface implementation with no fields
-			return 5, pubsub.TreeTraverser(done), true
-
-		case *loggregator_v2.Envelope_Event:
-			// Interface implementation with no fields
-			return 2, pubsub.TreeTraverser(done), true
-
 		case *loggregator_v2.Envelope_Log:
-			// Interface implementation with no fields
-			return 4, pubsub.TreeTraverser(done), true
+			return 4, _Message_Envelope_Log_Log, true
 
 		case *loggregator_v2.Envelope_Counter:
-			// Interface implementation with no fields
-			return 1, pubsub.TreeTraverser(done), true
+			return 1, _Message_Envelope_Counter_Counter, true
 
 		case *loggregator_v2.Envelope_Gauge:
-			// Interface implementation with no fields
-			return 3, pubsub.TreeTraverser(done), true
+			return 3, _Message_Envelope_Gauge_Gauge, true
+
+		case *loggregator_v2.Envelope_Timer:
+			return 5, _Message_Envelope_Timer_Timer, true
+
+		case *loggregator_v2.Envelope_Event:
+			return 2, _Message_Envelope_Event_Event, true
 
 		default:
 			return 0, pubsub.TreeTraverser(done), true
@@ -164,8 +158,7 @@ func ___Message_Envelope_Counter_Counter(idx int, data interface{}) (path uint64
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name (data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Counter).Counter)
-		return 1, pubsub.TreeTraverser(done), true
+		return 1, pubsub.TreeTraverser(_Message_Envelope_Counter_Counter_Name), true
 
 	default:
 		return 0, nil, false
@@ -188,7 +181,22 @@ func _Message_Envelope_Counter_Counter(data interface{}) pubsub.Paths {
 	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
-			return 1, pubsub.TreeTraverser(done), true
+			return 1, pubsub.TreeTraverser(_Message_Envelope_Counter_Counter_Name), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _Message_Envelope_Counter_Counter_Name(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 0, pubsub.TreeTraverser(done), true
+		case 1:
+
+			return hashUint64(crc64.Checksum([]byte(data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Counter).Counter.Name), tableECMA)), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}
@@ -216,8 +224,7 @@ func ___Message_Envelope_Gauge_Gauge(idx int, data interface{}) (path uint64, ne
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name (data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Gauge).Gauge)
-		return 1, pubsub.TreeTraverser(done), true
+		return 1, pubsub.TreeTraverser(_Message_Envelope_Gauge_Gauge_Metrics), true
 
 	default:
 		return 0, nil, false
@@ -240,7 +247,26 @@ func _Message_Envelope_Gauge_Gauge(data interface{}) pubsub.Paths {
 	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
-			return 1, pubsub.TreeTraverser(done), true
+			return 1, pubsub.TreeTraverser(_Message_Envelope_Gauge_Gauge_Metrics), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _Message_Envelope_Gauge_Gauge_Metrics(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 0, pubsub.TreeTraverser(done), true
+		case 1:
+
+			var total uint64
+			for x := range data.(*loggregator_v2.Envelope).Message.(*loggregator_v2.Envelope_Gauge).Gauge.Metrics {
+				total += hashUint64(crc64.Checksum([]byte(x), tableECMA))
+			}
+			return hashUint64(total), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}
@@ -401,6 +427,7 @@ type Envelope_CounterFilter struct {
 }
 
 type CounterFilter struct {
+	Name *string
 }
 
 type Envelope_GaugeFilter struct {
@@ -408,6 +435,7 @@ type Envelope_GaugeFilter struct {
 }
 
 type GaugeFilter struct {
+	Metrics []string
 }
 
 type Envelope_TimerFilter struct {
@@ -519,6 +547,13 @@ func createPath__Envelope_Counter_Counter(f *CounterFilter) []uint64 {
 		panic("Only one field can be set")
 	}
 
+	if f.Name != nil {
+
+		path = append(path, hashUint64(crc64.Checksum([]byte(*f.Name), tableECMA)))
+	} else {
+		path = append(path, 0)
+	}
+
 	return path
 }
 
@@ -607,6 +642,17 @@ func createPath__Envelope_Gauge_Gauge(f *GaugeFilter) []uint64 {
 	var count int
 	if count > 1 {
 		panic("Only one field can be set")
+	}
+
+	if f.Metrics != nil {
+
+		var total uint64
+		for _, x := range f.Metrics {
+			total += hashUint64(crc64.Checksum([]byte(x), tableECMA))
+		}
+		path = append(path, hashUint64(total))
+	} else {
+		path = append(path, 0)
 	}
 
 	return path

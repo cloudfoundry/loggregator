@@ -189,6 +189,100 @@ var _ = Describe("PubSub", func() {
 			Expect(setter.envelopes).To(HaveLen(0))
 		})
 
+		It("selects counters when given a name", func() {
+			req := &loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Counter{
+							Counter: &loggregator_v2.CounterSelector{
+								Name: "a",
+							},
+						},
+					},
+				},
+			}
+			setter := newSpyDataSetter()
+
+			pubsub.Subscribe(req, setter)
+			pubsub.Publish(buildCounter("some-id", "a"))
+			pubsub.Publish(buildCounter("some-id", "b"))
+
+			Expect(setter.envelopes).To(HaveLen(1))
+		})
+
+		It("selects gauges when given names", func() {
+			req := &loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Gauge{
+							Gauge: &loggregator_v2.GaugeSelector{
+								Names: []string{"a", "b"},
+							},
+						},
+					},
+				},
+			}
+			setter := newSpyDataSetter()
+
+			pubsub.Subscribe(req, setter)
+
+			pubsub.Publish(&loggregator_v2.Envelope{
+				SourceId: "some-id",
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
+							"a": {
+								Unit:  "bytes",
+								Value: 12342.23,
+							},
+						},
+					},
+				},
+			})
+
+			pubsub.Publish(&loggregator_v2.Envelope{
+				SourceId: "some-id",
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
+							"a": {
+								Unit:  "bytes",
+								Value: 12342.23,
+							},
+							"b": {
+								Unit:  "bytes",
+								Value: 12342.23,
+							},
+						},
+					},
+				},
+			})
+
+			pubsub.Publish(&loggregator_v2.Envelope{
+				SourceId: "some-id",
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
+							"a": {
+								Unit:  "bytes",
+								Value: 12342.23,
+							},
+							"b": {
+								Unit:  "bytes",
+								Value: 12342.23,
+							},
+							"c": {
+								Unit:  "bytes",
+								Value: 12342.23,
+							},
+						},
+					},
+				},
+			})
+
+			Expect(setter.envelopes).To(HaveLen(1))
+		})
+
 		It("supports multiple selectors", func() {
 			req := &loggregator_v2.EgressBatchRequest{
 				Selectors: []*loggregator_v2.Selector{
@@ -315,7 +409,7 @@ func (s *spyDataSetter) Set(e *loggregator_v2.Envelope) {
 
 func publishAllTypes(pubsub *v2.PubSub, id string) {
 	pubsub.Publish(buildLog(id))
-	pubsub.Publish(buildCounter(id))
+	pubsub.Publish(buildCounter(id, "my-time"))
 	pubsub.Publish(buildGauge(id))
 	pubsub.Publish(buildTimer(id))
 	pubsub.Publish(buildEvent(id))
@@ -333,12 +427,12 @@ func buildLog(id string) *loggregator_v2.Envelope {
 	}
 }
 
-func buildCounter(id string) *loggregator_v2.Envelope {
+func buildCounter(id, name string) *loggregator_v2.Envelope {
 	return &loggregator_v2.Envelope{
 		SourceId: id,
 		Message: &loggregator_v2.Envelope_Counter{
 			Counter: &loggregator_v2.Counter{
-				Name:  "my-time",
+				Name:  name,
 				Delta: 1234,
 				Total: 123454,
 			},

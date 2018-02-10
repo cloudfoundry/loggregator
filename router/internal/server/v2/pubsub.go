@@ -98,13 +98,27 @@ func buildFilter(s *loggregator_v2.Selector) *EnvelopeFilter {
 		f.SourceId = setters.String(s.GetSourceId())
 	}
 
-	switch s.Message.(type) {
+	switch x := s.Message.(type) {
 	case *loggregator_v2.Selector_Log:
 		f.Message_Envelope_Log = &Envelope_LogFilter{}
 	case *loggregator_v2.Selector_Counter:
-		f.Message_Envelope_Counter = &Envelope_CounterFilter{}
+		filter := &Envelope_CounterFilter{}
+		if x.Counter.GetName() != "" {
+			filter.Counter = &CounterFilter{
+				Name: setters.String(x.Counter.GetName()),
+			}
+		}
+		f.Message_Envelope_Counter = filter
 	case *loggregator_v2.Selector_Gauge:
-		f.Message_Envelope_Gauge = &Envelope_GaugeFilter{}
+		filter := &Envelope_GaugeFilter{}
+
+		if len(x.Gauge.GetNames()) != 0 {
+			filter.Gauge = &GaugeFilter{
+				Metrics: x.Gauge.GetNames(),
+			}
+		}
+
+		f.Message_Envelope_Gauge = filter
 	case *loggregator_v2.Selector_Timer:
 		f.Message_Envelope_Timer = &Envelope_TimerFilter{}
 	case *loggregator_v2.Selector_Event:
