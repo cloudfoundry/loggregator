@@ -209,7 +209,7 @@ func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *do
 		dopplerDisconnect := dopplerClient.disconnect
 		c.mu.RUnlock()
 		if tried && dopplerDisconnect || ctxDisconnect != 0 {
-			log.Printf("Disconnecting from stream (%s) (doppler.disconnect=%v) (ctx.disconnect=%d)", dopplerClient.uri, dopplerDisconnect, ctxDisconnect)
+			// Add metric for doppler disconnects
 			return
 		}
 		tried = true
@@ -217,7 +217,6 @@ func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *do
 		dopplerStream, err := c.pool.Subscribe(dopplerClient.uri, cs.ctx, cs.req)
 
 		if err != nil {
-			log.Printf("Unable to connect to doppler (%s): %s", dopplerClient.uri, err)
 			time.Sleep(delay)
 			if delay < time.Minute {
 				delay *= 10

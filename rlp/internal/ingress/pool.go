@@ -104,10 +104,6 @@ func (p *Pool) fetchClient(clients []unsafe.Pointer) loggregator_v2.EgressClient
 
 func (p *Pool) connectToDoppler(addr string, clients []unsafe.Pointer, idx int) {
 	for {
-		// TODO: Do we need this log line? It prints the same log line based
-		// on pool size
-		log.Printf("adding doppler %s", addr)
-
 		conn, err := grpc.Dial(addr, p.dialOpts...)
 		if err != nil {
 			// TODO: We don't yet understand how this could happen, we should.
