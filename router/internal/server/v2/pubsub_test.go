@@ -132,6 +132,165 @@ var _ = Describe("PubSub", func() {
 		Expect(setter3.envelopes).To(HaveLen(10))
 	})
 
+	It("while sharding, sends like counters to the same subscription", func() {
+		setter1 := newSpyDataSetter()
+		setter2 := newSpyDataSetter()
+		setter3 := newSpyDataSetter()
+
+		reqA := &loggregator_v2.EgressBatchRequest{
+			ShardId:           "shard-id-A",
+			DeterministicName: "black",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Counter{
+						Counter: &loggregator_v2.CounterSelector{},
+					},
+				},
+			},
+		}
+		reqB := &loggregator_v2.EgressBatchRequest{
+			ShardId: "shard-id-B",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Counter{
+						Counter: &loggregator_v2.CounterSelector{},
+					},
+				},
+			},
+		}
+		reqC := &loggregator_v2.EgressBatchRequest{
+			ShardId:           "shard-id-A",
+			DeterministicName: "blue",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Counter{
+						Counter: &loggregator_v2.CounterSelector{},
+					},
+				},
+			},
+		}
+
+		pubsub.Subscribe(reqA, setter1)
+		pubsub.Subscribe(reqC, setter2)
+		pubsub.Subscribe(reqB, setter3)
+
+		// "hash" and "other-hash" hash to different values % 2
+		for i := 0; i < 10; i++ {
+			pubsub.Publish(&loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Counter{
+					Counter: &loggregator_v2.Counter{
+						Name: "hash",
+					},
+				},
+			})
+
+			pubsub.Publish(&loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Counter{
+					Counter: &loggregator_v2.Counter{
+						Name: "other-hash",
+					},
+				},
+			})
+		}
+
+		Expect(setter1.envelopes).To(HaveLen(10))
+		Expect(setter2.envelopes).To(HaveLen(10))
+		Expect(setter3.envelopes).To(HaveLen(20))
+
+		// Counters
+		Expect(setter1.envelopes[0].GetCounter().GetName()).To(Or(
+			Equal("hash"),
+			Equal("other-hash"),
+		))
+		Expect(setter2.envelopes[0].GetCounter().GetName()).To(Or(
+			Equal("hash"),
+			Equal("other-hash"),
+		))
+		Expect(setter1.envelopes[0].GetCounter().GetName()).ToNot(Equal(setter2.envelopes[0].GetCounter().GetName()))
+	})
+
+	It("while sharding, sends like gauges to the same subscription", func() {
+		setter1 := newSpyDataSetter()
+		setter2 := newSpyDataSetter()
+		setter3 := newSpyDataSetter()
+
+		reqA := &loggregator_v2.EgressBatchRequest{
+			ShardId:           "shard-id-A",
+			DeterministicName: "black",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{},
+					},
+				},
+			},
+		}
+		reqB := &loggregator_v2.EgressBatchRequest{
+			ShardId: "shard-id-B",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{},
+					},
+				},
+			},
+		}
+		reqC := &loggregator_v2.EgressBatchRequest{
+			ShardId:           "shard-id-A",
+			DeterministicName: "blue",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{},
+					},
+				},
+			},
+		}
+
+		pubsub.Subscribe(reqA, setter1)
+		pubsub.Subscribe(reqC, setter2)
+		pubsub.Subscribe(reqB, setter3)
+
+		// "hash" and "other-hash" hash to different values % 2
+		for i := 0; i < 10; i++ {
+			pubsub.Publish(&loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
+							"a": {},
+							"b": {},
+						},
+					},
+				},
+			})
+
+			pubsub.Publish(&loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
+							"a": {},
+						},
+					},
+				},
+			})
+		}
+
+		Expect(setter1.envelopes).To(HaveLen(10))
+		Expect(setter2.envelopes).To(HaveLen(10))
+		Expect(setter3.envelopes).To(HaveLen(20))
+
+		// Gauges
+		Expect(setter1.envelopes[0].GetGauge().GetMetrics()).To(Or(
+			HaveKey("b"),
+			Not(HaveKey("b")),
+		))
+		Expect(setter2.envelopes[0].GetGauge().GetMetrics()).To(Or(
+			HaveKey("b"),
+			Not(HaveKey("b")),
+		))
+		Expect(setter1.envelopes[0].GetGauge().GetMetrics()).ToNot(Equal(setter2.envelopes[0].GetGauge().GetMetrics()))
+	})
+
 	Describe("Selectors", func() {
 		DescribeTable("selects only the requested types",
 			func(s *loggregator_v2.Selector, t interface{}) {

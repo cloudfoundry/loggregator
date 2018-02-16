@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"hash/crc64"
 	"math/rand"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
@@ -26,7 +27,12 @@ func NewPubSub(opts ...PubSubOption) *PubSub {
 		o(p)
 	}
 
-	p.pubsub = pubsub.New(pubsub.WithRand(p.rand))
+	p.pubsub = pubsub.New(
+		pubsub.WithRand(p.rand),
+		pubsub.WithDeterministicHashing(func(i interface{}) uint64 {
+			return p.hashEnvelope(i.(*loggregator_v2.Envelope))
+		}),
+	)
 
 	return p
 }
@@ -65,6 +71,7 @@ func (p *PubSub) Subscribe(
 		unsubscribes = append(unsubscribes, p.pubsub.Subscribe(
 			subscription(s.GetSourceId(), setter),
 			pubsub.WithShardID(req.GetShardId()),
+			pubsub.WithDeterministicRouting(req.GetDeterministicName()),
 			pubsub.WithPath(envelopeTraverserCreatePath(buildFilter(s))),
 		))
 	}
@@ -73,6 +80,21 @@ func (p *PubSub) Subscribe(
 		for _, u := range unsubscribes {
 			u()
 		}
+	}
+}
+
+func (p *PubSub) hashEnvelope(e *loggregator_v2.Envelope) uint64 {
+	switch e.Message.(type) {
+	case *loggregator_v2.Envelope_Counter:
+		return crc64.Checksum([]byte(e.GetCounter().GetName()), tableECMA)
+	case *loggregator_v2.Envelope_Gauge:
+		var h uint64
+		for name := range e.GetGauge().GetMetrics() {
+			h += crc64.Checksum([]byte(name), tableECMA)
+		}
+		return h
+	default:
+		return rand.Uint64()
 	}
 }
 
