@@ -50,7 +50,7 @@ func Build() (BuildPaths, chan error) {
 
 	go func() {
 		defer wg.Done()
-		agentPath, err := gexec.Build("code.cloudfoundry.org/loggregator/agent", "-race")
+		agentPath, err := gexec.Build("code.cloudfoundry.org/loggregator-agent/cmd/agent", "-race")
 		if err != nil {
 			errors <- err
 			return
