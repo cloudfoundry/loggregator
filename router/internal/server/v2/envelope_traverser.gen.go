@@ -1,9 +1,10 @@
 package v2
 
 import (
+	"hash/crc64"
+
 	loggregator_v2 "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/go-pubsub"
-	"hash/crc64"
 )
 
 func envelopeTraverserTraverse(data interface{}) pubsub.Paths {

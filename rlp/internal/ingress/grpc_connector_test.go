@@ -62,88 +62,109 @@ var _ = Describe("GRPCConnector", func() {
 			ctx, cancelCtx = context.WithCancel(context.Background())
 		})
 
-		Context("when no dopplers are available", func() {
-			Context("when a doppler comes online after stream is established", func() {
-				var (
-					data <-chan *loggregator_v2.Envelope
-					errs <-chan error
-				)
+		Context("when a doppler comes online after stream is established", func() {
+			var (
+				data <-chan *loggregator_v2.Envelope
+				errs <-chan error
+			)
 
-				BeforeEach(func() {
-					event := plumbing.Event{
-						GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
-					}
+			BeforeEach(func() {
+				event := plumbing.Event{
+					GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
+				}
 
-					var ready chan struct{}
-					data, errs, ready = readFromSubscription(ctx, req, connector)
-					Eventually(ready).Should(BeClosed())
+				var ready chan struct{}
+				data, errs, ready = readFromSubscription(ctx, req, connector)
+				Eventually(ready).Should(BeClosed())
 
-					mockFinder.NextOutput.Ret0 <- event
-				})
-
-				It("connects to the doppler with the correct request", func() {
-					Eventually(mockDopplerServerA.requests).Should(
-						Receive(Equal(req)),
-					)
-				})
-
-				It("returns data from both dopplers", func() {
-					senderA := captureSubscribeSender(mockDopplerServerA)
-					senderB := captureSubscribeSender(mockDopplerServerB)
-
-					err := senderA.Send(&loggregator_v2.EnvelopeBatch{
-						Batch: []*loggregator_v2.Envelope{{SourceId: "A"}, {SourceId: "B"}},
-					})
-					Expect(err).ToNot(HaveOccurred())
-					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "A"})))
-					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "B"})))
-
-					err = senderB.Send(&loggregator_v2.EnvelopeBatch{
-						Batch: []*loggregator_v2.Envelope{{SourceId: "C"}, {SourceId: "D"}},
-					})
-					Expect(err).ToNot(HaveOccurred())
-					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "C"})))
-					Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "D"})))
-				})
-
-				It("does not close the doppler connection when a client exits", func() {
-					Eventually(mockDopplerServerA.servers).Should(Receive())
-					cancelCtx()
-
-					newData, _, ready := readFromSubscription(context.Background(), req, connector)
-					Eventually(ready).Should(BeClosed())
-					Eventually(mockDopplerServerA.requests).Should(HaveLen(2))
-
-					senderA := captureSubscribeSender(mockDopplerServerA)
-					err := senderA.Send(&loggregator_v2.EnvelopeBatch{
-						Batch: []*loggregator_v2.Envelope{{SourceId: "A"}},
-					})
-					Expect(err).ToNot(HaveOccurred())
-
-					Eventually(newData, 5).Should(Receive())
-				})
+				mockFinder.NextOutput.Ret0 <- event
 			})
 
-			Context("when a doppler comes online before stream has established", func() {
-				var event plumbing.Event
+			It("connects to the doppler with the correct request", func() {
+				Eventually(mockDopplerServerA.requests).Should(
+					Receive(Equal(req)),
+				)
+			})
 
-				BeforeEach(func() {
-					event = plumbing.Event{
-						GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
-					}
+			It("returns data from both dopplers", func() {
+				senderA := captureSubscribeSender(mockDopplerServerA)
+				senderB := captureSubscribeSender(mockDopplerServerB)
 
-					mockFinder.NextOutput.Ret0 <- event
-					Eventually(mockFinder.NextCalled).Should(HaveLen(2))
-
-					_, _, ready := readFromSubscription(ctx, req, connector)
-					Eventually(ready).Should(BeClosed())
+				err := senderA.Send(&loggregator_v2.EnvelopeBatch{
+					Batch: []*loggregator_v2.Envelope{{SourceId: "A"}, {SourceId: "B"}},
 				})
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "A"})))
+				Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "B"})))
 
-				It("connects to the doppler with the correct request", func() {
-					Eventually(mockDopplerServerA.requests).Should(
-						BeCalled(With(req, Not(BeNil()))),
-					)
+				err = senderB.Send(&loggregator_v2.EnvelopeBatch{
+					Batch: []*loggregator_v2.Envelope{{SourceId: "C"}, {SourceId: "D"}},
 				})
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "C"})))
+				Eventually(data).Should(Receive(Equal(&loggregator_v2.Envelope{SourceId: "D"})))
+			})
+
+			It("does not close the doppler connection when a client exits", func() {
+				Eventually(mockDopplerServerA.servers).Should(Receive())
+				cancelCtx()
+
+				newData, _, ready := readFromSubscription(context.Background(), req, connector)
+				Eventually(ready).Should(BeClosed())
+				Eventually(mockDopplerServerA.requests).Should(HaveLen(2))
+
+				senderA := captureSubscribeSender(mockDopplerServerA)
+				err := senderA.Send(&loggregator_v2.EnvelopeBatch{
+					Batch: []*loggregator_v2.Envelope{{SourceId: "A"}},
+				})
+				Expect(err).ToNot(HaveOccurred())
+
+				Eventually(newData, 5).Should(Receive())
+			})
+		})
+
+		Context("when a doppler comes online before stream has established", func() {
+			var event plumbing.Event
+
+			BeforeEach(func() {
+				event = plumbing.Event{
+					GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
+				}
+
+				mockFinder.NextOutput.Ret0 <- event
+				Eventually(mockFinder.NextCalled).Should(HaveLen(2))
+
+				_, _, ready := readFromSubscription(ctx, req, connector)
+				Eventually(ready).Should(BeClosed())
+			})
+
+			It("connects to the doppler with the correct request", func() {
+				Eventually(mockDopplerServerA.requests).Should(
+					BeCalled(With(req, Not(BeNil()))),
+				)
+			})
+		})
+
+		Context("when a doppler disconnects", func() {
+			BeforeEach(func() {
+				event := plumbing.Event{
+					GRPCDopplers: createGrpcURIs(mockDopplerServerA, mockDopplerServerB),
+				}
+				mockFinder.NextOutput.Ret0 <- event
+
+				_, _, ready := readFromSubscription(ctx, req, connector)
+				Eventually(ready).Should(BeClosed())
+
+				Eventually(mockDopplerServerA.requests).Should(Receive())
+				Eventually(mockDopplerServerB.requests).Should(Receive())
+			})
+
+			It("emits a counter metric for total doppler disconnects", func() {
+				cancelCtx()
+
+				Eventually(func() uint64 {
+					return metricClient.GetDelta("log_router_disconnects")
+				}, 5).Should(Equal(uint64(2)))
 			})
 		})
 	})

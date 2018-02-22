@@ -42,7 +42,8 @@ type GRPCConnector struct {
 	consumerStates []unsafe.Pointer
 	bufferSize     int
 
-	ingressMetric *metricemitter.Counter
+	ingressMetric    *metricemitter.Counter
+	disconnectMetric *metricemitter.Counter
 }
 
 // MetricClient creates new CounterMetrics to be emitted periodically.
@@ -63,13 +64,15 @@ func NewGRPCConnector(
 		}),
 		metricemitter.WithVersion(2, 0),
 	)
+	disconnectMetric := m.NewCounter("log_router_disconnects")
 
 	c := &GRPCConnector{
-		bufferSize:     bufferSize,
-		pool:           pool,
-		finder:         f,
-		consumerStates: make([]unsafe.Pointer, maxConnections),
-		ingressMetric:  ingressMetric,
+		bufferSize:       bufferSize,
+		pool:             pool,
+		finder:           f,
+		consumerStates:   make([]unsafe.Pointer, maxConnections),
+		ingressMetric:    ingressMetric,
+		disconnectMetric: disconnectMetric,
 	}
 	go c.readFinder()
 	return c
@@ -209,7 +212,7 @@ func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *do
 		dopplerDisconnect := dopplerClient.disconnect
 		c.mu.RUnlock()
 		if tried && dopplerDisconnect || ctxDisconnect != 0 {
-			// Add metric for doppler disconnects
+			c.disconnectMetric.Increment(1)
 			return
 		}
 		tried = true
