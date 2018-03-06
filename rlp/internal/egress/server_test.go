@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/egress"
@@ -19,6 +20,38 @@ import (
 
 var _ = Describe("Server", func() {
 	Describe("Receiver()", func() {
+		It("errors when streams exceeds maxStreams", func() {
+			receiverServer := newSpyReceiverServer(nil)
+			receiver := newSpyReceiver(1)
+
+			server := egress.NewServer(
+				receiver,
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+				egress.WithMaxStreams(0),
+			)
+
+			err := server.Receiver(&loggregator_v2.EgressRequest{
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
+
+			Expect(err).To(MatchError(
+				grpc.Errorf(
+					codes.ResourceExhausted,
+					"unable to create stream, max egress streams reached: 0",
+				),
+			))
+		})
+
 		It("errors when the sender cannot send the envelope", func() {
 			receiverServer := newSpyReceiverServer(errors.New("Oh No!"))
 			receiver := newSpyReceiver(1)
@@ -466,6 +499,38 @@ var _ = Describe("Server", func() {
 					return metricClient.GetDelta("dropped")
 				}, 3).Should(BeNumerically(">", 100))
 			})
+
+			It("emits 'rejected_streams' metric for each rejected streams", func() {
+				metricClient := testhelper.NewMetricClient()
+				receiverServer := newSpyReceiverServer(nil)
+				receiverServer.wait = make(chan struct{})
+				defer receiverServer.stopWait()
+
+				receiver := newSpyReceiver(1)
+				server := egress.NewServer(
+					receiver,
+					metricClient,
+					newSpyHealthRegistrar(),
+					context.TODO(),
+					1,
+					time.Nanosecond,
+					egress.WithMaxStreams(0),
+				)
+
+				go server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
+						{
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
+
+				Eventually(func() uint64 {
+					return metricClient.GetDelta("rejected_streams")
+				}).Should(Equal(uint64(1)))
+			})
 		})
 
 		Describe("health monitoring", func() {
@@ -506,6 +571,36 @@ var _ = Describe("Server", func() {
 	})
 
 	Describe("BatchedReceiver()", func() {
+		It("errors when streams exceeds maxStreams", func() {
+			receiverServer := newSpyBatchedReceiverServer(nil)
+			server := egress.NewServer(
+				&stubReceiver{},
+				testhelper.NewMetricClient(),
+				newSpyHealthRegistrar(),
+				context.TODO(),
+				1,
+				time.Nanosecond,
+				egress.WithMaxStreams(0),
+			)
+
+			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
+						},
+					},
+				},
+			}, receiverServer)
+
+			Expect(err).To(MatchError(
+				grpc.Errorf(
+					codes.ResourceExhausted,
+					"unable to create stream, max egress streams reached: 0",
+				),
+			))
+		})
+
 		It("errors when the sender cannot send the envelope", func() {
 			receiverServer := newSpyBatchedReceiverServer(errors.New("Oh No!"))
 			server := egress.NewServer(
@@ -893,6 +988,37 @@ var _ = Describe("Server", func() {
 				Eventually(func() uint64 {
 					return metricClient.GetDelta("dropped")
 				}, 3).Should(BeNumerically(">", 100))
+			})
+
+			It("emits 'rejected_streams' metric when streams are rejected", func() {
+				metricClient := testhelper.NewMetricClient()
+				receiverServer := newSpyBatchedReceiverServer(nil)
+				receiver := newSpyReceiver(1)
+
+				server := egress.NewServer(
+					receiver,
+					metricClient,
+					newSpyHealthRegistrar(),
+					context.TODO(),
+					1,
+					time.Nanosecond,
+					egress.WithMaxStreams(0),
+				)
+				go server.BatchedReceiver(
+					&loggregator_v2.EgressBatchRequest{
+						Selectors: []*loggregator_v2.Selector{
+							{
+								Message: &loggregator_v2.Selector_Log{
+									Log: &loggregator_v2.LogSelector{},
+								},
+							},
+						},
+					}, receiverServer,
+				)
+
+				Eventually(func() uint64 {
+					return metricClient.GetDelta("rejected_streams")
+				}).Should(Equal(uint64(1)))
 			})
 		})
 

@@ -36,6 +36,7 @@ type RLP struct {
 	egressPort           int
 	egressServerOpts     []grpc.ServerOption
 	maxEgressConnections int
+	maxEgressStreams     int64
 
 	ingressAddrs    []string
 	ingressDialOpts []grpc.DialOption
@@ -67,6 +68,7 @@ func NewRLP(m MetricClient, opts ...RLPOption) *RLP {
 		ingressDialOpts:      []grpc.DialOption{grpc.WithInsecure()},
 		egressServerOpts:     []grpc.ServerOption{},
 		maxEgressConnections: 500,
+		maxEgressStreams:     500,
 		metricClient:         m,
 		healthAddr:           "localhost:0",
 		ctx:                  ctx,
@@ -81,7 +83,7 @@ func NewRLP(m MetricClient, opts ...RLPOption) *RLP {
 	return rlp
 }
 
-// RLPOption represents a function that can configure a remote log proxy.
+// RLPOption represents a function that can configure a reverse log proxy.
 type RLPOption func(c *RLP)
 
 // WithEgressPort specifies the port used to bind the egress gRPC server.
@@ -127,6 +129,13 @@ func WithHealthAddr(addr string) RLPOption {
 func WithMaxEgressConnections(max int) RLPOption {
 	return func(r *RLP) {
 		r.maxEgressConnections = max
+	}
+}
+
+// WithMaxEgressStreams specifies the number of streams the RLP will allow.
+func WithMaxEgressStreams(max int64) RLPOption {
+	return func(r *RLP) {
+		r.maxEgressStreams = max
 	}
 }
 
@@ -195,7 +204,15 @@ func (r *RLP) setupEgress() {
 	r.egressServer = grpc.NewServer(r.egressServerOpts...)
 	loggregator_v2.RegisterEgressServer(
 		r.egressServer,
-		egress.NewServer(r.v2Connector, r.metricClient, r.health, r.ctx, 100, 100*time.Millisecond),
+		egress.NewServer(
+			r.v2Connector,
+			r.metricClient,
+			r.health,
+			r.ctx,
+			100,
+			100*time.Millisecond,
+			egress.WithMaxStreams(r.maxEgressStreams),
+		),
 	)
 }
 

@@ -24,6 +24,7 @@ type Config struct {
 	MetricEmitterInterval time.Duration `env:"RLP_METRIC_EMITTER_INTERVAL"`
 	RouterAddrs           []string      `env:"ROUTER_ADDRS, required"`
 	AgentAddr             string        `env:"AGENT_ADDR"`
+	MaxEgressStreams      int64         `env:"MAX_EGRESS_STREAMS"`
 	GRPC                  GRPC
 }
 
@@ -34,6 +35,7 @@ func LoadConfig() (*Config, error) {
 		HealthAddr:            "localhost:14825",
 		MetricEmitterInterval: time.Minute,
 		AgentAddr:             "localhost:3458",
+		MaxEgressStreams:      500,
 	}
 
 	err := envstruct.Load(&conf)

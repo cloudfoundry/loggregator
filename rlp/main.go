@@ -96,6 +96,7 @@ func main() {
 			grpc.KeepaliveEnforcementPolicy(egressKP),
 		),
 		app.WithHealthAddr(conf.HealthAddr),
+		app.WithMaxEgressStreams(conf.MaxEgressStreams),
 	)
 	go rlp.Start()
 	defer rlp.Stop()

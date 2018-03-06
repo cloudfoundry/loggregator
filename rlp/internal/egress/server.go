@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync/atomic"
 	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
@@ -38,13 +39,16 @@ type MetricClient interface {
 // Server represents a bridge between inbound data from the Receiver and
 // outbound data on a gRPC stream.
 type Server struct {
-	receiver      Receiver
-	egressMetric  *metricemitter.Counter
-	droppedMetric *metricemitter.Counter
-	health        HealthRegistrar
-	ctx           context.Context
-	batchSize     int
-	batchInterval time.Duration
+	receiver       Receiver
+	egressMetric   *metricemitter.Counter
+	droppedMetric  *metricemitter.Counter
+	rejectedMetric *metricemitter.Counter
+	health         HealthRegistrar
+	ctx            context.Context
+	batchSize      int
+	batchInterval  time.Duration
+	maxStreams     int64
+	subscriptions  int64
 }
 
 // NewServer is the preferred way to create a new Server.
@@ -55,6 +59,7 @@ func NewServer(
 	c context.Context,
 	batchSize int,
 	batchInterval time.Duration,
+	opts ...ServerOption,
 ) *Server {
 	egressMetric := m.NewCounter("egress",
 		metricemitter.WithVersion(2, 0),
@@ -67,14 +72,37 @@ func NewServer(
 		}),
 	)
 
-	return &Server{
-		receiver:      r,
-		egressMetric:  egressMetric,
-		droppedMetric: droppedMetric,
-		health:        h,
-		ctx:           c,
-		batchSize:     batchSize,
-		batchInterval: batchInterval,
+	rejectedMetric := m.NewCounter("rejected_streams",
+		metricemitter.WithVersion(2, 0),
+	)
+
+	s := &Server{
+		receiver:       r,
+		egressMetric:   egressMetric,
+		droppedMetric:  droppedMetric,
+		rejectedMetric: rejectedMetric,
+		health:         h,
+		ctx:            c,
+		batchSize:      batchSize,
+		batchInterval:  batchInterval,
+		maxStreams:     500,
+	}
+
+	for _, o := range opts {
+		o(s)
+	}
+
+	return s
+}
+
+// ServerOption represents a function that cancel configure an RLP egress server.
+type ServerOption func(*Server)
+
+// WithMaxStreams specifies the maximum streams allowed by the RLP egress
+// server.
+func WithMaxStreams(conn int64) ServerOption {
+	return func(s *Server) {
+		s.maxStreams = conn
 	}
 }
 
@@ -83,6 +111,8 @@ func NewServer(
 func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Egress_ReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
+	atomic.AddInt64(&s.subscriptions, 1)
+	defer atomic.AddInt64(&s.subscriptions, -1)
 
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
@@ -116,6 +146,11 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 		UsePreferredTags: r.GetUsePreferredTags(),
 	}
 
+	if s.subscriptions > s.maxStreams {
+		s.rejectedMetric.Increment(1)
+		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
+	}
+
 	rx, err := s.receiver.Subscribe(ctx, br)
 	if err != nil {
 		log.Printf("Unable to setup subscription: %s", err)
@@ -145,6 +180,8 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggregator_v2.Egress_BatchedReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
+	atomic.AddInt64(&s.subscriptions, 1)
+	defer atomic.AddInt64(&s.subscriptions, -1)
 
 	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
 	r.LegacySelector = nil
@@ -171,6 +208,11 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 			cancel()
 		}
 	}()
+
+	if s.subscriptions > s.maxStreams {
+		s.rejectedMetric.Increment(1)
+		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
+	}
 
 	rx, err := s.receiver.Subscribe(ctx, r)
 	if err != nil {
