@@ -96,6 +96,33 @@ var _ = Describe("IngressServer", func() {
 		Expect(ingressMetric.GetDelta()).To(Equal(uint64(1)))
 	})
 
+	It("finishes modifying the map before it goes on the diode", func() {
+		tags := make(map[string]string)
+
+		spySenderServer.recvCount = 1
+		spySenderServer.envelope = &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Log{
+				Log: &loggregator_v2.Log{
+					Payload: []byte("hello"),
+				},
+			},
+			Tags: tags,
+		}
+
+		go ingestor.Sender(spySenderServer)
+
+		for {
+			v2e, ok := v2Buf.TryNext()
+			if ok {
+				for _, _ = range v2e.Tags {
+					// iterate the map to expose a race
+					// this can only fail when run with -race set
+				}
+				break
+			}
+		}
+	})
+
 	It("throws invalid envelopes on the ground", func() {
 		spySenderServer.recvCount = 1
 		spySenderServer.envelope = &loggregator_v2.Envelope{}

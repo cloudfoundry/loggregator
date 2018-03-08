@@ -91,6 +91,25 @@ var _ = Describe("IngestorServer", func() {
 		Expect(ingressMetric.GetDelta()).To(BeNumerically(">", 0))
 	})
 
+	It("reads envelopes from ingestor client into the v1 Buffer", func() {
+		pusherClient, err := dopplerClient.Pusher(context.TODO())
+		Expect(err).ToNot(HaveOccurred())
+
+		someEnvelope, data := buildContainerMetric()
+		pusherClient.Send(&plumbing.EnvelopeData{data})
+
+		f := func() *events.Envelope {
+			env, ok := v1Buf.TryNext()
+			if !ok {
+				return nil
+			}
+
+			return env
+		}
+		Eventually(f).Should(Equal(someEnvelope))
+		Expect(ingressMetric.GetDelta()).To(BeNumerically(">", 0))
+	})
+	
 	It("reads envelopes from ingestor client into the v2 Buffer", func() {
 		pusherClient, err := dopplerClient.Pusher(context.TODO())
 		Expect(err).ToNot(HaveOccurred())
