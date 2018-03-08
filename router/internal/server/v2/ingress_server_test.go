@@ -98,6 +98,35 @@ var _ = Describe("IngressServer", func() {
 		Expect(ok).To(BeTrue())
 	})
 
+	It("finishes modifying the map before it goes on the diode", func() {
+		tags := make(map[string]string)
+
+		mockSender.RecvOutput.Ret0 <- &plumbing.Envelope{
+			Message: &plumbing.Envelope_Log{
+				Log: &plumbing.Log{
+					Payload: []byte("hello"),
+				},
+			},
+			Tags: tags,
+		}
+		mockSender.RecvOutput.Ret1 <- nil
+		mockSender.RecvOutput.Ret0 <- nil
+		mockSender.RecvOutput.Ret1 <- io.EOF
+
+		go ingestor.Sender(mockSender)
+
+		for {
+			v2e, ok := v2Buf.TryNext()
+			if ok {
+				for range v2e.Tags {
+					// iterate the map to expose a race
+					// this can only fail when run with -race set
+				}
+				break
+			}
+		}
+	})
+
 	It("throws invalid envelopes on the ground", func() {
 		mockSender.RecvOutput.Ret0 <- &plumbing.Envelope{}
 		mockSender.RecvOutput.Ret1 <- nil

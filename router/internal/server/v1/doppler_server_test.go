@@ -477,6 +477,7 @@ func buildLogMessage() (*events.Envelope, []byte) {
 			MessageType: events.LogMessage_OUT.Enum(),
 			Timestamp:   proto.Int64(time.Now().UnixNano()),
 		},
+		Tags: make(map[string]string),
 	}
 	data, err := proto.Marshal(envelope)
 	Expect(err).ToNot(HaveOccurred())
