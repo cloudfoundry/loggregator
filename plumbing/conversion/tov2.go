@@ -75,9 +75,9 @@ func unsetV2Tag(e *loggregator_v2.Envelope, key string) {
 
 func initTags(v1e *events.Envelope, v2e *loggregator_v2.Envelope, usePreferredTags bool) {
 	if usePreferredTags {
-		v2e.Tags = v1e.Tags
-		if v2e.Tags == nil {
-			v2e.Tags = make(map[string]string)
+		v2e.Tags = make(map[string]string)
+		for k, v := range v1e.Tags {
+			v2e.Tags[k] = v
 		}
 
 		return
