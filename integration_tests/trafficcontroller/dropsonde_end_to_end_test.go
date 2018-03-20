@@ -112,7 +112,7 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 			expectedMessages = make([][]byte, 5)
 
 			for i := 0; i < 5; i++ {
-				message := makeDropsondeMessage(strconv.Itoa(i), "1234", 1234)
+				message := makeDropsondeMessage(strconv.Itoa(i), "efe5c422-e8a7-42c2-a52b-98bffd8d6a07", 1234)
 				expectedMessages[i] = message
 				fakeDoppler.SendLogMessage(message)
 			}
@@ -123,11 +123,11 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 			client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
 
 			Eventually(func() bool {
-				messages, err := client.RecentLogs("1234", "bearer iAmAnAdmin")
+				messages, err := client.RecentLogs("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
 				Expect(err).NotTo(HaveOccurred())
 				select {
 				case request := <-fakeDoppler.RecentLogsRequests:
-					Expect(request.AppID).To(Equal("1234"))
+					Expect(request.AppID).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
 					Expect(messages).To(HaveLen(5))
 					for i, message := range messages {
 						Expect(message.GetMessage()).To(BeEquivalentTo(strconv.Itoa(i)))
@@ -157,12 +157,12 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 			client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
 
 			Eventually(func() bool {
-				messages, err := client.ContainerMetrics("1234", "bearer iAmAnAdmin")
+				messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
 				Expect(err).NotTo(HaveOccurred())
 
 				select {
 				case request := <-fakeDoppler.ContainerMetricsRequests:
-					Expect(request.AppID).To(Equal("1234"))
+					Expect(request.AppID).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
 					Expect(messages).To(HaveLen(5))
 					for i, message := range messages {
 						Expect(message.GetInstanceIndex()).To(BeEquivalentTo(i))

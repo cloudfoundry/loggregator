@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	APP_ID                            = "1234"
+	APP_ID                            = "efe5c422-e8a7-42c2-a52b-98bffd8d6a07"
 	AUTH_TOKEN                        = "bearer iAmAnAdmin"
 	SUBSCRIPTION_ID                   = "firehose-subscription-1"
 	TRAFFIC_CONTROLLER_DROPSONDE_PORT = 4566
