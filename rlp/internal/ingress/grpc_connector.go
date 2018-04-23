@@ -12,6 +12,8 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -44,6 +46,7 @@ type GRPCConnector struct {
 
 	ingressMetric    *metricemitter.Counter
 	disconnectMetric *metricemitter.Counter
+	connectMetric    *metricemitter.Counter
 }
 
 // MetricClient creates new CounterMetrics to be emitted periodically.
@@ -65,6 +68,7 @@ func NewGRPCConnector(
 		metricemitter.WithVersion(2, 0),
 	)
 	disconnectMetric := m.NewCounter("log_router_disconnects")
+	connectMetric := m.NewCounter("log_router_connects")
 
 	c := &GRPCConnector{
 		bufferSize:       bufferSize,
@@ -73,6 +77,7 @@ func NewGRPCConnector(
 		consumerStates:   make([]unsafe.Pointer, maxConnections),
 		ingressMetric:    ingressMetric,
 		disconnectMetric: disconnectMetric,
+		connectMetric:    connectMetric,
 	}
 	go c.readFinder()
 	return c
@@ -100,7 +105,6 @@ func (c *GRPCConnector) Subscribe(ctx context.Context, req *loggregator_v2.Egres
 
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	log.Printf("Connecting to %d dopplers", len(c.clients))
 
 	for _, client := range c.clients {
 		go c.consumeSubscription(cs, client)
@@ -218,7 +222,6 @@ func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *do
 		tried = true
 
 		dopplerStream, err := c.pool.Subscribe(dopplerClient.uri, cs.ctx, cs.req)
-
 		if err != nil {
 			time.Sleep(delay)
 			if delay < time.Minute {
@@ -226,11 +229,18 @@ func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *do
 			}
 			continue
 		}
+		c.connectMetric.Increment(1)
 
 		delay = time.Millisecond
 
 		if err := c.readStream(dopplerStream, cs); err != nil {
+			if s, ok := status.FromError(err); ok {
+				if s.Code() == codes.Canceled {
+					continue
+				}
+			}
 			log.Printf("Error while reading from stream (%s): %s", dopplerClient.uri, err)
+
 			continue
 		}
 	}

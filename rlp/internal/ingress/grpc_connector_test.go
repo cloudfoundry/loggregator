@@ -143,6 +143,12 @@ var _ = Describe("GRPCConnector", func() {
 					BeCalled(With(req, Not(BeNil()))),
 				)
 			})
+
+			It("increments a counter for total doppler connections", func() {
+				Eventually(func() uint64 {
+					return metricClient.GetDelta("log_router_connects")
+				}).Should(Equal(uint64(2)))
+			})
 		})
 
 		Context("when a doppler disconnects", func() {
