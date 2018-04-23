@@ -114,7 +114,7 @@ var _ = Describe("IngressServer", func() {
 		for {
 			v2e, ok := v2Buf.TryNext()
 			if ok {
-				for _, _ = range v2e.Tags {
+				for range v2e.Tags {
 					// iterate the map to expose a race
 					// this can only fail when run with -race set
 				}

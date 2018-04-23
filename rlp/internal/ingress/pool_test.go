@@ -73,7 +73,7 @@ var _ = Describe("Pool", func() {
 
 	Describe("Subscribe()", func() {
 		var (
-			mockDoppler1 *MockDopplerServer
+			mockDoppler1 *spyRouter
 			ctx          context.Context
 			req          *loggregator_v2.EgressBatchRequest
 		)

@@ -23,8 +23,8 @@ var _ = Describe("GRPCConnector", func() {
 		req       *loggregator_v2.EgressBatchRequest
 		connector *ingress.GRPCConnector
 
-		mockDopplerServerA *MockDopplerServer
-		mockDopplerServerB *MockDopplerServer
+		mockDopplerServerA *spyRouter
+		mockDopplerServerB *spyRouter
 		mockFinder         *mockFinder
 
 		metricClient *testhelper.SpyMetricClient
@@ -65,7 +65,6 @@ var _ = Describe("GRPCConnector", func() {
 		Context("when a doppler comes online after stream is established", func() {
 			var (
 				data <-chan *loggregator_v2.Envelope
-				errs <-chan error
 			)
 
 			BeforeEach(func() {
@@ -74,7 +73,7 @@ var _ = Describe("GRPCConnector", func() {
 				}
 
 				var ready chan struct{}
-				data, errs, ready = readFromSubscription(ctx, req, connector)
+				data, _, ready = readFromSubscription(ctx, req, connector)
 				Eventually(ready).Should(BeClosed())
 
 				mockFinder.NextOutput.Ret0 <- event
@@ -176,19 +175,18 @@ var _ = Describe("GRPCConnector", func() {
 	})
 })
 
-// TODO: Rename to spy and remove doppler word
-type MockDopplerServer struct {
+type spyRouter struct {
 	addr       net.Addr
 	grpcServer *grpc.Server
 	requests   chan *loggregator_v2.EgressBatchRequest
 	servers    chan loggregator_v2.Egress_BatchedReceiverServer
 }
 
-func startMockDopplerServer() *MockDopplerServer {
+func startMockDopplerServer() *spyRouter {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	Expect(err).ToNot(HaveOccurred())
 
-	mockServer := &MockDopplerServer{
+	mockServer := &spyRouter{
 		addr:       lis.Addr(),
 		grpcServer: grpc.NewServer(),
 		requests:   make(chan *loggregator_v2.EgressBatchRequest, 100),
@@ -204,11 +202,11 @@ func startMockDopplerServer() *MockDopplerServer {
 	return mockServer
 }
 
-func (m *MockDopplerServer) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
+func (m *spyRouter) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
 	return grpc.Errorf(codes.Unimplemented, "Use batched receiver")
 }
 
-func (m *MockDopplerServer) BatchedReceiver(req *loggregator_v2.EgressBatchRequest, s loggregator_v2.Egress_BatchedReceiverServer) error {
+func (m *spyRouter) BatchedReceiver(req *loggregator_v2.EgressBatchRequest, s loggregator_v2.Egress_BatchedReceiverServer) error {
 	m.requests <- req
 	m.servers <- s
 
@@ -217,7 +215,7 @@ func (m *MockDopplerServer) BatchedReceiver(req *loggregator_v2.EgressBatchReque
 	return nil
 }
 
-func (m *MockDopplerServer) Stop() {
+func (m *spyRouter) Stop() {
 	m.grpcServer.Stop()
 }
 
@@ -241,7 +239,7 @@ func readFromSubscription(ctx context.Context, req *loggregator_v2.EgressBatchRe
 	return data, errs, ready
 }
 
-func createGrpcURIs(ms ...*MockDopplerServer) []string {
+func createGrpcURIs(ms ...*spyRouter) []string {
 	var results []string
 	for _, m := range ms {
 		results = append(results, m.addr.String())
@@ -249,7 +247,7 @@ func createGrpcURIs(ms ...*MockDopplerServer) []string {
 	return results
 }
 
-func captureSubscribeSender(doppler *MockDopplerServer) loggregator_v2.Egress_BatchedReceiverServer {
+func captureSubscribeSender(doppler *spyRouter) loggregator_v2.Egress_BatchedReceiverServer {
 	var server loggregator_v2.Egress_BatchedReceiverServer
 	EventuallyWithOffset(1, doppler.servers, 5).Should(Receive(&server))
 	return server
