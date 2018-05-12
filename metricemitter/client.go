@@ -157,6 +157,7 @@ func (c *Client) pulse(s sendable) {
 		})
 
 		if err != nil {
+			senderClient.CloseAndRecv()
 			senderClient = nil
 		}
 	}
