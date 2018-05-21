@@ -39,7 +39,6 @@ func NewRouter(grpc GRPC, opts ...RouterOption) *Router {
 			SinkInactivityTimeoutSeconds: 3600,
 			HealthAddr:                   "localhost:14825",
 			Agent: Agent{
-				UDPAddress:  "127.0.0.1:3457",
 				GRPCAddress: "127.0.0.1:3458",
 			},
 			MetricBatchIntervalMilliseconds: 5000,

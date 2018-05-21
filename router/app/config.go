@@ -6,10 +6,8 @@ import (
 	envstruct "code.cloudfoundry.org/go-envstruct"
 )
 
-// Agent stores the configuration for connecting to the Agent over UDP or
-// gRPC.
+// Agent stores the configuration for connecting to the Agent over gRPC.
 type Agent struct {
-	UDPAddress  string `env:"AGENT_UDP_ADDRESS"`
 	GRPCAddress string `env:"AGENT_GRPC_ADDRESS"`
 }
 
