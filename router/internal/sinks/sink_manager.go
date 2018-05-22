@@ -119,7 +119,7 @@ func (sm *SinkManager) listenForErrorMessages() {
 				return
 			}
 			appID := getAppId(errorMessage)
-			log.Println("Sink error for %s: %s", appID, errorMessage)
+			log.Printf("Sink error for %s: %s", appID, errorMessage)
 		}
 	}
 }
