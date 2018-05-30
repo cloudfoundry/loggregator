@@ -55,7 +55,7 @@ func (m *Counter) GetDelta() uint64 {
 }
 
 // WithEnvelope will take in a function that will receive a V2 Envelope. This
-// is used by the metric emitter Client when the Gauge metric is send to the
+// is used by the metric emitter Client when the Counter metric is send to the
 // IngressClient. When WithEnvelope is called the Counters delta is reset to
 // 0, if an error is returned by the given function, the delta will be
 // atomically added back to the Counters delta.

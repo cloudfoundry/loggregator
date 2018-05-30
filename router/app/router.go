@@ -61,11 +61,13 @@ func WithMetricReporting(
 	healthAddr string,
 	agent Agent,
 	metricBatchIntervalMilliseconds uint,
+	sourceID string,
 ) RouterOption {
 	return func(r *Router) {
 		r.c.HealthAddr = healthAddr
 		r.c.Agent = agent
 		r.c.MetricBatchIntervalMilliseconds = metricBatchIntervalMilliseconds
+		r.c.MetricSourceID = sourceID
 	}
 }
 
@@ -272,7 +274,7 @@ func initV2Metrics(c *Config) *metricemitter.Client {
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(credentials)),
 		metricemitter.WithOrigin("loggregator.doppler"),
 		metricemitter.WithPulseInterval(batchInterval),
-		metricemitter.WithSourceID("doppler"),
+		metricemitter.WithSourceID(c.MetricSourceID),
 	)
 	if err != nil {
 		log.Fatalf("Could not configure metric emitter: %s", err)

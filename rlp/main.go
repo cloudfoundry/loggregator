@@ -68,7 +68,7 @@ func main() {
 		metricemitter.WithGRPCDialOptions(grpc.WithTransportCredentials(metronCredentials)),
 		metricemitter.WithOrigin("loggregator.rlp"),
 		metricemitter.WithPulseInterval(conf.MetricEmitterInterval),
-		metricemitter.WithSourceID("reverse_log_proxy"),
+		metricemitter.WithSourceID(conf.MetricSourceID),
 	)
 	if err != nil {
 		log.Fatalf("Couldn't connect to metric emitter: %s", err)
