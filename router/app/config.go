@@ -34,7 +34,8 @@ type Config struct {
 	PProfPort                       uint32 `env:"ROUTER_PPROF_PORT"`
 	HealthAddr                      string `env:"ROUTER_HEALTH_ADDR"`
 	Agent                           Agent
-	MetricBatchIntervalMilliseconds uint `env:"ROUTER_METRIC_BATCH_INTERVAL_MILLISECONDS"`
+	MetricBatchIntervalMilliseconds uint   `env:"ROUTER_METRIC_BATCH_INTERVAL_MILLISECONDS"`
+	MetricSourceID                  string `env:"ROUTER_METRIC_SOURCE_ID"`
 }
 
 // LoadConfig reads from the environment to create a Config.
@@ -42,6 +43,7 @@ func LoadConfig() (*Config, error) {
 	config := Config{
 		MetricBatchIntervalMilliseconds: 5000,
 		HealthAddr:                      "localhost:14825",
+		MetricSourceID:                  "doppler",
 	}
 
 	err := envstruct.Load(&config)

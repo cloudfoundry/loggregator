@@ -31,6 +31,7 @@ func main() {
 			conf.HealthAddr,
 			conf.Agent,
 			conf.MetricBatchIntervalMilliseconds,
+			conf.MetricSourceID,
 		),
 	)
 	r.Start()

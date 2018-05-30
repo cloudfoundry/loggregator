@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
@@ -19,6 +20,7 @@ var _ = Describe("Router", func() {
 	var (
 		grpcConfig app.GRPC
 		router     *app.Router
+		spyAgent   *spyAgent
 	)
 
 	BeforeEach(func() {
@@ -27,13 +29,24 @@ var _ = Describe("Router", func() {
 			CertFile: testservers.Cert("doppler.crt"),
 			KeyFile:  testservers.Cert("doppler.key"),
 		}
-		router = app.NewRouter(grpcConfig,
-			app.WithMetricReporting("localhost:0", app.Agent{}, 100000),
+		addr := "localhost:12345"
+		spyAgent = newSpyAgent(addr)
+		router = app.NewRouter(
+			grpcConfig,
+			app.WithMetricReporting(
+				"localhost:0",
+				app.Agent{
+					GRPCAddress: addr,
+				},
+				100,
+				"doppler",
+			),
 		)
 		router.Start()
 	})
 
 	AfterEach(func() {
+		spyAgent.stop()
 		router.Stop()
 	})
 
@@ -45,6 +58,12 @@ var _ = Describe("Router", func() {
 			Expect(addrs.Health).ToNot(Equal("0.0.0.0:0"))
 			Expect(addrs.GRPC).ToNot(Equal(""))
 			Expect(addrs.GRPC).ToNot(Equal("0.0.0.0:0"))
+		})
+	})
+
+	Describe("MetricReporting", func() {
+		It("reports metrics with source ID", func() {
+			Expect(spyAgent.read().GetSourceId()).To(Equal("doppler"))
 		})
 	})
 
@@ -250,4 +269,48 @@ func grpcDial(addr string, g app.GRPC) *grpc.ClientConn {
 	}
 
 	return conn
+}
+
+type spyAgent struct {
+	loggregator_v2.IngressServer
+	envs chan *loggregator_v2.Envelope
+	s    *grpc.Server
+}
+
+func newSpyAgent(addr string) *spyAgent {
+	creds, err := plumbing.NewServerCredentials(
+		testservers.Cert("metron.crt"),
+		testservers.Cert("metron.key"),
+		testservers.Cert("loggregator-ca.crt"),
+	)
+	Expect(err).ToNot(HaveOccurred())
+	a := &spyAgent{
+		envs: make(chan *loggregator_v2.Envelope, 100),
+		s:    grpc.NewServer(grpc.Creds(creds)),
+	}
+	lis, err := net.Listen("tcp", addr)
+	Expect(err).ToNot(HaveOccurred())
+
+	loggregator_v2.RegisterIngressServer(a.s, a)
+	go a.s.Serve(lis)
+
+	return a
+}
+
+func (a *spyAgent) Sender(r loggregator_v2.Ingress_SenderServer) error {
+	for {
+		e, err := r.Recv()
+		if err != nil {
+			return nil
+		}
+		a.envs <- e
+	}
+}
+
+func (a *spyAgent) read() *loggregator_v2.Envelope {
+	return <-a.envs
+}
+
+func (a *spyAgent) stop() {
+	a.s.Stop()
 }
