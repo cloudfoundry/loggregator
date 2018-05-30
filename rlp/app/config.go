@@ -22,6 +22,7 @@ type Config struct {
 	PProfPort             uint32        `env:"RLP_PPROF_PORT"`
 	HealthAddr            string        `env:"RLP_HEALTH_ADDR"`
 	MetricEmitterInterval time.Duration `env:"RLP_METRIC_EMITTER_INTERVAL"`
+	MetricSourceID        string        `env:"RLP_METRIC_SOURCE_ID"`
 	RouterAddrs           []string      `env:"ROUTER_ADDRS, required"`
 	AgentAddr             string        `env:"AGENT_ADDR"`
 	MaxEgressStreams      int64         `env:"MAX_EGRESS_STREAMS"`
@@ -34,6 +35,7 @@ func LoadConfig() (*Config, error) {
 		PProfPort:             6061,
 		HealthAddr:            "localhost:14825",
 		MetricEmitterInterval: time.Minute,
+		MetricSourceID:        "reverse_log_proxy",
 		AgentAddr:             "localhost:3458",
 		MaxEgressStreams:      500,
 	}
