@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
 	"code.cloudfoundry.org/loggregator/profiler"
 	"code.cloudfoundry.org/loggregator/router/app"
 	"google.golang.org/grpc/grpclog"
@@ -19,6 +20,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to parse config: %s", err)
 	}
+
+	envstruct.WriteReport(conf)
 
 	r := app.NewRouter(
 		conf.GRPC,

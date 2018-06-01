@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 
 	"google.golang.org/grpc"
@@ -27,6 +28,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %s", err)
 	}
+
+	envstruct.WriteReport(conf)
 
 	dopplerCredentials, err := plumbing.NewClientCredentials(
 		conf.GRPC.CertFile,
