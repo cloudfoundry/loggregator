@@ -13,6 +13,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 	rand.Seed(time.Now().UnixNano())
 	grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
 

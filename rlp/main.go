@@ -22,6 +22,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 	grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
 
 	conf, err := app.LoadConfig()
