@@ -79,7 +79,7 @@ func (s *WebSocketServer) ServeWS(
 				)
 				s.health.Inc("slowConsumerCount")
 
-				log.Print("Doppler Proxy: Slow Consumer from %s using %s", r.RemoteAddr, r.URL)
+				log.Printf("Doppler Proxy: Slow Consumer from %s using %s", r.RemoteAddr, r.URL)
 				return
 			}
 		}
