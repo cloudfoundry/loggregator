@@ -75,8 +75,8 @@ The most common way to deploy Loggregator is via [Bosh][bosh]. There is a [Loggr
 
 [slack-badge]:              https://slack.cloudfoundry.org/badge.svg
 [loggregator-slack]:        https://cloudfoundry.slack.com/archives/loggregator
-[ci-badge]:                 https://loggregator.ci.cf-app.com/api/v1/teams/main/pipelines/loggregator/jobs/loggregator-tests/badge
-[ci-pipeline]:              https://loggregator.ci.cf-app.com/
+[ci-badge]:                 https://loggregator.ci.cf-app.com/api/v1/pipelines/loggregator/jobs/loggregator-tests/badge
+[ci-pipeline]:              https://loggregator.ci.cf-app.com/teams/main/pipelines/loggregator
 [cf-deployment]:            https://github.com/cloudfoundry/cf-deployment
 [protobuf]:                 https://developers.google.com/protocol-buffers/
 [grpc]:                     https://grpc.io/
