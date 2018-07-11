@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -11,7 +12,10 @@ import (
 const (
 	websocketKeepAliveDuration = 30 * time.Second
 	slowConsumerEventTitle     = "Traffic Controller has disconnected slow consumer"
-	slowConsumerEventBody      = "When Loggregator detects a slow connection, that connection is disconnected to prevent back pressure on the system. This may be due to improperly scaled nozzles, or slow user connections to Loggregator"
+	slowConsumerEventBody      = `Remote Address: %s
+Path: %s
+
+When Loggregator detects a slow connection, that connection is disconnected to prevent back pressure on the system. This may be due to improperly scaled nozzles, or slow user connections to Loggregator`
 )
 
 type WebSocketServer struct {
@@ -75,7 +79,7 @@ func (s *WebSocketServer) ServeWS(
 				s.slowConsumerMetric.Increment(1)
 				s.metricClient.EmitEvent(
 					slowConsumerEventTitle,
-					slowConsumerEventBody,
+					fmt.Sprintf(slowConsumerEventBody, r.RemoteAddr, r.URL),
 				)
 				s.health.Inc("slowConsumerCount")
 

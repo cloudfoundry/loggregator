@@ -27,6 +27,7 @@ var _ = Describe("WebsocketServer", func() {
 			s := NewWebSocketServer(time.Millisecond, metricClient, mockHealth)
 
 			req, _ := http.NewRequest("GET", "/some", nil)
+			req.RemoteAddr = "some-address"
 
 			s.ServeWS(httptest.NewRecorder(), req, func() ([]byte, error) {
 				return []byte("hello"), nil
@@ -41,6 +42,9 @@ var _ = Describe("WebsocketServer", func() {
 
 		It("emits an event", func() {
 			expectedBody := sanitizeWhitespace(`
+Remote Address: some-address
+Path: /some
+
 When Loggregator detects a slow connection, that connection is disconnected to
 prevent back pressure on the system. This may be due to improperly scaled
 nozzles, or slow user connections to Loggregator`)
