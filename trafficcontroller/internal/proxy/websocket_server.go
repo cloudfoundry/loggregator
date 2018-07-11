@@ -13,6 +13,7 @@ const (
 	websocketKeepAliveDuration = 30 * time.Second
 	slowConsumerEventTitle     = "Traffic Controller has disconnected slow consumer"
 	slowConsumerEventBody      = `Remote Address: %s
+X-Forwarded-For: %s
 Path: %s
 
 When Loggregator detects a slow connection, that connection is disconnected to prevent back pressure on the system. This may be due to improperly scaled nozzles, or slow user connections to Loggregator`
@@ -77,9 +78,15 @@ func (s *WebSocketServer) ServeWS(
 				}
 			case <-timer.C:
 				s.slowConsumerMetric.Increment(1)
+
+				eventBody := fmt.Sprintf(slowConsumerEventBody,
+					r.RemoteAddr,
+					r.Header.Get("X-Forwarded-For"),
+					r.URL)
+
 				s.metricClient.EmitEvent(
 					slowConsumerEventTitle,
-					fmt.Sprintf(slowConsumerEventBody, r.RemoteAddr, r.URL),
+					eventBody,
 				)
 				s.health.Inc("slowConsumerCount")
 
