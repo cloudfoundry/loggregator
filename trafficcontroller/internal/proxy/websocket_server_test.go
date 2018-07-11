@@ -28,7 +28,7 @@ var _ = Describe("WebsocketServer", func() {
 
 			req, _ := http.NewRequest("GET", "/some", nil)
 			req.RemoteAddr = "some-address"
-			req.Header.Set("X-Forwarded-For", "192.0.0.1")
+			req.Header["X-Forwarded-For"] = []string{"192.0.0.1", "192.0.0.2"}
 
 			s.ServeWS(httptest.NewRecorder(), req, func() ([]byte, error) {
 				return []byte("hello"), nil
@@ -44,7 +44,7 @@ var _ = Describe("WebsocketServer", func() {
 		It("emits an event", func() {
 			expectedBody := sanitizeWhitespace(`
 Remote Address: some-address
-X-Forwarded-For: 192.0.0.1
+X-Forwarded-For: 192.0.0.1, 192.0.0.2
 Path: /some
 
 When Loggregator detects a slow connection, that connection is disconnected to

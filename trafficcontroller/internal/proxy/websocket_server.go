@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
@@ -81,7 +82,7 @@ func (s *WebSocketServer) ServeWS(
 
 				eventBody := fmt.Sprintf(slowConsumerEventBody,
 					r.RemoteAddr,
-					r.Header.Get("X-Forwarded-For"),
+					strings.Join(r.Header["X-Forwarded-For"], ", "),
 					r.URL)
 
 				s.metricClient.EmitEvent(
