@@ -13,6 +13,9 @@ pkg/
 # jetbrains
 .idea
 
+# vscode
+.vscode
+
 # misc
 out/
 */**/test_assets/stdout.log
