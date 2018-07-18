@@ -34,10 +34,11 @@ var _ = Describe("Gateway", func() {
 		cfg = app.Config{
 			LogsProviderAddr: logsProvider.addr(),
 
-			LogsProviderCAPath:   testservers.Cert("loggregator-ca.crt"),
-			LogsProviderCertPath: testservers.Cert("rlpgateway.crt"),
-			LogsProviderKeyPath:  testservers.Cert("rlpgateway.key"),
-			GatewayAddr:          ":0",
+			LogsProviderCAPath:     testservers.Cert("loggregator-ca.crt"),
+			LogsProviderCertPath:   testservers.Cert("rlpgateway.crt"),
+			LogsProviderKeyPath:    testservers.Cert("rlpgateway.key"),
+			LogsProviderCommonName: "reverselogproxy",
+			GatewayAddr:            ":0",
 		}
 	})
 

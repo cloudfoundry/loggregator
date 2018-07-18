@@ -10,6 +10,7 @@ import (
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/web"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -33,26 +34,30 @@ var _ = Describe("Read", func() {
 	})
 
 	It("reads from the logs provider and sends SSE to the client", func() {
+		server := httptest.NewServer(web.ReadHandler(lp))
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/v2/read", nil)
+		defer func() {
+			cancel()
+			server.CloseClientConnections()
+			server.Close()
+		}()
+
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read", nil)
+		Expect(err).ToNot(HaveOccurred())
+
 		req = req.WithContext(ctx)
 
-		h := web.ReadHandler(lp)
-
-		go h.ServeHTTP(rec, req)
-
-		// TODO: How to expect on these?
-		// Expect(rec.Code).To(Equal(http.StatusOK))
+		resp, err := server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(lp.requests).Should(HaveLen(1))
-		Expect(rec.HeaderMap.Get("Content-Type")).To(Equal("text/event-stream"))
-		Expect(rec.HeaderMap.Get("Cache-Control")).To(Equal("no-cache"))
-		Expect(rec.HeaderMap.Get("Connection")).To(Equal("keep-alive"))
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Expect(resp.Header.Get("Content-Type")).To(Equal("text/event-stream"))
+		Expect(resp.Header.Get("Cache-Control")).To(Equal("no-cache"))
+		Expect(resp.Header.Get("Connection")).To(Equal("keep-alive"))
 
-		buf := bufio.NewReader(rec.Body)
+		buf := bufio.NewReader(resp.Body)
 
 		line, err := buf.ReadBytes('\n')
 		Expect(err).ToNot(HaveOccurred())
@@ -80,9 +85,9 @@ var _ = Describe("Read", func() {
 
 		h := web.ReadHandler(lp)
 
-		go h.ServeHTTP(rec, req)
+		h.ServeHTTP(rec, req)
 
-		Eventually(func() int { return rec.Code }).Should(Equal(http.StatusGone))
+		Expect(rec.Code).To(Equal(http.StatusGone))
 	})
 })
 

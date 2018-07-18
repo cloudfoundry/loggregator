@@ -29,6 +29,11 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 
 		m := jsonpb.Marshaler{}
 		for {
+			if isDone(ctx) {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			batch, err := recv()
 			if err != nil {
 				log.Printf("error getting logs from provider: %s", err)
@@ -38,14 +43,23 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 
 			data, err := m.MarshalToString(batch)
 			if err != nil {
-				log.Printf("error unmarshaling logs to string: %s", err)
+				log.Printf("error marshaling logs to string: %s", err)
 				w.WriteHeader(http.StatusGone)
 				return
 
 			}
 
-			fmt.Fprintf(w, "data: %s\n\n", data) // TODO need envs
+			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		}
+	}
+}
+
+func isDone(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
 	}
 }
