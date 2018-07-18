@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -151,7 +152,12 @@ var _ = Describe("Read", func() {
 
 		resp, err := server.Client().Do(req)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusGone))
+
+		buf := bufio.NewReader(resp.Body)
+		Eventually(func() error {
+			_, err := buf.ReadBytes('\n')
+			return err
+		}).Should(Equal(io.EOF))
 	})
 
 	It("returns a bad request if no selectors are provided in url", func() {

@@ -49,23 +49,25 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
 
+		flusher.Flush()
+
+		// TODO:
+		//   - ping events
+		//   - error events
 		for {
 			if isDone(ctx) {
-				w.WriteHeader(http.StatusOK)
 				return
 			}
 
 			batch, err := recv()
 			if err != nil {
 				log.Printf("error getting logs from provider: %s", err)
-				w.WriteHeader(http.StatusGone)
 				return
 			}
 
 			data, err := marshaler.MarshalToString(batch)
 			if err != nil {
 				log.Printf("error marshaling envelope batch to string: %s", err)
-				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
