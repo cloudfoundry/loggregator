@@ -38,7 +38,8 @@ var _ = Describe("Gateway", func() {
 			LogsProviderCertPath:   testservers.Cert("rlpgateway.crt"),
 			LogsProviderKeyPath:    testservers.Cert("rlpgateway.key"),
 			LogsProviderCommonName: "reverselogproxy",
-			GatewayAddr:            ":0",
+
+			GatewayAddr: ":0",
 		}
 	})
 
