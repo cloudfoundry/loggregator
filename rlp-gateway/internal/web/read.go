@@ -10,12 +10,29 @@ import (
 	"github.com/gogo/protobuf/jsonpb"
 )
 
+var marshaler jsonpb.Marshaler
+
 func ReadHandler(lp LogsProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(r.Context())
 		defer cancel()
 
-		recv := lp.Stream(ctx, &loggregator_v2.EgressBatchRequest{})
+		query := r.URL.Query()
+
+		s, err := BuildSelector(query)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		recv := lp.Stream(
+			ctx,
+			&loggregator_v2.EgressBatchRequest{
+				ShardId:           query.Get("shard_id"),
+				DeterministicName: query.Get("deterministic_name"),
+				Selectors:         s,
+			},
+		)
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -27,7 +44,6 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
 
-		m := jsonpb.Marshaler{}
 		for {
 			if isDone(ctx) {
 				w.WriteHeader(http.StatusOK)
@@ -41,12 +57,11 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 				return
 			}
 
-			data, err := m.MarshalToString(batch)
+			data, err := marshaler.MarshalToString(batch)
 			if err != nil {
 				log.Printf("error marshaling logs to string: %s", err)
 				w.WriteHeader(http.StatusGone)
 				return
-
 			}
 
 			fmt.Fprintf(w, "data: %s\n\n", data)

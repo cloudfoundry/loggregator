@@ -17,8 +17,12 @@ import (
 
 var _ = Describe("Read", func() {
 	var (
-		lp *stubLogsProvider
+		server *httptest.Server
+		lp     *stubLogsProvider
+		ctx    context.Context
+		cancel func()
 	)
+
 	BeforeEach(func() {
 		lp = newStubLogsProvider()
 		lp._batchResponse = &loggregator_v2.EnvelopeBatch{
@@ -31,19 +35,18 @@ var _ = Describe("Read", func() {
 				},
 			},
 		}
+		server = httptest.NewServer(web.ReadHandler(lp))
+		ctx, cancel = context.WithCancel(context.Background())
+	})
+
+	AfterEach(func() {
+		cancel()
+		server.CloseClientConnections()
+		server.Close()
 	})
 
 	It("reads from the logs provider and sends SSE to the client", func() {
-		server := httptest.NewServer(web.ReadHandler(lp))
-		ctx, cancel := context.WithCancel(context.Background())
-
-		defer func() {
-			cancel()
-			server.CloseClientConnections()
-			server.Close()
-		}()
-
-		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read", nil)
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read?log", nil)
 		Expect(err).ToNot(HaveOccurred())
 
 		req = req.WithContext(ctx)
@@ -52,6 +55,17 @@ var _ = Describe("Read", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(lp.requests).Should(HaveLen(1))
+
+		Expect(lp.requests()[0]).To(Equal(&loggregator_v2.EgressBatchRequest{
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
+		}))
+
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 		Expect(resp.Header.Get("Content-Type")).To(Equal("text/event-stream"))
 		Expect(resp.Header.Get("Cache-Control")).To(Equal("no-cache"))
@@ -72,23 +86,85 @@ var _ = Describe("Read", func() {
 		Expect(string(line)).To(Equal(`data: {"batch":[{"sourceId":"source-id-a"},{"sourceId":"source-id-b"}]}` + "\n"))
 	})
 
-	It("closes the SSE stream if the envelope stream returns any error", func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	It("adds the shard ID to the egress request", func() {
+		req, err := http.NewRequest(
+			http.MethodGet,
+			server.URL+"/v2/read?log&shard_id=my-shard-id",
+			nil,
+		)
+		Expect(err).ToNot(HaveOccurred())
 
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/v2/read", nil)
 		req = req.WithContext(ctx)
 
+		_, err = server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(lp.requests).Should(HaveLen(1))
+
+		Expect(lp.requests()[0]).To(Equal(&loggregator_v2.EgressBatchRequest{
+			ShardId: "my-shard-id",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
+		}))
+	})
+
+	It("adds the deterministic name to the egress request", func() {
+		req, err := http.NewRequest(
+			http.MethodGet,
+			server.URL+"/v2/read?log&deterministic_name=some-deterministic-name",
+			nil,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		req = req.WithContext(ctx)
+
+		_, err = server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(lp.requests).Should(HaveLen(1))
+
+		Expect(lp.requests()[0]).To(Equal(&loggregator_v2.EgressBatchRequest{
+			DeterministicName: "some-deterministic-name",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+			},
+		}))
+	})
+
+	It("closes the SSE stream if the envelope stream returns any error", func() {
 		lp._batchResponse = nil
 		lp._errorResponse = errors.New("an error")
 
-		h := web.ReadHandler(lp)
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read?log", nil)
+		Expect(err).ToNot(HaveOccurred())
 
-		h.ServeHTTP(rec, req)
+		req = req.WithContext(ctx)
 
-		Expect(rec.Code).To(Equal(http.StatusGone))
+		resp, err := server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusGone))
 	})
+
+	It("returns a bad request if no selectors are provided in url", func() {
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read", nil)
+		Expect(err).ToNot(HaveOccurred())
+
+		req = req.WithContext(ctx)
+
+		resp, err := server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	})
+
 })
 
 type stubLogsProvider struct {

@@ -48,7 +48,7 @@ var _ = Describe("Gateway", func() {
 		defer gateway.Stop()
 
 		client := newTestClient()
-		go client.open("http://" + gateway.Addr() + "/v2/read")
+		go client.open("http://" + gateway.Addr() + "/v2/read?log")
 
 		Eventually(client.envelopes).Should(HaveLen(10))
 	})
@@ -62,7 +62,7 @@ var _ = Describe("Gateway", func() {
 
 		client := newTestClient()
 		Expect(func() {
-			client.open("http://" + gateway.Addr() + "/v2/read")
+			client.open("http://" + gateway.Addr() + "/v2/read?log")
 		}).ToNot(Panic())
 	})
 })
