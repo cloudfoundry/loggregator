@@ -158,13 +158,21 @@ var _ = Describe("Read", func() {
 		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read", nil)
 		Expect(err).ToNot(HaveOccurred())
 
-		req = req.WithContext(ctx)
-
-		resp, err := server.Client().Do(req)
+		resp, err := server.Client().Do(req.WithContext(ctx))
 		Expect(err).ToNot(HaveOccurred())
+
 		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 	})
 
+	It("returns 405, method not allowed", func() {
+		req, err := http.NewRequest(http.MethodPost, server.URL+"/v2/read?log", nil)
+		Expect(err).ToNot(HaveOccurred())
+
+		resp, err := server.Client().Do(req.WithContext(ctx))
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(resp.StatusCode).To(Equal(http.StatusMethodNotAllowed))
+	})
 })
 
 type stubLogsProvider struct {

@@ -14,6 +14,11 @@ var marshaler jsonpb.Marshaler
 
 func ReadHandler(lp LogsProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
 		ctx, cancel := context.WithCancel(r.Context())
 		defer cancel()
 
@@ -59,8 +64,8 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 
 			data, err := marshaler.MarshalToString(batch)
 			if err != nil {
-				log.Printf("error marshaling logs to string: %s", err)
-				w.WriteHeader(http.StatusGone)
+				log.Printf("error marshaling envelope batch to string: %s", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
