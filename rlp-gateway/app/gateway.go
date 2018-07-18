@@ -4,10 +4,12 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/ingress"
 	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/web"
+	"github.com/gorilla/handlers"
 )
 
 type Gateway struct {
@@ -39,12 +41,15 @@ func (g *Gateway) Start(blocking bool) {
 		log.Fatalf("failed to load client TLS config: %s", err)
 	}
 
+	handler := web.NewHandler(ingress.NewLogClient(creds, g.cfg.LogsProviderAddr))
+	stack := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(
+		handlers.LoggingHandler(os.Stdout, handler),
+	)
+
 	g.listener = l
 	g.server = &http.Server{
 		Addr:    g.cfg.GatewayAddr,
-		Handler: web.NewHandler(ingress.NewLogClient(creds, g.cfg.LogsProviderAddr)),
-		// TODO: Logging Middleware
-		// TODO: Recovery Middleware
+		Handler: stack,
 	}
 
 	if blocking {
