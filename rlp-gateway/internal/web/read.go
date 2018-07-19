@@ -8,6 +8,8 @@ import (
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var marshaler jsonpb.Marshaler
@@ -69,7 +71,11 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 
 			batch, err := recv()
 			if err != nil {
-				log.Printf("error getting logs from provider: %s", err)
+				status, ok := status.FromError(err)
+				if ok && status.Code() != codes.Canceled {
+					log.Printf("error getting logs from provider: %s", err)
+				}
+
 				return
 			}
 
