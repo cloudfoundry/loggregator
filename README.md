@@ -55,6 +55,10 @@ The Router takes each log and publishes it to any interested consumer. Every log
 
 The ReverseLogProxy (RLP) has gRPC endpoints to allow consumers to read data from Loggregator. Each RLP connects to every  Router to ensure it gets all the relevant logs. Each Router only gets a subset of the logs, and therefore without the RLP, a consumer would only get a fraction of the logs. The RLP only speaks V2.
 
+##### Reverse Log Proxy Gateway
+
+The ReverseLogProxy (RLP) Gateway exposes the RLP API over HTTP.
+
 ##### Traffic Controller
 
 The TrafficController (TC) is like the RLP, but is tuned for CloudFoundry. It authenticates via the UAA and CloudController, which are both CF components. It egresses logs via Websockets. It only speaks V1. Planned deprecation in 2018. 
