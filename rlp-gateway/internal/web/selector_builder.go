@@ -16,6 +16,8 @@ var (
 	errGaugeNamePresentButEmpty   = errors.New("gauge.name is invalid without value")
 )
 
+// BuildSelector returns a slice of v2 loggregator Selectors generated
+// from the given query parameters
 func BuildSelector(v url.Values) ([]*loggregator_v2.Selector, error) {
 	if len(v) == 0 {
 		return nil, errEmptyQuery

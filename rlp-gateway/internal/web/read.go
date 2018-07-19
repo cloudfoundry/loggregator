@@ -12,6 +12,13 @@ import (
 
 var marshaler jsonpb.Marshaler
 
+// ReadHandler returns a http.Handler that will serve logs over server sent
+// events. Logs are streamed from the logs provider and written to the client
+// connection. The format of the envelopes is as follows:
+//
+//     data: <JSON ENVELOPE BATCH>
+//
+//     data: <JSON ENVELOPE BATCH>
 func ReadHandler(lp LogsProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

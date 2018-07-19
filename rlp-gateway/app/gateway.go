@@ -12,18 +12,22 @@ import (
 	"github.com/gorilla/handlers"
 )
 
+// Gateway provides a high level for running the RLP gateway
 type Gateway struct {
 	cfg      Config
 	listener net.Listener
 	server   *http.Server
 }
 
+// NewGateway creates a new Gateway
 func NewGateway(cfg Config) *Gateway {
 	return &Gateway{
 		cfg: cfg,
 	}
 }
 
+// Start will start the process that connects to the logs provider
+// and listens on http
 func (g *Gateway) Start(blocking bool) {
 	creds, err := plumbing.NewClientCredentials(
 		g.cfg.LogsProviderCertPath,
@@ -35,9 +39,7 @@ func (g *Gateway) Start(blocking bool) {
 		log.Fatalf("failed to load client TLS config: %s", err)
 	}
 
-	log.Println("certs loaded!!!!!!")
 	lc := ingress.NewLogClient(creds, g.cfg.LogsProviderAddr)
-	log.Println("log client created!!!!!!")
 	stack := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(
 		handlers.LoggingHandler(os.Stdout, web.NewHandler(lc)),
 	)
@@ -62,10 +64,12 @@ func (g *Gateway) Start(blocking bool) {
 	go g.server.Serve(g.listener)
 }
 
+// Stop closes the server connection
 func (g *Gateway) Stop() {
 	_ = g.server.Close()
 }
 
+// Addr returns the address the gateway HTTP listener is bound to
 func (g *Gateway) Addr() string {
 	if g.listener == nil {
 		return ""
