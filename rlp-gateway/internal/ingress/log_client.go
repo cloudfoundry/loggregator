@@ -36,7 +36,7 @@ func NewLogClient(creds credentials.TransportCredentials, logsProviderAddr strin
 func (c *LogClient) Stream(ctx context.Context, req *loggregator_v2.EgressBatchRequest) web.Receiver {
 	receiver, err := c.c.BatchedReceiver(ctx, req)
 	if err != nil {
-		log.Println("failed to open stream from logs provider: %s", err) // TODO: Do not log fatal, this could actually happen a lot
+		log.Printf("failed to open stream from logs provider: %s", err)
 	}
 
 	return receiver.Recv
