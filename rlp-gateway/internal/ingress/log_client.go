@@ -24,7 +24,6 @@ func NewLogClient(creds credentials.TransportCredentials, logsProviderAddr strin
 	if err != nil {
 		log.Fatalf("failed to dial logs provider: %s", err)
 	}
-
 	client := loggregator_v2.NewEgressClient(conn)
 	return &LogClient{
 		c: client,
@@ -34,7 +33,7 @@ func NewLogClient(creds credentials.TransportCredentials, logsProviderAddr strin
 func (c *LogClient) Stream(ctx context.Context, req *loggregator_v2.EgressBatchRequest) web.Receiver {
 	receiver, err := c.c.BatchedReceiver(ctx, req)
 	if err != nil {
-		log.Fatalf("failed to open stream from logs provider: %s", err) // TODO: Do not log fatal, this could actually happen a lot
+		log.Println("failed to open stream from logs provider: %s", err) // TODO: Do not log fatal, this could actually happen a lot
 	}
 
 	return receiver.Recv

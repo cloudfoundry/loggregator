@@ -196,6 +196,7 @@ func (r *RLP) startEgressListener() {
 	if err != nil {
 		log.Fatalf("failed to listen on port: %d: %s", r.egressPort, err)
 	}
+	log.Printf("grpc bound to: %s", l.Addr().String())
 	r.egressListener = netutil.LimitListener(l, r.maxEgressConnections)
 	r.egressAddr = r.egressListener.Addr()
 }

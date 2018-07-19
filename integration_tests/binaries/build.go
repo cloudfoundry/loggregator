@@ -13,6 +13,8 @@ type BuildPaths struct {
 	Agent             string `json:"agent"`
 	Router            string `json:"router"`
 	TrafficController string `json:"traffic_controller"`
+	RLP               string `json:"rlp"`
+	RLPGateway        string `json:"rlp_gateway"`
 }
 
 func (bp BuildPaths) Marshal() ([]byte, error) {
@@ -27,6 +29,8 @@ func (bp BuildPaths) SetEnv() {
 	os.Setenv("AGENT_BUILD_PATH", bp.Agent)
 	os.Setenv("ROUTER_BUILD_PATH", bp.Router)
 	os.Setenv("TRAFFIC_CONTROLLER_BUILD_PATH", bp.TrafficController)
+	os.Setenv("RLP_BUILD_PATH", bp.RLP)
+	os.Setenv("RLP_GATEWAY_BUILD_PATH", bp.RLPGateway)
 }
 
 func Build() (BuildPaths, chan error) {
@@ -39,6 +43,8 @@ func Build() (BuildPaths, chan error) {
 		bp.Agent = os.Getenv("AGENT_BUILD_PATH")
 		bp.Router = os.Getenv("ROUTER_BUILD_PATH")
 		bp.TrafficController = os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
+		bp.RLP = os.Getenv("RLP_BUILD_PATH")
+		bp.RLPGateway = os.Getenv("RLP_GATEWAY_BUILD_PATH")
 		return bp, errors
 	}
 
@@ -46,42 +52,66 @@ func Build() (BuildPaths, chan error) {
 		mu sync.Mutex
 		wg sync.WaitGroup
 	)
-	wg.Add(3)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
-		agentPath, err := gexec.Build("code.cloudfoundry.org/loggregator-agent/cmd/agent", "-race")
+		path, err := gexec.Build("code.cloudfoundry.org/loggregator-agent/cmd/agent", "-race")
 		if err != nil {
 			errors <- err
 			return
 		}
 		mu.Lock()
 		defer mu.Unlock()
-		bp.Agent = agentPath
+		bp.Agent = path
 	}()
 
 	go func() {
 		defer wg.Done()
-		routerPath, err := gexec.Build("code.cloudfoundry.org/loggregator/router", "-race")
+		path, err := gexec.Build("code.cloudfoundry.org/loggregator/router", "-race")
 		if err != nil {
 			errors <- err
 			return
 		}
 		mu.Lock()
 		defer mu.Unlock()
-		bp.Router = routerPath
+		bp.Router = path
 	}()
 
 	go func() {
 		defer wg.Done()
-		tcPath, err := gexec.Build("code.cloudfoundry.org/loggregator/trafficcontroller", "-race")
+		path, err := gexec.Build("code.cloudfoundry.org/loggregator/trafficcontroller", "-race")
 		if err != nil {
 			errors <- err
 			return
 		}
 		mu.Lock()
 		defer mu.Unlock()
-		bp.TrafficController = tcPath
+		bp.TrafficController = path
+	}()
+
+	go func() {
+		defer wg.Done()
+		path, err := gexec.Build("code.cloudfoundry.org/loggregator/rlp", "-race")
+		if err != nil {
+			errors <- err
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		bp.RLP = path
+	}()
+
+	go func() {
+		defer wg.Done()
+		path, err := gexec.Build("code.cloudfoundry.org/loggregator/rlp-gateway", "-race")
+		if err != nil {
+			errors <- err
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		bp.RLPGateway = path
 	}()
 
 	wg.Wait()

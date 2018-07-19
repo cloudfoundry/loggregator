@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"github.com/gogo/protobuf/jsonpb"
+	"github.com/golang/protobuf/jsonpb"
 )
 
 var marshaler jsonpb.Marshaler
@@ -35,6 +35,7 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 			&loggregator_v2.EgressBatchRequest{
 				ShardId:           query.Get("shard_id"),
 				DeterministicName: query.Get("deterministic_name"),
+				UsePreferredTags:  true,
 				Selectors:         s,
 			},
 		)

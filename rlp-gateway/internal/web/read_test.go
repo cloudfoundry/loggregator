@@ -65,6 +65,7 @@ var _ = Describe("Read", func() {
 					},
 				},
 			},
+			UsePreferredTags: true,
 		}))
 
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -111,6 +112,7 @@ var _ = Describe("Read", func() {
 					},
 				},
 			},
+			UsePreferredTags: true,
 		}))
 	})
 
@@ -138,6 +140,7 @@ var _ = Describe("Read", func() {
 					},
 				},
 			},
+			UsePreferredTags: true,
 		}))
 	})
 

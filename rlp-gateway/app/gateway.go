@@ -16,7 +16,6 @@ type Gateway struct {
 	cfg      Config
 	listener net.Listener
 	server   *http.Server
-	log      *log.Logger
 }
 
 func NewGateway(cfg Config) *Gateway {
@@ -26,11 +25,6 @@ func NewGateway(cfg Config) *Gateway {
 }
 
 func (g *Gateway) Start(blocking bool) {
-	l, err := net.Listen("tcp", g.cfg.GatewayAddr)
-	if err != nil {
-		g.log.Fatalf("failed to start listener: %s", err)
-	}
-
 	creds, err := plumbing.NewClientCredentials(
 		g.cfg.LogsProviderCertPath,
 		g.cfg.LogsProviderKeyPath,
@@ -41,10 +35,18 @@ func (g *Gateway) Start(blocking bool) {
 		log.Fatalf("failed to load client TLS config: %s", err)
 	}
 
-	handler := web.NewHandler(ingress.NewLogClient(creds, g.cfg.LogsProviderAddr))
+	log.Println("certs loaded!!!!!!")
+	lc := ingress.NewLogClient(creds, g.cfg.LogsProviderAddr)
+	log.Println("log client created!!!!!!")
 	stack := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(
-		handlers.LoggingHandler(os.Stdout, handler),
+		handlers.LoggingHandler(os.Stdout, web.NewHandler(lc)),
 	)
+
+	l, err := net.Listen("tcp", g.cfg.GatewayAddr)
+	if err != nil {
+		log.Fatalf("failed to start listener: %s", err)
+	}
+	log.Printf("http bound to: %s", l.Addr().String())
 
 	g.listener = l
 	g.server = &http.Server{

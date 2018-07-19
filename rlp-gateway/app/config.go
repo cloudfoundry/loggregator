@@ -28,5 +28,5 @@ func LoadConfig() Config {
 
 	envstruct.WriteReport(&cfg)
 
-	return Config{}
+	return cfg
 }
