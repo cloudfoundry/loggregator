@@ -15,11 +15,11 @@ import (
 
 func BuildRLPGatewayConfig(gatewayPort int, logProviderAddr string) app.Config {
 	return app.Config{
-		LogsProviderAddr:       logProviderAddr,
-		LogsProviderCAPath:     Cert("loggregator-ca.crt"),
-		LogsProviderCertPath:   Cert("rlpgateway.crt"),
-		LogsProviderKeyPath:    Cert("rlpgateway.key"),
-		LogsProviderCommonName: "reverselogproxy",
+		LogsProviderAddr:           logProviderAddr,
+		LogsProviderCAPath:         Cert("loggregator-ca.crt"),
+		LogsProviderClientCertPath: Cert("rlpgateway.crt"),
+		LogsProviderClientKeyPath:  Cert("rlpgateway.key"),
+		LogsProviderCommonName:     "reverselogproxy",
 
 		GatewayAddr: fmt.Sprintf("127.0.0.1:%d", gatewayPort),
 	}

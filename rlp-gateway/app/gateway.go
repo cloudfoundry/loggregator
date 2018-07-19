@@ -30,8 +30,8 @@ func NewGateway(cfg Config) *Gateway {
 // and listens on http
 func (g *Gateway) Start(blocking bool) {
 	creds, err := plumbing.NewClientCredentials(
-		g.cfg.LogsProviderCertPath,
-		g.cfg.LogsProviderKeyPath,
+		g.cfg.LogsProviderClientCertPath,
+		g.cfg.LogsProviderClientKeyPath,
 		g.cfg.LogsProviderCAPath,
 		g.cfg.LogsProviderCommonName,
 	)

@@ -8,11 +8,11 @@ import (
 
 // Config holds the configuration for the RLP Gateway
 type Config struct {
-	LogsProviderAddr       string `env:"LOGS_PROVIDER_ADDR,        required, report"`
-	LogsProviderCAPath     string `env:"LOGS_PROVIDER_CA_PATH,     required, report"`
-	LogsProviderCertPath   string `env:"LOGS_PROVIDER_CERT_PATH,   required, report"`
-	LogsProviderKeyPath    string `env:"LOGS_PROVIDER_KEY_PATH,    required, report"`
-	LogsProviderCommonName string `env:"LOGS_PROVIDER_COMMON_NAME,           report"`
+	LogsProviderAddr           string `env:"LOGS_PROVIDER_ADDR,             required, report"`
+	LogsProviderCAPath         string `env:"LOGS_PROVIDER_CA_PATH,          required, report"`
+	LogsProviderClientCertPath string `env:"LOGS_PROVIDER_CLIENT_CERT_PATH, required, report"`
+	LogsProviderClientKeyPath  string `env:"LOGS_PROVIDER_CLIENT_KEY_PATH,  required, report"`
+	LogsProviderCommonName     string `env:"LOGS_PROVIDER_COMMON_NAME, report"`
 
 	GatewayAddr string `env:"GATEWAY_ADDR, report"`
 }
