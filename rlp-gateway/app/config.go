@@ -15,6 +15,7 @@ type Config struct {
 	LogsProviderCommonName     string `env:"LOGS_PROVIDER_COMMON_NAME, report"`
 
 	GatewayAddr string `env:"GATEWAY_ADDR, report"`
+	PProfPort   uint32 `env:"PPROF_PORT"`
 }
 
 // LoadConfig will load and return the config from the current environment. If
