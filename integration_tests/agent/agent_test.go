@@ -129,13 +129,9 @@ var _ = Describe("Agent", func() {
 			"Message": Equal(&loggregator_v2.Envelope_Log{
 				Log: &loggregator_v2.Log{Payload: []byte("some-message")},
 			}),
-			"DeprecatedTags": Equal(map[string]*loggregator_v2.Value{
-				"auto-tag-1": {
-					Data: &loggregator_v2.Value_Text{"auto-tag-value-1"},
-				},
-				"auto-tag-2": {
-					Data: &loggregator_v2.Value_Text{"auto-tag-value-2"},
-				},
+			"Tags": Equal(map[string]string{
+				"auto-tag-1": "auto-tag-value-1",
+				"auto-tag-2": "auto-tag-value-2",
 			}),
 		}))
 	})
