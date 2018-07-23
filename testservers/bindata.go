@@ -36,6 +36,7 @@ import (
 	"strings"
 	"time"
 )
+
 type asset struct {
 	bytes []byte
 	info  os.FileInfo
@@ -1095,27 +1096,27 @@ var _bindata = map[string]func() (*asset, error){
 	"cc_trafficcontroller.crt": cc_trafficcontrollerCrt,
 	"cc_trafficcontroller.csr": cc_trafficcontrollerCsr,
 	"cc_trafficcontroller.key": cc_trafficcontrollerKey,
-	"doppler.crt": dopplerCrt,
-	"doppler.csr": dopplerCsr,
-	"doppler.key": dopplerKey,
-	"loggregator-ca.crl": loggregatorCaCrl,
-	"loggregator-ca.crt": loggregatorCaCrt,
-	"loggregator-ca.key": loggregatorCaKey,
-	"metron.crt": metronCrt,
-	"metron.csr": metronCsr,
-	"metron.key": metronKey,
-	"reverselogproxy.crt": reverselogproxyCrt,
-	"reverselogproxy.csr": reverselogproxyCsr,
-	"reverselogproxy.key": reverselogproxyKey,
-	"rlpgateway.crt": rlpgatewayCrt,
-	"rlpgateway.csr": rlpgatewayCsr,
-	"rlpgateway.key": rlpgatewayKey,
-	"syslogdrainbinder.crt": syslogdrainbinderCrt,
-	"syslogdrainbinder.csr": syslogdrainbinderCsr,
-	"syslogdrainbinder.key": syslogdrainbinderKey,
-	"trafficcontroller.crt": trafficcontrollerCrt,
-	"trafficcontroller.csr": trafficcontrollerCsr,
-	"trafficcontroller.key": trafficcontrollerKey,
+	"doppler.crt":              dopplerCrt,
+	"doppler.csr":              dopplerCsr,
+	"doppler.key":              dopplerKey,
+	"loggregator-ca.crl":       loggregatorCaCrl,
+	"loggregator-ca.crt":       loggregatorCaCrt,
+	"loggregator-ca.key":       loggregatorCaKey,
+	"metron.crt":               metronCrt,
+	"metron.csr":               metronCsr,
+	"metron.key":               metronKey,
+	"reverselogproxy.crt":      reverselogproxyCrt,
+	"reverselogproxy.csr":      reverselogproxyCsr,
+	"reverselogproxy.key":      reverselogproxyKey,
+	"rlpgateway.crt":           rlpgatewayCrt,
+	"rlpgateway.csr":           rlpgatewayCsr,
+	"rlpgateway.key":           rlpgatewayKey,
+	"syslogdrainbinder.crt":    syslogdrainbinderCrt,
+	"syslogdrainbinder.csr":    syslogdrainbinderCsr,
+	"syslogdrainbinder.key":    syslogdrainbinderKey,
+	"trafficcontroller.crt":    trafficcontrollerCrt,
+	"trafficcontroller.csr":    trafficcontrollerCsr,
+	"trafficcontroller.key":    trafficcontrollerKey,
 }
 
 // AssetDir returns the file names below a certain
@@ -1157,31 +1158,32 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
+
 var _bintree = &bintree{nil, map[string]*bintree{
-	"cc_trafficcontroller.crt": &bintree{cc_trafficcontrollerCrt, map[string]*bintree{}},
-	"cc_trafficcontroller.csr": &bintree{cc_trafficcontrollerCsr, map[string]*bintree{}},
-	"cc_trafficcontroller.key": &bintree{cc_trafficcontrollerKey, map[string]*bintree{}},
-	"doppler.crt": &bintree{dopplerCrt, map[string]*bintree{}},
-	"doppler.csr": &bintree{dopplerCsr, map[string]*bintree{}},
-	"doppler.key": &bintree{dopplerKey, map[string]*bintree{}},
-	"loggregator-ca.crl": &bintree{loggregatorCaCrl, map[string]*bintree{}},
-	"loggregator-ca.crt": &bintree{loggregatorCaCrt, map[string]*bintree{}},
-	"loggregator-ca.key": &bintree{loggregatorCaKey, map[string]*bintree{}},
-	"metron.crt": &bintree{metronCrt, map[string]*bintree{}},
-	"metron.csr": &bintree{metronCsr, map[string]*bintree{}},
-	"metron.key": &bintree{metronKey, map[string]*bintree{}},
-	"reverselogproxy.crt": &bintree{reverselogproxyCrt, map[string]*bintree{}},
-	"reverselogproxy.csr": &bintree{reverselogproxyCsr, map[string]*bintree{}},
-	"reverselogproxy.key": &bintree{reverselogproxyKey, map[string]*bintree{}},
-	"rlpgateway.crt": &bintree{rlpgatewayCrt, map[string]*bintree{}},
-	"rlpgateway.csr": &bintree{rlpgatewayCsr, map[string]*bintree{}},
-	"rlpgateway.key": &bintree{rlpgatewayKey, map[string]*bintree{}},
-	"syslogdrainbinder.crt": &bintree{syslogdrainbinderCrt, map[string]*bintree{}},
-	"syslogdrainbinder.csr": &bintree{syslogdrainbinderCsr, map[string]*bintree{}},
-	"syslogdrainbinder.key": &bintree{syslogdrainbinderKey, map[string]*bintree{}},
-	"trafficcontroller.crt": &bintree{trafficcontrollerCrt, map[string]*bintree{}},
-	"trafficcontroller.csr": &bintree{trafficcontrollerCsr, map[string]*bintree{}},
-	"trafficcontroller.key": &bintree{trafficcontrollerKey, map[string]*bintree{}},
+	"cc_trafficcontroller.crt": {cc_trafficcontrollerCrt, map[string]*bintree{}},
+	"cc_trafficcontroller.csr": {cc_trafficcontrollerCsr, map[string]*bintree{}},
+	"cc_trafficcontroller.key": {cc_trafficcontrollerKey, map[string]*bintree{}},
+	"doppler.crt":              {dopplerCrt, map[string]*bintree{}},
+	"doppler.csr":              {dopplerCsr, map[string]*bintree{}},
+	"doppler.key":              {dopplerKey, map[string]*bintree{}},
+	"loggregator-ca.crl":       {loggregatorCaCrl, map[string]*bintree{}},
+	"loggregator-ca.crt":       {loggregatorCaCrt, map[string]*bintree{}},
+	"loggregator-ca.key":       {loggregatorCaKey, map[string]*bintree{}},
+	"metron.crt":               {metronCrt, map[string]*bintree{}},
+	"metron.csr":               {metronCsr, map[string]*bintree{}},
+	"metron.key":               {metronKey, map[string]*bintree{}},
+	"reverselogproxy.crt":      {reverselogproxyCrt, map[string]*bintree{}},
+	"reverselogproxy.csr":      {reverselogproxyCsr, map[string]*bintree{}},
+	"reverselogproxy.key":      {reverselogproxyKey, map[string]*bintree{}},
+	"rlpgateway.crt":           {rlpgatewayCrt, map[string]*bintree{}},
+	"rlpgateway.csr":           {rlpgatewayCsr, map[string]*bintree{}},
+	"rlpgateway.key":           {rlpgatewayKey, map[string]*bintree{}},
+	"syslogdrainbinder.crt":    {syslogdrainbinderCrt, map[string]*bintree{}},
+	"syslogdrainbinder.csr":    {syslogdrainbinderCsr, map[string]*bintree{}},
+	"syslogdrainbinder.key":    {syslogdrainbinderKey, map[string]*bintree{}},
+	"trafficcontroller.crt":    {trafficcontrollerCrt, map[string]*bintree{}},
+	"trafficcontroller.csr":    {trafficcontrollerCsr, map[string]*bintree{}},
+	"trafficcontroller.key":    {trafficcontrollerKey, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
@@ -1230,4 +1232,3 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
-
