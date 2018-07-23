@@ -109,7 +109,7 @@ var _ = Describe("IngestorServer", func() {
 		Eventually(f).Should(Equal(someEnvelope))
 		Expect(ingressMetric.GetDelta()).To(BeNumerically(">", 0))
 	})
-	
+
 	It("reads envelopes from ingestor client into the v2 Buffer", func() {
 		pusherClient, err := dopplerClient.Pusher(context.TODO())
 		Expect(err).ToNot(HaveOccurred())
