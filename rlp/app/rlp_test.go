@@ -143,10 +143,9 @@ var _ = Describe("Start", func() {
 			egressClient, cleanup := setupRLPClient(egressAddr)
 			defer cleanup()
 
-			var egressStream loggregator_v2.Egress_ReceiverClient
 			Eventually(func() error {
 				var err error
-				egressStream, err = egressClient.Receiver(context.Background(), &loggregator_v2.EgressRequest{})
+				_, err = egressClient.Receiver(context.Background(), &loggregator_v2.EgressRequest{})
 				return err
 			}, 5).ShouldNot(HaveOccurred())
 
