@@ -77,7 +77,7 @@ var _ = Describe("Read", func() {
 
 		line, err := buf.ReadBytes('\n')
 		Expect(err).ToNot(HaveOccurred())
-		Expect(string(line)).To(Equal(`data: {"batch":[{"sourceId":"source-id-a"},{"sourceId":"source-id-b"}]}` + "\n"))
+		Expect(string(line)).To(Equal(`data: {"batch":[{"source_id":"source-id-a"},{"source_id":"source-id-b"}]}` + "\n"))
 
 		// Read 1 empty new lines
 		_, err = buf.ReadBytes('\n')
@@ -85,7 +85,7 @@ var _ = Describe("Read", func() {
 
 		line, err = buf.ReadBytes('\n')
 		Expect(err).ToNot(HaveOccurred())
-		Expect(string(line)).To(Equal(`data: {"batch":[{"sourceId":"source-id-a"},{"sourceId":"source-id-b"}]}` + "\n"))
+		Expect(string(line)).To(Equal(`data: {"batch":[{"source_id":"source-id-a"},{"source_id":"source-id-b"}]}` + "\n"))
 	})
 
 	It("adds the shard ID to the egress request", func() {
