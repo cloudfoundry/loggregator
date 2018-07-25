@@ -6,6 +6,7 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
+	goproto "github.com/golang/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -164,7 +165,7 @@ var _ = Describe("HTTP", func() {
 
 				converted := conversion.ToV2(v1Envelope, false)
 
-				_, err := proto.Marshal(converted)
+				_, err := goproto.Marshal(converted)
 				Expect(err).ToNot(HaveOccurred())
 
 				for k, v := range expectedV2Envelope.DeprecatedTags {
@@ -260,7 +261,7 @@ var _ = Describe("HTTP", func() {
 
 				converted := conversion.ToV2(v1Envelope, true)
 
-				_, err := proto.Marshal(converted)
+				_, err := goproto.Marshal(converted)
 				Expect(err).ToNot(HaveOccurred())
 
 				for k, v := range expectedV2Envelope.DeprecatedTags {
