@@ -24,7 +24,7 @@ var marshaler jsonpb.Marshaler
 func ReadHandler(lp LogsProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			http.Error(w, errMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 			return
 		}
 

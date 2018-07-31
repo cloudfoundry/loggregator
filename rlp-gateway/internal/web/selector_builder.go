@@ -1,7 +1,6 @@
 package web
 
 import (
-	"errors"
 	"net/url"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
@@ -9,11 +8,6 @@ import (
 
 var (
 	envelopeTypes = []string{"log", "counter", "gauge", "timer", "event"}
-
-	errEmptyQuery                 = errors.New("query cannot be empty")
-	errMissingType                = errors.New("query must provide at least one envelope type")
-	errCounterNamePresentButEmpty = errors.New("counter.name is invalid without value")
-	errGaugeNamePresentButEmpty   = errors.New("gauge.name is invalid without value")
 )
 
 // BuildSelector returns a slice of v2 loggregator Selectors generated

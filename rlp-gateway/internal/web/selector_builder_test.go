@@ -104,26 +104,38 @@ var _ = Describe("SelectorBuilder", func() {
 
 	It("returns an error if the url values is empty", func() {
 		_, err := web.BuildSelector(url.Values{})
-		Expect(err).To(MatchError("query cannot be empty"))
+		Expect(err.Error()).To(MatchJSON(`{
+			"error": "empty_query",
+			"message": "query cannot be empty"
+		}`))
 	})
 
 	It("returns an error if no types are given", func() {
 		_, err := web.BuildSelector(url.Values{"source_id": {"app-1"}})
-		Expect(err).To(MatchError("query must provide at least one envelope type"))
+		Expect(err.Error()).To(MatchJSON(`{
+			"error": "missing_envelope_type",
+			"message": "query must provide at least one envelope type"
+		}`))
 	})
 
 	It("returns an error when counter.name present but empty", func() {
 		_, err := web.BuildSelector(url.Values{
 			"counter.name": {},
 		})
-		Expect(err).To(MatchError("counter.name is invalid without value"))
+		Expect(err.Error()).To(MatchJSON(`{
+			"error": "missing_counter_name",
+			"message": "counter.name is invalid without value"
+		}`))
 	})
 
 	It("returns an error when gauge.name present but empty", func() {
 		_, err := web.BuildSelector(url.Values{
 			"gauge.name": {},
 		})
-		Expect(err).To(MatchError("gauge.name is invalid without value"))
+		Expect(err.Error()).To(MatchJSON(`{
+			"error": "missing_gauge_name",
+			"message": "gauge.name is invalid without value"
+		}`))
 	})
 })
 

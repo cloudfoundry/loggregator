@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -170,7 +171,14 @@ var _ = Describe("Read", func() {
 		resp, err := server.Client().Do(req.WithContext(ctx))
 		Expect(err).ToNot(HaveOccurred())
 
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).ToNot(HaveOccurred())
+
 		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+		Expect(body).To(MatchJSON(`{
+			"error": "empty_query",
+			"message": "query cannot be empty"
+		}`))
 	})
 
 	It("returns 405, method not allowed", func() {
@@ -180,7 +188,14 @@ var _ = Describe("Read", func() {
 		resp, err := server.Client().Do(req.WithContext(ctx))
 		Expect(err).ToNot(HaveOccurred())
 
+		body, err := ioutil.ReadAll(resp.Body)
+		Expect(err).ToNot(HaveOccurred())
+
 		Expect(resp.StatusCode).To(Equal(http.StatusMethodNotAllowed))
+		Expect(body).To(MatchJSON(`{
+			"error": "method_not_allowed",
+			"message": "method not allowed"
+		}`))
 	})
 })
 
