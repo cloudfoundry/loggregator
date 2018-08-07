@@ -114,6 +114,11 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 	atomic.AddInt64(&s.subscriptions, 1)
 	defer atomic.AddInt64(&s.subscriptions, -1)
 
+	if s.subscriptions > s.maxStreams {
+		s.rejectedMetric.Increment(1)
+		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
+	}
+
 	ctx, cancel := context.WithCancel(srv.Context())
 	defer cancel()
 
@@ -144,11 +149,6 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 		ShardId:          r.GetShardId(),
 		Selectors:        r.GetSelectors(),
 		UsePreferredTags: r.GetUsePreferredTags(),
-	}
-
-	if s.subscriptions > s.maxStreams {
-		s.rejectedMetric.Increment(1)
-		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
 	}
 
 	rx, err := s.receiver.Subscribe(ctx, br)
@@ -183,6 +183,11 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 	atomic.AddInt64(&s.subscriptions, 1)
 	defer atomic.AddInt64(&s.subscriptions, -1)
 
+	if s.subscriptions > s.maxStreams {
+		s.rejectedMetric.Increment(1)
+		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
+	}
+
 	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
 	r.LegacySelector = nil
 
@@ -208,11 +213,6 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 			cancel()
 		}
 	}()
-
-	if s.subscriptions > s.maxStreams {
-		s.rejectedMetric.Increment(1)
-		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
-	}
 
 	rx, err := s.receiver.Subscribe(ctx, r)
 	if err != nil {
@@ -250,7 +250,7 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 			return nil
 		default:
 			batcher.Flush()
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
@@ -308,6 +308,7 @@ func (s *Server) consumeBatchReceiver(
 ) {
 
 	defer cancel()
+	defer close(buffer)
 
 	for {
 		e, err := rx()
