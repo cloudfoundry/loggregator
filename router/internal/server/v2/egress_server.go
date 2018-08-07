@@ -105,13 +105,10 @@ func (s *EgressServer) BatchedReceiver(
 
 	dw := newDiodeWrapper(d)
 
-	t := time.NewTimer(s.forceFlushInterval)
-	for {
-		if !t.Stop() {
-			<-t.C
-		}
-		t.Reset(s.forceFlushInterval)
+	t := time.NewTicker(s.forceFlushInterval)
+	defer t.Stop()
 
+	for {
 		select {
 		case <-sender.Context().Done():
 			return sender.Context().Err()
