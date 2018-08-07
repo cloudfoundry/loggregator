@@ -188,6 +188,7 @@ func (d *Router) Start() {
 		healthRegistrar,
 		100*time.Millisecond,
 		100,
+		time.Second,
 	)
 
 	var opts []plumbing.ConfigOption
