@@ -29,14 +29,13 @@ var _ = Describe("Router", func() {
 			CertFile: testservers.Cert("doppler.crt"),
 			KeyFile:  testservers.Cert("doppler.key"),
 		}
-		addr := "localhost:12345"
-		spyAgent = newSpyAgent(addr)
+		spyAgent = newSpyAgent("localhost:0")
 		router = app.NewRouter(
 			grpcConfig,
 			app.WithMetricReporting(
 				"localhost:0",
 				app.Agent{
-					GRPCAddress: addr,
+					GRPCAddress: spyAgent.addr,
 				},
 				100,
 				"doppler",
@@ -275,6 +274,7 @@ type spyAgent struct {
 	loggregator_v2.IngressServer
 	envs chan *loggregator_v2.Envelope
 	s    *grpc.Server
+	addr string
 }
 
 func newSpyAgent(addr string) *spyAgent {
@@ -290,6 +290,8 @@ func newSpyAgent(addr string) *spyAgent {
 	}
 	lis, err := net.Listen("tcp", addr)
 	Expect(err).ToNot(HaveOccurred())
+
+	a.addr = lis.Addr().String()
 
 	loggregator_v2.RegisterIngressServer(a.s, a)
 	go a.s.Serve(lis)
