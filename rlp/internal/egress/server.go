@@ -234,10 +234,12 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 		},
 	)
 
+	rb := newReaderBackoff(10*time.Millisecond, 500*time.Millisecond)
 	for {
 		select {
 		case data := <-buffer:
 			batcher.Write(data)
+			rb.reset()
 		case <-senderErrorStream:
 			return io.ErrUnexpectedEOF
 		case <-receiveErrorStream:
@@ -250,7 +252,7 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 			return nil
 		default:
 			batcher.Flush()
-			time.Sleep(100 * time.Millisecond)
+			rb.sleep()
 		}
 	}
 
@@ -400,4 +402,34 @@ func (s *Server) convergeTags(usePreferred bool, e *loggregator_v2.Envelope) {
 		}
 	}
 	e.Tags = nil
+}
+
+type readerBackoff struct {
+	misses       int64
+	baseInterval time.Duration
+	maxInterval  time.Duration
+}
+
+func newReaderBackoff(baseInterval, maxInterval time.Duration) *readerBackoff {
+	return &readerBackoff{
+		baseInterval: baseInterval,
+		maxInterval:  maxInterval,
+	}
+}
+
+func (r *readerBackoff) sleep() {
+	r.misses++
+
+	sleep := r.baseInterval * time.Duration(r.misses)
+
+	if sleep > time.Second {
+		time.Sleep(time.Second)
+		return
+	}
+
+	time.Sleep(sleep)
+}
+
+func (r *readerBackoff) reset() {
+	r.misses = 0
 }
