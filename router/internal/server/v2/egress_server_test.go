@@ -26,7 +26,6 @@ var _ = Describe("EgressServer", func() {
 				nil,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			err := server.Receiver(&loggregator_v2.EgressRequest{}, nil)
@@ -48,7 +47,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
@@ -71,7 +69,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Hour,
 				2000,
-				10*time.Millisecond,
 			)
 
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
@@ -97,7 +94,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
@@ -118,7 +114,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			err := server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
@@ -139,7 +134,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
@@ -160,7 +154,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			req := &loggregator_v2.EgressBatchRequest{
@@ -186,7 +179,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 
 			req := &loggregator_v2.EgressBatchRequest{
@@ -226,7 +218,6 @@ var _ = Describe("EgressServer", func() {
 				healthRegistrar,
 				time.Millisecond,
 				10,
-				time.Second,
 			)
 			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, spyReceiver)
 
