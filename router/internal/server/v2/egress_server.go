@@ -95,6 +95,7 @@ func (s *EgressServer) BatchedReceiver(
 		},
 	)
 
+	rb := newReaderBackoff(10*time.Millisecond, 500*time.Millisecond)
 	for {
 		select {
 		case <-sender.Context().Done():
@@ -105,11 +106,12 @@ func (s *EgressServer) BatchedReceiver(
 			data, ok := d.TryNext()
 			if !ok {
 				batcher.ForcedFlush()
-				time.Sleep(10 * time.Millisecond)
+				rb.sleep()
 				continue
 			}
 
 			batcher.Write(data)
+			rb.reset()
 		}
 	}
 }
@@ -131,4 +133,34 @@ func (b *batchWriter) Write(batch []*loggregator_v2.Envelope) {
 		return
 	}
 	b.egressMetric.Increment(uint64(len(batch)))
+}
+
+type readerBackoff struct {
+	misses       int64
+	baseInterval time.Duration
+	maxInterval  time.Duration
+}
+
+func newReaderBackoff(baseInterval, maxInterval time.Duration) *readerBackoff {
+	return &readerBackoff{
+		baseInterval: baseInterval,
+		maxInterval:  maxInterval,
+	}
+}
+
+func (r *readerBackoff) sleep() {
+	r.misses++
+
+	sleep := r.baseInterval * time.Duration(r.misses)
+
+	if sleep > time.Second {
+		time.Sleep(time.Second)
+		return
+	}
+
+	time.Sleep(sleep)
+}
+
+func (r *readerBackoff) reset() {
+	r.misses = 0
 }
