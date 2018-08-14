@@ -59,9 +59,11 @@ The ReverseLogProxy (RLP) has gRPC endpoints to allow consumers to read data fro
 
 The ReverseLogProxy (RLP) Gateway exposes the RLP API over HTTP.
 
+The API Documentation can be found [here](./docs/rlp_gateway.md)
+
 ##### Traffic Controller
 
-The TrafficController (TC) is like the RLP, but is tuned for CloudFoundry. It authenticates via the UAA and CloudController, which are both CF components. It egresses logs via Websockets. It only speaks V1. Planned deprecation in 2018. 
+The TrafficController (TC) is like the RLP, but is tuned for CloudFoundry. It authenticates via the UAA and CloudController, which are both CF components. It egresses logs via Websockets. It only speaks V1. Planned deprecation in 2018.
 
 ### Avoiding Producer Backpressure
 
