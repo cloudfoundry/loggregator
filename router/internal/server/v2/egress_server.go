@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	gendiode "code.cloudfoundry.org/go-diodes"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
@@ -47,6 +48,7 @@ func NewEgressServer(
 	egressMetric := m.NewCounter("egress",
 		metricemitter.WithVersion(2, 0),
 	)
+
 	return &EgressServer{
 		subscriber:          s,
 		egressMetric:        egressMetric,
@@ -80,7 +82,9 @@ func (s *EgressServer) BatchedReceiver(
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 
-	d := diodes.NewOneToOneEnvelopeV2(1000, s)
+	d := diodes.NewOneToOneWaiterEnvelopeV2(1000, s,
+		gendiode.WithWaiterContext(sender.Context()),
+	)
 	cancel := s.subscriber.Subscribe(req, d)
 	defer cancel()
 
@@ -95,23 +99,41 @@ func (s *EgressServer) BatchedReceiver(
 		},
 	)
 
-	rb := newReaderBackoff(10*time.Millisecond, 500*time.Millisecond)
+	c := make(chan *loggregator_v2.Envelope)
+	go func() {
+		for {
+			env := d.Next()
+			if env == nil {
+				return
+			}
+
+			select {
+			case c <- env:
+			case <-sender.Context().Done():
+				return
+			}
+		}
+	}()
+
+	resetDuration := 250 * time.Millisecond
+	timer := time.NewTimer(resetDuration)
 	for {
 		select {
 		case <-sender.Context().Done():
 			return sender.Context().Err()
 		case err := <-errStream:
 			return err
-		default:
-			data, ok := d.TryNext()
-			if !ok {
-				batcher.ForcedFlush()
-				rb.sleep()
-				continue
+		case <-timer.C:
+			batcher.ForcedFlush()
+			// Don't call stop like the documentation recommends because this
+			// case implies the timer has infact been triggered.
+			timer.Reset(resetDuration)
+		case env := <-c:
+			batcher.Write(env)
+			if !timer.Stop() {
+				<-timer.C
 			}
-
-			batcher.Write(data)
-			rb.reset()
+			timer.Reset(resetDuration)
 		}
 	}
 }
@@ -133,34 +155,4 @@ func (b *batchWriter) Write(batch []*loggregator_v2.Envelope) {
 		return
 	}
 	b.egressMetric.Increment(uint64(len(batch)))
-}
-
-type readerBackoff struct {
-	misses       int64
-	baseInterval time.Duration
-	maxInterval  time.Duration
-}
-
-func newReaderBackoff(baseInterval, maxInterval time.Duration) *readerBackoff {
-	return &readerBackoff{
-		baseInterval: baseInterval,
-		maxInterval:  maxInterval,
-	}
-}
-
-func (r *readerBackoff) sleep() {
-	r.misses++
-
-	sleep := r.baseInterval * time.Duration(r.misses)
-
-	if sleep > time.Second {
-		time.Sleep(time.Second)
-		return
-	}
-
-	time.Sleep(sleep)
-}
-
-func (r *readerBackoff) reset() {
-	r.misses = 0
 }

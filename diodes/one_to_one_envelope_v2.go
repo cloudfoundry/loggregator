@@ -7,15 +7,15 @@ import (
 
 // OneToOneEnvelopeV2 diode is optimized for a single writer and a single reader
 type OneToOneEnvelopeV2 struct {
-	d *gendiodes.Poller
+	d *gendiodes.Waiter
 }
 
-// NewOneToOneEnvelopeV2 initializes a new one to one diode for V2 envelopes
+// NewOneToOneWaiterEnvelopeV2 initializes a new one to one diode for V2 envelopes
 // of a given size and alerter. The alerter is called whenever data is dropped
 // with an integer representing the number of V2 envelopes that were dropped.
-func NewOneToOneEnvelopeV2(size int, alerter gendiodes.Alerter, opts ...gendiodes.PollerConfigOption) *OneToOneEnvelopeV2 {
+func NewOneToOneWaiterEnvelopeV2(size int, alerter gendiodes.Alerter, opts ...gendiodes.WaiterConfigOption) *OneToOneEnvelopeV2 {
 	return &OneToOneEnvelopeV2{
-		d: gendiodes.NewPoller(gendiodes.NewOneToOne(size, alerter), opts...),
+		d: gendiodes.NewWaiter(gendiodes.NewOneToOne(size, alerter), opts...),
 	}
 }
 

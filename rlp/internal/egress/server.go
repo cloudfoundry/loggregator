@@ -12,6 +12,7 @@ import (
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
 )
@@ -111,10 +112,10 @@ func WithMaxStreams(conn int64) ServerOption {
 func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Egress_ReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
-	atomic.AddInt64(&s.subscriptions, 1)
+	subCount := atomic.AddInt64(&s.subscriptions, 1)
 	defer atomic.AddInt64(&s.subscriptions, -1)
 
-	if s.subscriptions > s.maxStreams {
+	if subCount > s.maxStreams {
 		s.rejectedMetric.Increment(1)
 		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
 	}
@@ -180,10 +181,10 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggregator_v2.Egress_BatchedReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
-	atomic.AddInt64(&s.subscriptions, 1)
+	subCount := atomic.AddInt64(&s.subscriptions, 1)
 	defer atomic.AddInt64(&s.subscriptions, -1)
 
-	if s.subscriptions > s.maxStreams {
+	if subCount > s.maxStreams {
 		s.rejectedMetric.Increment(1)
 		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
 	}
@@ -234,12 +235,16 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 		},
 	)
 
-	rb := newReaderBackoff(10*time.Millisecond, 500*time.Millisecond)
+	resetDuration := 100 * time.Millisecond
+	timer := time.NewTimer(resetDuration)
 	for {
 		select {
 		case data := <-buffer:
 			batcher.Write(data)
-			rb.reset()
+			if !timer.Stop() {
+				<-timer.C
+			}
+			timer.Reset(resetDuration)
 		case <-senderErrorStream:
 			return io.ErrUnexpectedEOF
 		case <-receiveErrorStream:
@@ -250,9 +255,9 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 			batcher.ForcedFlush()
 
 			return nil
-		default:
+		case <-timer.C:
 			batcher.Flush()
-			rb.sleep()
+			timer.Reset(resetDuration)
 		}
 	}
 
@@ -402,34 +407,4 @@ func (s *Server) convergeTags(usePreferred bool, e *loggregator_v2.Envelope) {
 		}
 	}
 	e.Tags = nil
-}
-
-type readerBackoff struct {
-	misses       int64
-	baseInterval time.Duration
-	maxInterval  time.Duration
-}
-
-func newReaderBackoff(baseInterval, maxInterval time.Duration) *readerBackoff {
-	return &readerBackoff{
-		baseInterval: baseInterval,
-		maxInterval:  maxInterval,
-	}
-}
-
-func (r *readerBackoff) sleep() {
-	r.misses++
-
-	sleep := r.baseInterval * time.Duration(r.misses)
-
-	if sleep > time.Second {
-		time.Sleep(time.Second)
-		return
-	}
-
-	time.Sleep(sleep)
-}
-
-func (r *readerBackoff) reset() {
-	r.misses = 0
 }
