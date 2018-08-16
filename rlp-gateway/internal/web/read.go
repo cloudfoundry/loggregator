@@ -53,7 +53,7 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+			http.Error(w, errStreamingUnsupported.Error(), http.StatusInternalServerError)
 			return
 		}
 

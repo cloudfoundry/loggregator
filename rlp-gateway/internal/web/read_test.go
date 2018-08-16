@@ -307,6 +307,20 @@ var _ = Describe("Read", func() {
 			"message": "method not allowed"
 		}`))
 	})
+
+	It("return 500, internal server error when streaming is not supported", func() {
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read?log", nil)
+		Expect(err).ToNot(HaveOccurred())
+
+		w := &nonFlusherWriter{httptest.NewRecorder()}
+		web.ReadHandler(lp)(w, req)
+
+		Expect(w.rw.Code).To(Equal(http.StatusInternalServerError))
+		Expect(w.rw.Body).To(MatchJSON(`{
+			"error": "streaming_unsupported",
+			"message": "request does not support streaming"
+		}`))
+	})
 })
 
 type stubLogsProvider struct {
@@ -333,4 +347,22 @@ func (s *stubLogsProvider) requests() []*loggregator_v2.EgressBatchRequest {
 	defer s.mu.Unlock()
 
 	return s._requests
+}
+
+// nonFlusherWriter is a wrapper around the httptest.ResponseRecorder that
+// excludes the Flush() function.
+type nonFlusherWriter struct {
+	rw *httptest.ResponseRecorder
+}
+
+func (w *nonFlusherWriter) Header() http.Header {
+	return w.rw.Header()
+}
+
+func (w *nonFlusherWriter) Write(d []byte) (int, error) {
+	return w.rw.Write(d)
+}
+
+func (w *nonFlusherWriter) WriteHeader(statusCode int) {
+	w.rw.WriteHeader(statusCode)
 }
