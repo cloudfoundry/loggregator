@@ -78,7 +78,26 @@ var _ = Describe("Read", func() {
 
 		line, err := buf.ReadBytes('\n')
 		Expect(err).ToNot(HaveOccurred())
-		Expect(string(line)).To(Equal(`data: {"batch":[{"source_id":"source-id-a"},{"source_id":"source-id-b"}]}` + "\n"))
+		Expect(string(line)).To(HavePrefix("data: "))
+		Expect(string(line)).To(HaveSuffix("\n"))
+		Expect(string(line[6:])).To(MatchJSON(`{
+			"batch": [
+				{
+					"source_id":"source-id-a",
+					"timestamp": "0",
+					"instance_id": "",
+					"tags": {},
+					"deprecated_tags": {}
+				},
+				{
+					"source_id":"source-id-b",
+					"timestamp": "0",
+					"instance_id": "",
+					"tags": {},
+					"deprecated_tags": {}
+				}
+			]
+		}`))
 
 		// Read 1 empty new lines
 		_, err = buf.ReadBytes('\n')
@@ -86,7 +105,98 @@ var _ = Describe("Read", func() {
 
 		line, err = buf.ReadBytes('\n')
 		Expect(err).ToNot(HaveOccurred())
-		Expect(string(line)).To(Equal(`data: {"batch":[{"source_id":"source-id-a"},{"source_id":"source-id-b"}]}` + "\n"))
+		Expect(string(line)).To(HavePrefix("data: "))
+		Expect(string(line)).To(HaveSuffix("\n"))
+		Expect(string(line[6:])).To(MatchJSON(`{
+			"batch": [
+				{
+					"source_id":"source-id-a",
+					"timestamp": "0",
+					"instance_id": "",
+					"tags": {},
+					"deprecated_tags": {}
+				},
+				{
+					"source_id":"source-id-b",
+					"timestamp": "0",
+					"instance_id": "",
+					"tags": {},
+					"deprecated_tags": {}
+				}
+			]
+		}`))
+	})
+
+	It("contains zero values for gauge metrics", func() {
+		lp._batchResponse = &loggregator_v2.EnvelopeBatch{
+			Batch: []*loggregator_v2.Envelope{
+				{
+					SourceId: "source-id-a",
+					Message: &loggregator_v2.Envelope_Gauge{
+						Gauge: &loggregator_v2.Gauge{
+							Metrics: map[string]*loggregator_v2.GaugeValue{
+								"cpu": &loggregator_v2.GaugeValue{
+									Unit:  "percent",
+									Value: 0.0,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read?gauge", nil)
+		Expect(err).ToNot(HaveOccurred())
+
+		req = req.WithContext(ctx)
+
+		resp, err := server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(lp.requests).Should(HaveLen(1))
+
+		Expect(lp.requests()[0]).To(Equal(&loggregator_v2.EgressBatchRequest{
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{},
+					},
+				},
+			},
+			UsePreferredTags: true,
+		}))
+
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Expect(resp.Header.Get("Content-Type")).To(Equal("text/event-stream"))
+		Expect(resp.Header.Get("Cache-Control")).To(Equal("no-cache"))
+		Expect(resp.Header.Get("Connection")).To(Equal("keep-alive"))
+
+		buf := bufio.NewReader(resp.Body)
+
+		line, err := buf.ReadBytes('\n')
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(line)).To(HavePrefix("data: "))
+		Expect(string(line)).To(HaveSuffix("\n"))
+		Expect(string(line[6:])).To(MatchJSON(`{
+			"batch": [
+				{
+					"timestamp": "0",
+					"instance_id": "",
+					"tags": {},
+					"deprecated_tags": {},
+					"source_id":"source-id-a",
+					"gauge": {
+						"metrics": {
+							"cpu": {
+								"unit": "percent",
+								"value": 0
+							}
+						}
+					}
+				}
+			]
+		}`))
 	})
 
 	It("adds the shard ID to the egress request", func() {

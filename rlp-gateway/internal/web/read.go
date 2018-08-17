@@ -12,7 +12,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var marshaler jsonpb.Marshaler
+var marshaler = jsonpb.Marshaler{
+	EmitDefaults: true,
+}
 
 // ReadHandler returns a http.Handler that will serve logs over server sent
 // events. Logs are streamed from the logs provider and written to the client
