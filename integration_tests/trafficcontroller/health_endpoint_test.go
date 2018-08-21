@@ -12,7 +12,7 @@ import (
 
 var _ = Describe("TrafficController Health Endpoint", func() {
 	It("returns health metrics", func() {
-		cfg := testservers.BuildTrafficControllerConf(1236, 37474, 1278)
+		cfg := testservers.BuildTrafficControllerConf("", 37474, "")
 
 		var tcPorts testservers.TrafficControllerPorts
 		tcCleanupFunc, tcPorts = testservers.StartTrafficController(cfg)

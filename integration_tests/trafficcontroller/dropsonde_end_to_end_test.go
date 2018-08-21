@@ -18,25 +18,32 @@ import (
 )
 
 var _ = Describe("TrafficController for dropsonde messages", func() {
-	var dropsondeEndpoint string
-	var wsPort int
+	var (
+		logCache     *stubGrpcLogCache
+		fakeDoppler  *FakeDoppler
+		tcWSEndpoint string
+		wsPort       int
+	)
 
 	BeforeEach(func() {
-		cfg := testservers.BuildTrafficControllerConf(1236, 37474, 1287)
+		fakeDoppler = NewFakeDoppler()
+		err := fakeDoppler.Start()
+		Expect(err).ToNot(HaveOccurred())
+
+		logCache = newStubGrpcLogCache()
+		cfg := testservers.BuildTrafficControllerConf(fakeDoppler.Addr(), 37474, logCache.addr())
 
 		var tcPorts testservers.TrafficControllerPorts
 		tcCleanupFunc, tcPorts = testservers.StartTrafficController(cfg)
 
 		wsPort = tcPorts.WS
 
+		tcHTTPEndpoint := fmt.Sprintf("http://%s:%d", localIPAddress, tcPorts.WS)
+		tcWSEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, tcPorts.WS)
+
 		// wait for TC
-		trafficControllerDropsondeEndpoint := fmt.Sprintf(
-			"http://%s:%d",
-			localIPAddress,
-			tcPorts.WS,
-		)
 		Eventually(func() error {
-			resp, err := http.Get(trafficControllerDropsondeEndpoint)
+			resp, err := http.Get(tcHTTPEndpoint)
 			if err == nil {
 				resp.Body.Close()
 			}
@@ -44,18 +51,13 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 		}, 10).Should(Succeed())
 	})
 
+	AfterEach(func(done Done) {
+		defer close(done)
+		fakeDoppler.Stop()
+		logCache.stop()
+	}, 30)
+
 	Describe("Loggregator Router Paths", func() {
-		BeforeEach(func() {
-			fakeDoppler = NewFakeDoppler()
-			fakeDoppler.Start()
-			dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
-		})
-
-		AfterEach(func(done Done) {
-			defer close(done)
-			fakeDoppler.Stop()
-		}, 30)
-
 		Context("Streaming", func() {
 			var (
 				client   *consumer.Consumer
@@ -63,8 +65,8 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 				errors   <-chan error
 			)
 
-			JustBeforeEach(func() {
-				client = consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+			BeforeEach(func() {
+				client = consumer.New(tcWSEndpoint, &tls.Config{}, nil)
 				messages, errors = client.StreamWithoutReconnect(APP_ID, AUTH_TOKEN)
 			})
 
@@ -107,7 +109,7 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 			)
 
 			It("passes messages through for every app for uaa admins", func() {
-				client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+				client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
 				defer client.Close()
 				messages, errors = client.FirehoseWithoutReconnect(SUBSCRIPTION_ID, AUTH_TOKEN)
 
@@ -145,7 +147,7 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 			})
 
 			It("returns a multi-part HTTP response with the most recent container metrics for all instances for a given app", func() {
-				client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+				client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
 
 				Eventually(func() bool {
 					messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
@@ -169,25 +171,9 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 	})
 
 	Describe("LogCache API Paths", func() {
-		var (
-			logCache *stubGrpcLogCache
-		)
-		BeforeEach(func() {
-			fakeDoppler = NewFakeDoppler()
-			fakeDoppler.Start()
-			dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
-
-			logCache = newStubGrpcLogCache(1287)
-		})
-
-		AfterEach(func(done Done) {
-			defer close(done)
-			fakeDoppler.Stop()
-		}, 30)
-
 		Context("Recent", func() {
 			It("returns a multi-part HTTP response with all recent messages", func() {
-				client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+				client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
 
 				Eventually(func() int {
 					messages, err := client.RecentLogs("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")

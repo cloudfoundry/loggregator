@@ -13,12 +13,12 @@ import (
 	tcConf "code.cloudfoundry.org/loggregator/trafficcontroller/app"
 )
 
-func BuildTrafficControllerConf(dopplerGRPCPort, agentPort, logCachePort int) tcConf.Config {
+func BuildTrafficControllerConf(routerAddr string, agentPort int, logCacheAddr string) tcConf.Config {
 	return tcConf.Config{
 		IP:                    "127.0.0.1",
-		RouterAddrs:           []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
+		RouterAddrs:           []string{routerAddr},
 		HealthAddr:            "localhost:0",
-		LogCacheAddr:          fmt.Sprintf("127.0.0.1:%d", logCachePort),
+		LogCacheAddr:          logCacheAddr,
 		SystemDomain:          "vcap.me",
 		SkipCertVerify:        true,
 		ApiHost:               "http://127.0.0.1:65530",

@@ -1,7 +1,6 @@
 package trafficcontroller_test
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -15,14 +14,15 @@ import (
 )
 
 type stubGrpcLogCache struct {
-	mu       sync.Mutex
-	reqs     []*logcache_v1.ReadRequest
-	promReqs []*logcache_v1.PromQL_InstantQueryRequest
-	lis      net.Listener
-	block    bool
+	mu         sync.Mutex
+	reqs       []*logcache_v1.ReadRequest
+	promReqs   []*logcache_v1.PromQL_InstantQueryRequest
+	lis        net.Listener
+	block      bool
+	grpcServer *grpc.Server
 }
 
-func newStubGrpcLogCache(port int) *stubGrpcLogCache {
+func newStubGrpcLogCache() *stubGrpcLogCache {
 	s := &stubGrpcLogCache{}
 	lcCredentials, err := plumbing.NewServerCredentials(
 		testservers.Cert("log_cache.crt"),
@@ -33,20 +33,17 @@ func newStubGrpcLogCache(port int) *stubGrpcLogCache {
 		panic(err)
 	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		panic(err)
 	}
 
 	s.lis = lis
-	srv := grpc.NewServer(grpc.Creds(lcCredentials))
-	logcache_v1.RegisterEgressServer(srv, s)
+	s.grpcServer = grpc.NewServer(grpc.Creds(lcCredentials))
+	logcache_v1.RegisterEgressServer(s.grpcServer, s)
 
 	go func() {
-		err = srv.Serve(lis)
-		if err != nil {
-			panic(err)
-		}
+		_ = s.grpcServer.Serve(lis)
 	}()
 
 	time.Sleep(100 * time.Millisecond)
@@ -105,4 +102,10 @@ func (s *stubGrpcLogCache) requests() []*logcache_v1.ReadRequest {
 	r := make([]*logcache_v1.ReadRequest, len(s.reqs))
 	copy(r, s.reqs)
 	return r
+}
+
+func (s *stubGrpcLogCache) stop() {
+	if s.grpcServer != nil {
+		s.grpcServer.Stop()
+	}
 }
