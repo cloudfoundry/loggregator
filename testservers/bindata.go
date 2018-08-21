@@ -6,6 +6,15 @@
 // loggregator-certs/doppler.crt
 // loggregator-certs/doppler.csr
 // loggregator-certs/doppler.key
+// loggregator-certs/log-cache-trafficcontroller.crt
+// loggregator-certs/log-cache-trafficcontroller.csr
+// loggregator-certs/log-cache-trafficcontroller.key
+// loggregator-certs/log-cache.crl
+// loggregator-certs/log-cache.crt
+// loggregator-certs/log-cache.key
+// loggregator-certs/log_cache.crt
+// loggregator-certs/log_cache.csr
+// loggregator-certs/log_cache.key
 // loggregator-certs/loggregator-ca.crl
 // loggregator-certs/loggregator-ca.crt
 // loggregator-certs/loggregator-ca.key
@@ -36,7 +45,6 @@ import (
 	"strings"
 	"time"
 )
-
 type asset struct {
 	bytes []byte
 	info  os.FileInfo
@@ -69,29 +77,29 @@ func (fi bindataFileInfo) Sys() interface{} {
 }
 
 var _cc_trafficcontrollerCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIEMzCCAhugAwIBAgIRAKyvuGg9FVh/FDk7NVh4h7IwDQYJKoZIhvcNAQELBQAw
-GDEWMBQGA1UEAxMNbG9nZ3JlZ2F0b3JDQTAeFw0xODA3MTgxNTIxMjdaFw00MzA3
-MTgxNTIxMjJaMB8xHTAbBgNVBAMMFGNjX3RyYWZmaWNjb250cm9sbGVyMIIBIjAN
-BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtSAEd4gWv6t+MNiy7ke/LLYcOKoD
-BNWUMiWQQNFsjvn7VWaDg+NZ7ap6gT47EJiSN2n4RUxWW7cS3E8nU9v0DcC1KsCJ
-8CVlybDsLS/NBXmXLaL8Enu7peAzj20QqZ1xKZXOdjsNRylWSD6cijHg2ZoB41AU
-q68YzpHnSi6iIGpvzCKza+5cj/Agqz4hdMVbnZxtMoDb8dWPaawD7ctlHE/UYy/A
-869wJrxpTeaZgBRbS3FqOOp5y9Hw8rvNZ6xf7qfIgPO/7mH4lwci9UL+PbDDD85T
-aj28T+xm0V0V3z1RqNfSavNGufZvHyhVAPg3YQGCL/eqWh4FbE1OIfw/MQIDAQAB
-o3EwbzAOBgNVHQ8BAf8EBAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUF
-BwMCMB0GA1UdDgQWBBRau3cVJkkO+Q8kT9rmYotRH26t7DAfBgNVHSMEGDAWgBRq
-gfJND2vBKL5KKWspk5UcwUkevjANBgkqhkiG9w0BAQsFAAOCAgEAERywXPcnJ1mN
-1Hf5SB7SZPqQHi09eWkuuPewV4ivBlah+yhV7PnbaQaW08zzSe2sTjf/vT1Rm4GH
-I3rty649IKlDUKwcXiSaoUMbNoEhheMW/wUYWkW4FCcEGC9GChZei5YTESsMRm94
-34oY7ITYgwe1hB40VzYMNoTjwP15nPQ2nLrmFN4CDeA3Me5lJEspenJntHjHswTk
-TV8qX6LJknKh0uAcFzEy4lDgxG++ZxuenQmT5RDOQgQVJ7+gJjmkHCE/7knEq4aF
-NmXv432Rosks98ItatMTAKO5zvLiAs8LedA2J6itQcNIsS2dJdPE0TFR/LPDgItw
-aW9w1k6aOP0oL3aPjbaPgQXG41/UUrozEhdIPAKe9//R8mBcciiOGLooDShmLcYw
-cPFsHZbJGsRDagfukhhKk8+SdAtFTOKMA/I/YW8pRFlB1Qa2Dnkrito+iUvFGlVa
-S6xujcGh8aEgJMx6mlMnJaMUvKCIdn9mgUfACwQXYBFTIiAxe6CO68qs5bHKRpoc
-iMBdc04kpFXPsJgEmbf9kLlruvEAY3JQVASQ516JMzmvypuzWHt5U3u9TVNEsqFl
-Wbgso+hFp7g1QxQzaNHc9NeV2ZddWlS2R3pgYdeAcP/aQoOJj2tHDlK3+6dDSD8/
-KpIYcJ0hB8pgdEHHwpcD7H99nM40dok=
+MIIEMjCCAhqgAwIBAgIQFhrJzXv6PMBvtmLRZFW6MDANBgkqhkiG9w0BAQsFADAY
+MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDgyMTE2MjAzOVoXDTQzMDgy
+MTE2MjAzMVowHzEdMBsGA1UEAwwUY2NfdHJhZmZpY2NvbnRyb2xsZXIwggEiMA0G
+CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQD0HTrLmEzDjXLelHhayG4FGQZAlfX0
+Rk/Fqzb+A7UbmjEJu0rz7+iq10Db3TwOdh2dv/QejgYiS5wMGoOo/nURB95AYqqc
+3R4knfk7DK1XfKFeONg7Kx1eLk9n5VZn4oE1kAN7tn3fCTJtrgMHM6hAJ3wT1TYh
+TC35ZJJPCgfJE2MuOX2SLGhckRNRH1mmT7/4KIlwMYh19fJghshMimXH2JaGRUtR
+2+m0kcYiRTYAfF1vm7Kx7s3kY/uhDf0dDzgHBw/N8bTdL7f1DPLwfvR4SOtg7/h3
+JnPIaTMZeDFT2YtwtMlTR0BgGBbu+1p7dS2eqAhZy1gIlUQ6G4ke5b3lAgMBAAGj
+cTBvMA4GA1UdDwEB/wQEAwIDuDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUH
+AwIwHQYDVR0OBBYEFNYV+J3NpHHGqrOAPrj/Lu3QR4coMB8GA1UdIwQYMBaAFFqg
+70+h7J0guZSQCcZ1ijintDTEMA0GCSqGSIb3DQEBCwUAA4ICAQAroCNnncy1Tkpa
+yAIKSgW3zHwwFFCHRWo1yK4LC2AuDHcSuKsh4LwGnEdpzyOzCAnS2VIh+AdgBoHG
+jvSqvIibp9tv0ArcI504aEoUl+R8nucTOWo86y0oPq4tqm1GSfBWkZNGQtqJWuMg
+gZFpAJDTK8/u7OrADAYjI7KBi/boRAEz3Pc1d8kQbAPSS9uxRHmC63VNzYxLsfT7
+ItB8NZByj6jhWESaw+iNWnhO0levjpUxJzMH8bawSipRiT61iEHqcwXBt85WYNDF
+yGw4D7q9t2eLrQreCoM8L1lY26FimRDmOLQSPa0AmQVYmItzfa0bD6ieDdiR5cmC
+fA3P7eG861UHbZ1OhSl/ggaS3G1cstLL0e7iCRcWJA97OcHfL7aa4Go5Q8o0gsK6
+eKyjUOUFMRuAKUDRBqJWpGRxNG/9ixXdpO75P6icdMYb4sbhsP2Ie0Hpshq5AH5E
+X7vZv28dyrc0meAYLGzLuLDZWZobHSn5sEKjYISwnJSVM7hbKfL8kybYWaxvSGP1
+whqcpCEBx9pv/DhAvMMchjJfgslXg9y4Vyow+KpK3zFQP4PQJKa0L73aF7WfOUCD
+G4ogi736c5bHTHyJnoyheCeBFz+BiF2/KeoM4DcYmJisohl7Z5X6QNbGW8IR4iLT
+LV3kpHk3uH/g23sAPZU7aoYyl0OeJA==
 -----END CERTIFICATE-----
 `)
 
@@ -105,25 +113,25 @@ func cc_trafficcontrollerCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "cc_trafficcontroller.crt", size: 1517, mode: os.FileMode(292), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "cc_trafficcontroller.crt", size: 1517, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _cc_trafficcontrollerCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICZDCCAUwCAQAwHzEdMBsGA1UEAwwUY2NfdHJhZmZpY2NvbnRyb2xsZXIwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC1IAR3iBa/q34w2LLuR78sthw4
-qgME1ZQyJZBA0WyO+ftVZoOD41ntqnqBPjsQmJI3afhFTFZbtxLcTydT2/QNwLUq
-wInwJWXJsOwtL80FeZctovwSe7ul4DOPbRCpnXEplc52Ow1HKVZIPpyKMeDZmgHj
-UBSrrxjOkedKLqIgam/MIrNr7lyP8CCrPiF0xVudnG0ygNvx1Y9prAPty2UcT9Rj
-L8Dzr3AmvGlN5pmAFFtLcWo46nnL0fDyu81nrF/up8iA87/uYfiXByL1Qv49sMMP
-zlNqPbxP7GbRXRXfPVGo19Jq80a59m8fKFUA+DdhAYIv96paHgVsTU4h/D8xAgMB
-AAGgADANBgkqhkiG9w0BAQsFAAOCAQEAl1Ea+YNHaS16vGAlX+QIN94bJNkjKBxH
-9yZMNkMYYtps0gbYJCKGrE8cBNmb1/ICYw6nyD79DLdjQv8EzxUWX++f5+BbKvnT
-SmQnoqyQ9LN2JvAe3uoJE8O8LXUL3LdnjsvIqJ4NO/xQqZ+IFAVABZx+HKKQ9qu3
-aTrmmZykQ4iO5yzafiXpMtRivO/nCvcGasaImktNRN9k0Q7xM5beKc6SA0dCDo8w
-4/K6+r/lhPfkJZnXfpTnhfHZmDq63YuwgQ6uQct/gVvSEuUY9M2MvpP0Xx8kqOz2
-CLMMDB5y6miiZXcYvQO0HdzxKIWzJFiV0lDTCSEoCxvOTp9ITZG3zw==
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQD0HTrLmEzDjXLelHhayG4FGQZA
+lfX0Rk/Fqzb+A7UbmjEJu0rz7+iq10Db3TwOdh2dv/QejgYiS5wMGoOo/nURB95A
+Yqqc3R4knfk7DK1XfKFeONg7Kx1eLk9n5VZn4oE1kAN7tn3fCTJtrgMHM6hAJ3wT
+1TYhTC35ZJJPCgfJE2MuOX2SLGhckRNRH1mmT7/4KIlwMYh19fJghshMimXH2JaG
+RUtR2+m0kcYiRTYAfF1vm7Kx7s3kY/uhDf0dDzgHBw/N8bTdL7f1DPLwfvR4SOtg
+7/h3JnPIaTMZeDFT2YtwtMlTR0BgGBbu+1p7dS2eqAhZy1gIlUQ6G4ke5b3lAgMB
+AAGgADANBgkqhkiG9w0BAQsFAAOCAQEAp4AjwPrQXpMCPjaMt2SaoZCbOcD/WaxY
+EpIV5QeyXkRSz2CEpFDZvSWi4qXH16M9tUQxtqDANjWKgag8r5YaFuudNO2EqnBu
+oUlSy6+Vq/4sPgQRmZuh1n3sqdzwJogyZCiEjjFD6AQIW4/FO4kCiFUhbTf24ZSw
+x94EHAtVnQ51UUH820EojIrJjWhFTifi58DUeRFzJnY8PEztSp1p6mXgz/NttmHZ
+E8jMTDRqAXOOPrTr4hIIHrh0YNsHzgsw0cB14ZLra5NTNRiLoxD2JSPqUTi7xT/p
+5DrsfLZsIismK8VYGeeUifNB+1gWVYINMlbKmlKDWHts6rJ9/YiY6w==
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -137,37 +145,37 @@ func cc_trafficcontrollerCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "cc_trafficcontroller.csr", size: 907, mode: os.FileMode(292), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "cc_trafficcontroller.csr", size: 907, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _cc_trafficcontrollerKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -181,35 +189,35 @@ func cc_trafficcontrollerKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "cc_trafficcontroller.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "cc_trafficcontroller.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _dopplerCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIEJTCCAg2gAwIBAgIQQPW+GLG8fW5EmB4d8SlKFjANBgkqhkiG9w0BAQsFADAY
-MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDcxODE1MjEyNloXDTQzMDcx
-ODE1MjEyMlowEjEQMA4GA1UEAxMHZG9wcGxlcjCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAKAT7hZxTXpw/oDoaMC1s5cfZswW9GHeciXZCIBv9NElQmhL
-kUvdBtCDqeWqhsCIPsuPbQvGzDuJiD/0enDJiGfzRUz0AvaT/+0srKPnWEkeTst+
-5ZHg2WcuvUE017ejrdcIjKr4YAih13g+kgzSv3kdbJmLRqXI6dKA+ONqymUlGmwH
-H2RF0UXDXmn6mGDmi6ayrFvPz+TuFpfQMm7AUOS098RjSxBaZIpIsjLprsOuhe2/
-MNKzYEXBprJmLGGF44bnuoziOAO399VJgMcPcQHq/3rCPcyDV3l0e0KjrMh8j7rK
-2d2YENzKSESDhPY5cE4dDvNXEZmtb84lFvfr0fkCAwEAAaNxMG8wDgYDVR0PAQH/
+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
-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
-ZMQg/txTp49O
++dbOlYqB8WY9+wLTYitlHWUAlLMwHwYDVR0jBBgwFoAUWqDvT6HsnSC5lJAJxnWK
+OKe0NMQwDQYJKoZIhvcNAQELBQADggIBAHVaH2U0zrH8dha7Md0+5Kc8QsDQoB90
+H8+YftSGEIinvLv7+RJhEiiiVPWaAmxxlT1G2M7BIYKppz4DHvPzbRqu0rOLPFS/
+VOxDd9noIqA2qFllWCtsbG30ok3DTj/A9U7V1yiIUuS89j03EqbCDFpme7LPzgQz
+z+aFCVKMK4PW+Q/WdL9C5CEuPiOcKBhdi4PDMScYf7LEMnKxXNnZR6F0JyHZVxsZ
+iUrnSFb6mjtVXUEnHrwzquzje2sZpbQ75byuVZjmzC/9Qkwqp5Ngbc8K7VI5wJ5N
+z5iGXn5SHVaTeFTkeneDC1n6/rUnLh9jmX0+VANFpv42PfEWLjoFmtqA1tyoN9U9
+0+Dn4b8ezZEWilBjssr3FrljjB7OYU1owoWa8Rcx2akCJQoX4Zt8GCPsWfjjZA2A
+gIOYD6e2kplj90317VAcq+J0Lki9qWmAwCbgF7RymEXlTQyhhYFQji4cXbTeJAbR
+uyfa2yrJ9z750q5XI+kvsN9vlCikea8SqLDqX36aG4riJxCj/nMchPPGYirCUcQ+
+0RVPNfeiKsLD710qbiYeYXRJCKyMtmqhtFDOOGsNyaL1TS5KX1C4xITiSQ/y/ITQ
+NIkmIlFE9GXTNgS8j4Kge2Hr1mlePU4wufwt8FLg4BxnztOgd/pkZAcIAcKjwOrN
+nx1Z4+uP9Xo/
 -----END CERTIFICATE-----
 `)
 
@@ -223,25 +231,25 @@ func dopplerCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "doppler.crt", size: 1497, mode: os.FileMode(292), modTime: time.Unix(1531927286, 0)}
+	info := bindataFileInfo{name: "doppler.crt", size: 1497, mode: os.FileMode(292), modTime: time.Unix(1534868438, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _dopplerCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICVzCCAT8CAQAwEjEQMA4GA1UEAxMHZG9wcGxlcjCCASIwDQYJKoZIhvcNAQEB
-BQADggEPADCCAQoCggEBAKAT7hZxTXpw/oDoaMC1s5cfZswW9GHeciXZCIBv9NEl
-QmhLkUvdBtCDqeWqhsCIPsuPbQvGzDuJiD/0enDJiGfzRUz0AvaT/+0srKPnWEke
-Tst+5ZHg2WcuvUE017ejrdcIjKr4YAih13g+kgzSv3kdbJmLRqXI6dKA+ONqymUl
-GmwHH2RF0UXDXmn6mGDmi6ayrFvPz+TuFpfQMm7AUOS098RjSxBaZIpIsjLprsOu
-he2/MNKzYEXBprJmLGGF44bnuoziOAO399VJgMcPcQHq/3rCPcyDV3l0e0KjrMh8
-j7rK2d2YENzKSESDhPY5cE4dDvNXEZmtb84lFvfr0fkCAwEAAaAAMA0GCSqGSIb3
-DQEBCwUAA4IBAQB3sI0GVPPAb+8pU4hEihEaeiXWhP0Xeri5tDPIT0LRRjEbAFAW
-T+Ff+DXWA/WSGnWCYM6Pqt21AxmcEYmIbreMZ4IBhi6ixanP/t4i3sETIiobmFQg
-XjY0NJRWjgALGpT/2amR9wesWz+PN3dSesTaoWWWk+PZsv4aAxeOrqUBdmUVvCiP
-kRw54UIX+ce6a6XFosnb79PuL8ZtFHc55DJ9lSp11Kna+dR8Gn5gBNun6+KsrDcx
-Ibkhl7M/B5/paPiY489kz7rlhi1gPxctAhBjryGveoHI7OyJApbkNGTVx5zysfSd
-M6LOCmeB/K1D8BBHCdyFbjQXFAcP8aUm4inp
+BQADggEPADCCAQoCggEBAMJT+aUGR+5nq7V4H1adkh+hm+vwn9fEvTzw3It+vj+w
+VMhWoC3+z3ObmN3bE36NgBUC/Ejm2HiKt46PCMyoDiksJWfnsjUffzIgYTlMiKw+
+Ua+Rhm2I6sBzAn9ELoCI4Qx4+NIOZEalOAz3lweAbf3bbGEwHEMYPfywwwSTWsyb
+PjDwHAXZrz6vODq8Mnsom24sx0Wt/Xk1oOz6kv8pCIzOwjNwEeHrfrqNc3LEAE8U
+9AB/sct6YywIZrUi7RNGGevGPnuLwaui7C8cfkBYE23TefhSu2mvJe8sTAjYVpBk
+kyxYxD2edbqZX4PV697b8AyhqYJPJizGSyMHcRTk2GECAwEAAaAAMA0GCSqGSIb3
+DQEBCwUAA4IBAQBI3pAKCPhAhIawJDISw/OjgNvDu6eEJ2d7hLv3v5YHQJVFHyiw
+UrjOanuJhyVSDFTCh7SrOjE6z2VaiaNnBA8GtYWgI4xyBi3TgMV+S7Tv6nVuTDBL
+vQ2ToGbNxOffcbJPVsMGgujHNqGyfUVdNqdKdy4pvvhoTR5ROP7wZq3RUcRSWm7W
+5T9vwQulCEFAa4GQ7k+9Ev5Gx2Scdnc5jHIQrt3xe6z+ad8bCYn1QJfa6zY5uILs
+rT8Va6Z4U0JanB7if7mr5MbeUl1TwC2DrBlh+kWJRzLP8saTrw/KJEfrioat3a2k
+r+c9RBaSGwc9oAuBy+RrZ7rhCgEz6ZGr4Sji
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -255,37 +263,37 @@ func dopplerCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "doppler.csr", size: 887, mode: os.FileMode(292), modTime: time.Unix(1531927286, 0)}
+	info := bindataFileInfo{name: "doppler.csr", size: 887, mode: os.FileMode(292), modTime: time.Unix(1534868438, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _dopplerKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -299,26 +307,409 @@ func dopplerKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "doppler.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1531927286, 0)}
+	info := bindataFileInfo{name: "doppler.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1534868438, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _logCacheTrafficcontrollerCrt = []byte(`-----BEGIN CERTIFICATE-----
+MIIENjCCAh6gAwIBAgIRAPHWhsLocM6tH6GveykwGB0wDQYJKoZIhvcNAQELBQAw
+FDESMBAGA1UEAxMJbG9nLWNhY2hlMB4XDTE4MDgyMTE2MjA0MVoXDTQzMDgyMTE2
+MjAzNVowJjEkMCIGA1UEAxMbbG9nLWNhY2hlLXRyYWZmaWNjb250cm9sbGVyMIIB
+IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8XWYI8JVvd+gdIpyZ9RA+lDR
+mLFHEXAhdL56BCP2nvtkymHunp9V+P69Idlsb7yQJBaA9uTW7cnUgE9yjiITHkIQ
+gDBM/hNt5f2AkXEhLr/wH4LlMWWlgeXFnaPutf/sR/s0acX6oc9vi+zrr46ZeoHl
+fko6QZyMtRDb9foYOMryEHrqv2hXrAdmVYkQpez0wamj5NxQzuFVbxRaAsDoxaXI
+y/ARAiE/2Use+YhZKJYXMgnY1P+mDD1wgUjlJj6vpW4fHrItCr2onkfVvwpb0z1C
+WEAU2cILLdWnseFoFHZRAbH23709I0Ngi60mHcEyOqXlFAdlw/Krf+oqmLswgwID
+AQABo3EwbzAOBgNVHQ8BAf8EBAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG
+AQUFBwMCMB0GA1UdDgQWBBQfiOQBO8IvBnxh27r9LgCjlhwpgDAfBgNVHSMEGDAW
+gBSJ5K+HuEzXwuAw6wYWdcgTkGV5HDANBgkqhkiG9w0BAQsFAAOCAgEAJX7wdJlL
+Sd6wjnj1E0eDuGAGVsSj6uoGkCWb0dzmVnOpyKFmASKDPjMOjo0W9G8yW3k8rppo
+e6dtgXZrCr0qj0RBwNf6E+6E5cb4rTRf5jAlXGHNkY5SCUHHCh2KLw4oqqNcJAmm
+XT4KRU+wuJ6K+b0yoviN27ocqiZzvMDgwAxsifaqw5G9qhR81Zu1VoBUZPKSdUQ9
+cgXjYNN7MedXkYGnCPAHsVLvDQ9Bxh3nPGaFRG55m7N/bewyiagd9cIeHwq0krD0
+mMblLByytggTyQhAQX/q9ACYrXOG3RFRPZIHZaRJcVVbd03pqvUNhWcQP9DFywxV
+9cNHkVk6TGx89d2aVxJXaRnWJi40rx1Y/HXZ9UrGiOUvDSffwfi9vdQgAnN8dF4q
+B1jHw7NZ62WHMilyEmczIRrDPB23quHr3on09oMqdBwgiEqZ3agWiFwuUhDr6hOK
+tQJLfvXZ/3PQUqD8BWI6J+6tVgBjMe2azG4sEjsGWr5YiZjrIuqB8lExRGFHxvlc
+7NDcX35vIT6MiLF3yl2/VhWDiaqHnpBvbcsmrhqDd4u6ZUKtw9PeEoHQrrhDuikU
+GkunkW46QwUq0i3jPUq2MtgiQGAROaPMvPSm6yDTsV+Z9FRyrdzXCEB1HYSUZMU6
+Qa0iq/PyOPeZ5qWXt2ELTNHjeArpDqD8OOY=
+-----END CERTIFICATE-----
+`)
+
+func logCacheTrafficcontrollerCrtBytes() ([]byte, error) {
+	return _logCacheTrafficcontrollerCrt, nil
+}
+
+func logCacheTrafficcontrollerCrt() (*asset, error) {
+	bytes, err := logCacheTrafficcontrollerCrtBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log-cache-trafficcontroller.crt", size: 1521, mode: os.FileMode(292), modTime: time.Unix(1534868441, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _logCacheTrafficcontrollerCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
+MIICazCCAVMCAQAwJjEkMCIGA1UEAxMbbG9nLWNhY2hlLXRyYWZmaWNjb250cm9s
+bGVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8XWYI8JVvd+gdIpy
+Z9RA+lDRmLFHEXAhdL56BCP2nvtkymHunp9V+P69Idlsb7yQJBaA9uTW7cnUgE9y
+jiITHkIQgDBM/hNt5f2AkXEhLr/wH4LlMWWlgeXFnaPutf/sR/s0acX6oc9vi+zr
+r46ZeoHlfko6QZyMtRDb9foYOMryEHrqv2hXrAdmVYkQpez0wamj5NxQzuFVbxRa
+AsDoxaXIy/ARAiE/2Use+YhZKJYXMgnY1P+mDD1wgUjlJj6vpW4fHrItCr2onkfV
+vwpb0z1CWEAU2cILLdWnseFoFHZRAbH23709I0Ngi60mHcEyOqXlFAdlw/Krf+oq
+mLswgwIDAQABoAAwDQYJKoZIhvcNAQELBQADggEBABT+pJMhdL34SISf3DMaZnWv
+jO8SXsxQcQhT+DwRB7zNgD3FQOBCao4XwHTClFpAHNdAQq4smpyUpJpGAws/oPqI
+tnPaxPc4UnkiYtuXAeW0r/Bd0eWCkw7mamcfyQecdyrQEtxRjbMBBAfOfymbpV4I
+BM/wsN56VFuWqOD6gT5SM5gTWgX4ECrTkxrEAkDkwr4+FY7COtUnUEYWMiiMUmIn
+AXaroYRGIERGm963KUxGlfpegQRajhqV4REfFjAvdiRoyJjlDkHxLS2etCIuykWa
+YndANR6imv/TNAkIDZokAnXcqoCMX+e+40c+bm+ZXsRhefX0tTsvKSd2ImPVjr0=
+-----END CERTIFICATE REQUEST-----
+`)
+
+func logCacheTrafficcontrollerCsrBytes() ([]byte, error) {
+	return _logCacheTrafficcontrollerCsr, nil
+}
+
+func logCacheTrafficcontrollerCsr() (*asset, error) {
+	bytes, err := logCacheTrafficcontrollerCsrBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log-cache-trafficcontroller.csr", size: 915, mode: os.FileMode(292), modTime: time.Unix(1534868441, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _logCacheTrafficcontrollerKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA8XWYI8JVvd+gdIpyZ9RA+lDRmLFHEXAhdL56BCP2nvtkymHu
+np9V+P69Idlsb7yQJBaA9uTW7cnUgE9yjiITHkIQgDBM/hNt5f2AkXEhLr/wH4Ll
+MWWlgeXFnaPutf/sR/s0acX6oc9vi+zrr46ZeoHlfko6QZyMtRDb9foYOMryEHrq
+v2hXrAdmVYkQpez0wamj5NxQzuFVbxRaAsDoxaXIy/ARAiE/2Use+YhZKJYXMgnY
+1P+mDD1wgUjlJj6vpW4fHrItCr2onkfVvwpb0z1CWEAU2cILLdWnseFoFHZRAbH2
+3709I0Ngi60mHcEyOqXlFAdlw/Krf+oqmLswgwIDAQABAoIBAQDoiEEOHvcHtjcG
+RNZMm6I/7lkLXZ59cqkljtJe7mtxS9US+iEc7YGUG271DDhbmxKNTobAPj2mHnrh
+XqGJs9MJjsHpUZq0DO4HUYzhhDtalEmhbyNd4O/1GtynJdqbt21LHOaq/piR//0C
+mhWXqhKwYiwq5T0ZNrRjI2tRhZqSBTDx3vKt6aMcWcO67gqf0OsUs9fscXE6K7Cr
+Iduo0ARDuWqfV8C2cT9ZwVbv/pT9n+/N1M+CaWyGXEFL00kjzymDlOQczzBZO0Gs
+R/0U1PGiRc63/3eFBOYokOmGl+oIGOUceU50JsR5f1/7Lksw7dpN9eAe4IKO2xa2
+Qjnb+uBhAoGBAP9p2EHYCdHA12QI6ajIglY30w/s5GhsuzNIsRQ7QZO9FadmLWhF
+5bd0zKOquepABKeJpZtDeI6ondE1FGVEnNPzZD0H3KXNo+kqKteA/D37QYX/tCq1
+4FQMFIB0Gu3t9YRVJ0wUKhmICsbSwxBI3sH2FE/kHMcwbzahB7INOxh7AoGBAPID
+i8n5Yqf/oIKVoFDsg+0RLAnhO2+XvkSl856lmO4jVbyXRsBl6OCaCFCl3p0AcmzV
+7GZs2SKqh68qPp6pwvedcJgjffvTtxk7/E+tslLvDIQct7DIwSXVo/kTgR1J7xTV
+422hcU7ooy6a7iG+XEvs7DBS5vzHZKO/BhmCKP2ZAoGAB9BgKluGqWEh9dCD/YLs
+4eBhV6piroMtEvuVV04cyn1NbUql9vu0dHFhVVyCxZThz5JZe6+Lv6mO8niSQCri
+NWXL2kYkTPpGmnqMxv0OOoM2VPgmtevMiiW4dtmWfVL7YOoOArjXNOLBmaWXDCd+
+kSaLJoqPCtUDggNZLexTs4MCgYBswoMzxUs8zHhJtwxQ0bmH9EuiNQIM6FitaRbO
+mQTdICwLkMBO/n1lUlOiSqh8ThMeLhULAqeiGJjZc1ao3wmrVamf9XNMlJyYTojZ
+Feopsxwg0vcKD24dnqEN8mH3054J8wU942uUVp/e9elGaNH5nQOXw+nid4kWvWX0
+WLYrIQKBgHZ21/1RfYa06cJkMqdjj7GBuHYyT1jWb6NmvRPnTeC1EBt/6S+KUunb
+2TZS6gCHOPL2UnXEJnbhHshZt88X7XuAzCVhj7OByU7Uuh4yoG3Z5+dl+qCABqvH
+F4LkcGn0tFq7HxCo/Y6pYD4NNN9lrQhDUaxboRA40AcUjnd02xGF
+-----END RSA PRIVATE KEY-----
+`)
+
+func logCacheTrafficcontrollerKeyBytes() ([]byte, error) {
+	return _logCacheTrafficcontrollerKey, nil
+}
+
+func logCacheTrafficcontrollerKey() (*asset, error) {
+	bytes, err := logCacheTrafficcontrollerKeyBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log-cache-trafficcontroller.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1534868441, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _logCacheCrl = []byte(`-----BEGIN X509 CRL-----
+MIICgzBtAgEBMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMTCWxvZy1jYWNoZRcN
+MTgwODIxMTYyMDM4WhcNNDMwODIxMTYyMDM2WjAAoCMwITAfBgNVHSMEGDAWgBSJ
+5K+HuEzXwuAw6wYWdcgTkGV5HDANBgkqhkiG9w0BAQsFAAOCAgEAMNftv393Vwbq
+woMgF6H++Z6TJ3rubLWRlhM+U1WmRw0gceJ7TXNQeBriwUUtphiWjuDwQPGl+lav
+5p8tpBCbwYwBcTZm29W8+qcwu7n/P0QRMR/x9F7SoJplB7yPKZP4XxRzDB9a48iR
+qziEU9vx0hZH+Cyw4i+8ECf1Bxm8Y0EpGvs+gQM1XqoO1wLjf88EKIh1OQHzEqMw
+P5HOETnR0AbiRtTHAMTRNhthkBVjuiM/dZYkTf5izianmDH7IpSQBszRrVA6xWRZ
+N/lCoBeF1hM2p5eSZIz0/t+e0vM5knywXpM0hdVbI5GxQnc0kAZfNyfayqZmT0JQ
+kn+QfhO2YmJqsFmW1owO8pHTDH8j9loSkUdLVFIVp3MxoVh7F81YlcgMAVjwp/FU
+uKy+dpomTaYexzEiKUI7B3wIVrXWINmcSHM/E4ioADMd6g40iW2PY+7Js0ujJyDI
+MRx+LUeNsIGGwieltrai6dkPFFatyRRf0GSWfWD3WvXFkyymIutdKQmkx5/hfGp0
+7pMQltRmcRqcBMko/jDltXaXvmER3aavTfQO2CANSM+6uh7SK+XAV2GDC4gK3Sd/
+A1gaoU8ALj9zGRLiT77xaAtrT0ATsbMEKn/t95DLYELE4ka08f7Cxb3DBNwcOttd
+XLrPQJ1/rRTOW0gmSYQTCdaDODvuaC4=
+-----END X509 CRL-----
+`)
+
+func logCacheCrlBytes() ([]byte, error) {
+	return _logCacheCrl, nil
+}
+
+func logCacheCrl() (*asset, error) {
+	bytes, err := logCacheCrlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log-cache.crl", size: 926, mode: os.FileMode(292), modTime: time.Unix(1534868438, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _logCacheCrt = []byte(`-----BEGIN CERTIFICATE-----
+MIIE6DCCAtCgAwIBAgIBATANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDEwlsb2ct
+Y2FjaGUwHhcNMTgwODIxMTYyMDM2WhcNNDMwODIxMTYyMDM2WjAUMRIwEAYDVQQD
+Ewlsb2ctY2FjaGUwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDArI3s
+aPWk+PNjKULDD6wD9FIxQpI5f+LVguLcHbp8fvanzwesHhF9fflWQWhNKuo+ei8N
+AYIq4AD+urkOP3QjOLauimeEPQTz0bbLPkBdcb29mMEPNvxfIiO5wRVJvtVdDkl6
+PPk2wTsTfSOKFLyD43EaJsy/a7K+5CFnwqQzxNWP9x6XJ6HRSra4UyEWNfeH+kE0
+/PxFHJVjyDby/8LtLpKRoTe52WatqM7XZVMNm/C5GH3ZC782pwfZ8rW3gTf1N5Zz
+p6B5rcdwQFI2DE6HEzHrBgl8YcdDvVgaXkeqx57eWVaPSLa/ffuWUSLv3yc2bZuD
+Aj+sXUBDSyiIQyRTLniCpofqJ6CB+b+VpW59vptld+XUlWZqKiCYy8w+8fvfWVNg
+caCh5Qc5PE5H5LZmsCdZsHgqb1R/343UviGY/mf759lzLRH8G0Bx/3jCKrslkToO
+WeIXWkc5L3ILl2wbtI5rWf1kbkGBusFq22jtiyEBX4zyZLkqWtO3kGKfm2Ieyt7b
+Qhd6dkoJvA3RqvheeLORWWahvmuLMoZX6iymdJa8VXFZxktq75/36TlYp3Ue8IS5
+lSX/SAnusGy5Lht1JHkfWwXnKZyDSedVw3wNewaPHNCOoWpyS/H+lgNLp/CMDLfD
+6bLrCJiEbr8+9lIyYceogH8jqHAVR7DK5N/yAwIDAQABo0UwQzAOBgNVHQ8BAf8E
+BAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBADAdBgNVHQ4EFgQUieSvh7hM18LgMOsG
+FnXIE5BleRwwDQYJKoZIhvcNAQELBQADggIBAHj4Vb8ws2SxA7+PCJRxjUz/X7tj
+90W3fNDkTztR/2sV9/lX9m6CbhYP2eQwH9h0ub1AklQgg/bhmjkaWdZmZbFTeqrw
+dRU9FUrroUcVD6k1lZHnrtgr7JxPYKboJ3oI1KKOKujnDGtmInjzhhShsmC9z3Zt
+WcxrZKR2llVikGaHb6rZparm7cmnYJIItJwghO3BKt+Hd/kqrSyoYWKkQu3lw9kL
+b+2Khb46y5E+V/NtABtSlEJoczG25sDKJgpkA5jn8hQ5FCke5h4g2QDGTbxnFDSa
+Vmf8FiLzqrCyUH8SzdNcW8wbtu6en9xOH0GcituSqLvvXa2jXQa31K9UG41nTQ9j
+YMsVPYM+vQUqu1Lk8zLudYhYbg22NtQaRKh6BoLZD+X3lC0JFrw+WLKVfiOPTPh1
+zdkraaQz872tZAGaQKm/9GL9JYPgpuApePuSMNtYA/BpwVeq82J4PZqg157fQZ6+
+cXsGn1sokXyvw/Bd74YjwHZxk8tqZEgSPclSwo0N6mu1gPYXAp33p/DLGxkA6zQ1
+dprqt2bu8KRilLJTx7QNVtUUPG7Irpfu1Yw/x0EcmXiuCpAXYXAASCWLaa9mh/vZ
+XuautpT/wMgaX+A3vHuyMgWLzEf6UO0NwuzgmhOvfmzduxRbDwiYdQV1CtFDNnar
+qZWchXE4ohjxNVp7
+-----END CERTIFICATE-----
+`)
+
+func logCacheCrtBytes() ([]byte, error) {
+	return _logCacheCrt, nil
+}
+
+func logCacheCrt() (*asset, error) {
+	bytes, err := logCacheCrtBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log-cache.crt", size: 1761, mode: os.FileMode(292), modTime: time.Unix(1534868438, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _logCacheKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
+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
+-----END RSA PRIVATE KEY-----
+`)
+
+func logCacheKeyBytes() ([]byte, error) {
+	return _logCacheKey, nil
+}
+
+func logCacheKey() (*asset, error) {
+	bytes, err := logCacheKeyBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log-cache.key", size: 3247, mode: os.FileMode(288), modTime: time.Unix(1534868438, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _log_cacheCrt = []byte(`-----BEGIN CERTIFICATE-----
+MIIEJDCCAgygAwIBAgIRAKRl2TsGwf7zzNodO1BZSNIwDQYJKoZIhvcNAQELBQAw
+FDESMBAGA1UEAxMJbG9nLWNhY2hlMB4XDTE4MDgyMTE2MjA0MFoXDTQzMDgyMTE2
+MjAzNVowFDESMBAGA1UEAwwJbG9nX2NhY2hlMIIBIjANBgkqhkiG9w0BAQEFAAOC
+AQ8AMIIBCgKCAQEA3DlbCDtcFi+x9fo5NlljHE9pPIH0JXe66432xxTeST/pAJVl
+ik1vN3yu6S1caLlLhgQ5vTOb4mnQSpCh7PBoQG35XpTtesJxCkcss7b9S9XUd9O3
+ZMoKTlWSv3ySuWKY1jGyZOLJDazCHniWEu9f3J7xc2dERbtUj86nYk0OAb5JTK8l
+V5Vss8QDyKidBELkmeYN7nAW4xU7R/7J9gxDPzcCxvkI4aa+qwj4z70Ia9EFMFf+
+fHTbHGb/Bj9wSpjIODdh3y3YdxBHF3Bn7Vp8VANfAKEguDE2JSvz+BtVWY1ucV9H
+dGRZxWJpS0F/kbCgdpiBUrFlbXUPM3WJJxVsVQIDAQABo3EwbzAOBgNVHQ8BAf8E
+BAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0GA1UdDgQWBBQj
+egWVG9+uHRJ+wKD1Xh0gR+Ki3TAfBgNVHSMEGDAWgBSJ5K+HuEzXwuAw6wYWdcgT
+kGV5HDANBgkqhkiG9w0BAQsFAAOCAgEAVwqYd7er89A0+nKakKrnYmc6Rwlh7xl3
+5YGzJCzqVMGeSoHzW7YWtocQBtVdbBZenHg5Qxvt5p5PbWweCgB3QewDTrQrWWxv
+wuDdkVVl09YAOij1wbQ9vehE4US8sFBGhrIylYbZhyLbYqdNSyTABl2rpWQRJQ9E
+00ZW+lvYvlZPM4pEFcJ243GgOIe5bTsJAyOdeDatOKkKEpQrFMoNeKeeX6uWM2cB
+mWD/MkHfw3pG8clfxr49F9bwpA/1lnomoikJLE+SDWrAXqBvZkHLapnnegDvDgg7
+iEWJ4TJRiQpIvPZw86AS/U8STQgL/nje8VH+1oTP8IHu17fIwrs21ee5zpWzJaZP
+dej9AUhmWBOipxKuUlhYD1mNocvK+RCLS/h+9XlKriRpZHZLeqCboZLRQudgYYph
+1UQ+QvWu9kWZsVYxFXxVl+F8qP2v4/KjyRQoM3LojOq891ckfTmgZQzYOsUkILSN
+IzhUmGW2PDw3ArBEgGbU9glCaLjKiWDCwzKvOH4N4lkrQ6lThd9OuTL5w+ylzfDg
+o2miRr6YGyK61DFbq80/vwk+vcpYU8mz6O/+zBM+SZhlIbukhxDkSbp18UQyZs1D
++AY0A+HoL/F8DxvuOr+xfK04pkf6daXBS7vKqP/J4C+RHAeGyadmjTKUpFy2PHST
+UD0iRb4eAn8=
+-----END CERTIFICATE-----
+`)
+
+func log_cacheCrtBytes() ([]byte, error) {
+	return _log_cacheCrt, nil
+}
+
+func log_cacheCrt() (*asset, error) {
+	bytes, err := log_cacheCrtBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log_cache.crt", size: 1497, mode: os.FileMode(292), modTime: time.Unix(1534868440, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _log_cacheCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
+MIICWTCCAUECAQAwFDESMBAGA1UEAwwJbG9nX2NhY2hlMIIBIjANBgkqhkiG9w0B
+AQEFAAOCAQ8AMIIBCgKCAQEA3DlbCDtcFi+x9fo5NlljHE9pPIH0JXe66432xxTe
+ST/pAJVlik1vN3yu6S1caLlLhgQ5vTOb4mnQSpCh7PBoQG35XpTtesJxCkcss7b9
+S9XUd9O3ZMoKTlWSv3ySuWKY1jGyZOLJDazCHniWEu9f3J7xc2dERbtUj86nYk0O
+Ab5JTK8lV5Vss8QDyKidBELkmeYN7nAW4xU7R/7J9gxDPzcCxvkI4aa+qwj4z70I
+a9EFMFf+fHTbHGb/Bj9wSpjIODdh3y3YdxBHF3Bn7Vp8VANfAKEguDE2JSvz+BtV
+WY1ucV9HdGRZxWJpS0F/kbCgdpiBUrFlbXUPM3WJJxVsVQIDAQABoAAwDQYJKoZI
+hvcNAQELBQADggEBAHkdtL3qNBcqhqJpRlvc5jrd5IBqaKLK9tWI7iQRCGFjvBSR
+KPsZ+v2VfZ2PnjHn5fgKRYaBAatETvNEvM60VOFvcUr/NHl9kOKcbF5YZnPDt0hF
+gPmgJT9nfGM7Qq6hK7lXChkP+Ck69NceKDp2aTcrV32fFW9IrvqglsSE2ehGWxed
+Phn6Yk8DxmlJLC8wwD/jomQH4bKsCKerAhrqBHd+s/ZgzQosmUY0Fcl13Y8c0l6M
+wJBhcYrk8wiEHRt9Cp0L65qbwpx0mLZgmcjfR4eFiBKLS7qE3A4itf0knhbQnQF0
+HJWRHs+X4w79N9aAs6aAto9b7L7bUDBj491OXzw=
+-----END CERTIFICATE REQUEST-----
+`)
+
+func log_cacheCsrBytes() ([]byte, error) {
+	return _log_cacheCsr, nil
+}
+
+func log_cacheCsr() (*asset, error) {
+	bytes, err := log_cacheCsrBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log_cache.csr", size: 891, mode: os.FileMode(292), modTime: time.Unix(1534868440, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _log_cacheKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA3DlbCDtcFi+x9fo5NlljHE9pPIH0JXe66432xxTeST/pAJVl
+ik1vN3yu6S1caLlLhgQ5vTOb4mnQSpCh7PBoQG35XpTtesJxCkcss7b9S9XUd9O3
+ZMoKTlWSv3ySuWKY1jGyZOLJDazCHniWEu9f3J7xc2dERbtUj86nYk0OAb5JTK8l
+V5Vss8QDyKidBELkmeYN7nAW4xU7R/7J9gxDPzcCxvkI4aa+qwj4z70Ia9EFMFf+
+fHTbHGb/Bj9wSpjIODdh3y3YdxBHF3Bn7Vp8VANfAKEguDE2JSvz+BtVWY1ucV9H
+dGRZxWJpS0F/kbCgdpiBUrFlbXUPM3WJJxVsVQIDAQABAoIBAB/jpkzw24rS6UAn
+NbWrB/EHhsOeRc5PIiAN9Jgra2zL9l+BQqzePaaZRXK6gNEhU9BaOEovePk2PVUu
+0GPRBCegRSXvBtxp35iPaee0LcWXdybK35mWsBtbxN45mb2Ci4Moux5kwJxcUde7
+um+PfiAiW/BMGdTHJZ2VXSOc6NRThr6QjlC4DK4tYR9RDl7JmiMVz39yZ053MJhz
+5XvHqvSOYFepZF3IjePHsTfVH6FeIAC8NTB/oW+lsldJ0n7T8VXDI6riPntLaN10
+LZwovDEqB+nXqh9aMWSbsruQGB4x9RuUkS4DOqX8phd25d3v8aHRMDE00hQzMqgN
+sL4XpMECgYEA/PMxpSgW2ugm3t5mdnavugKhdLk2UmxwUuibpvkXx+kg0DgYyJoW
+eNPpgeuApVutfWQHT7tT7eRvW2M6OLAxROesE1QTmiPC2aJGxuf/kyIqEHErvut5
+MaxeOf/zY/41FxhajFu0Bd9bJTTCt9FWuBkW/3SBbWOOpe60AQRbIAkCgYEA3uEk
+rDrCrCvqa/NRQ/X4yT5pRRBFgjACG3luvOuo0mhywQsGjlDRgk+bokgJeKFiBfev
+v0xoyrWJM2QbxldifbYtEaGoGWGMcEs20YOldmN6bldcPdctSblaqmW1kvzfuXGu
+35sh7ot2dTwSoCDgJpPrvNOIF02TJBGnj0NbpO0CgYAOXpZkZnmd5/BFWucBNc7X
+x0x6wAbI+eYLn7Ev9BiYv7KggX9O7gn2xTsPqVw+iI27gNI1glPLQN3emC13iPLT
+kkGhO3Z9nCh2ipRwuj83kYpIMtWkW+Yfn0YfD145QPitHjIOpSr95mlcHLovDRJb
+FPnMe0ba+vvgi0XohOHUWQKBgD0shqhPKIehNiKTEkcZCEQUQUiXgryM+McZuW9Z
+L2kxCe46XH5LaHXf69PK+e6GPSVuKmrTSh/5W8MjQwxZh8sBabVhLYZp4+Yeftla
+zNuFymDm0YaXvPJzUZNbf07s4WtA7MKrDdEvrj/XUTVqUJvGFfoqBTyAKlbIEbmc
+v1axAoGBAMLZvi6uOOG1IbE0f5/KeLeI0vhQ6X+ZgD4qEEMlw5DHhUnErq2oQLlF
+TTVnrPgo7+ylUWbdFbERvZMOgDe9HFG5pFR3Sd0aI7uS42kVMkSAigSTmlRAimL2
+4l46YNqk8d7KKyIWE4YKZvUv3vYD9iMlwZ44rhcBcNAZFccBxDgC
+-----END RSA PRIVATE KEY-----
+`)
+
+func log_cacheKeyBytes() ([]byte, error) {
+	return _log_cacheKey, nil
+}
+
+func log_cacheKey() (*asset, error) {
+	bytes, err := log_cacheKeyBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "log_cache.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _loggregatorCaCrl = []byte(`-----BEGIN X509 CRL-----
 MIIChzBxAgEBMA0GCSqGSIb3DQEBCwUAMBgxFjAUBgNVBAMTDWxvZ2dyZWdhdG9y
-Q0EXDTE4MDcxODE1MjEyNloXDTQzMDcxODE1MjEyM1owAKAjMCEwHwYDVR0jBBgw
-FoAUaoHyTQ9rwSi+SilrKZOVHMFJHr4wDQYJKoZIhvcNAQELBQADggIBAMTS4h0K
-b0dMzi2FzPU/2OIJAcxJixEph1NLz+/OtdXdB/PuLwqf/4FTYUVq4JDTh8Wa1dkf
-O5UvrJoFJ60bLkpaJQLeY0WqrvdI73/7jmwPZ+/JH7/4uEcd4qf2R9pFq2qrnwlG
-uUKyQRUuD0i473F95KGNZ3O+78JTyzWHhDYR2/2jF6581HJ3WuK//9devHqBIBNW
-8iZsDs97oqRUQXuiWza7/ev5k4ik/U2NoHKpaeH6V/QhAF6VFpJCyOjkFnS+aTJ8
-TAVam8czQTaPX6ICJoTxXiK2v8gCc+B1KJgfU2nlN6G6kngKkcGH9Zm4qdkIff9x
-eKO+4rHePCJUx6G2E97hNGf6MkNBjKD8iSfkykdfALiXY0MgFHh+UBD6o/fsDmd0
-Q0FcPfzSvpd4We0KwVMegFkwV+SrPnebYIwIS+a9vDc02A8BV8Wni/0ewRxmQVon
-u+FbrSP2MCwUg9QWY3YygP/n68xqRso2fqNl7rH+2HAyfgJLR/YkiH4kevQ1Gicj
-MMBy484EyMB5B6bHnszJ+56eRkwVdEfGsS8kCsidmZa6F/udQsy+GA8lUcbmfPZd
-i3o2jzTDwyIhoEHXzM3emwOUCMz5JepIKDYmBW3CRMVFvZyJFpb1v+s5uWHaUUvp
-4esjM4Yq7UJF8D+gNqRa2QbgDwu3XxJHywH7
+Q0EXDTE4MDgyMTE2MjAzNloXDTQzMDgyMTE2MjAzMlowAKAjMCEwHwYDVR0jBBgw
+FoAUWqDvT6HsnSC5lJAJxnWKOKe0NMQwDQYJKoZIhvcNAQELBQADggIBAAuvvjtw
+ReNCcwA3WbX1NJkxXOTK09LR2QFALoScuz1AlxG9rxokEP83lidCDRITuLGB+Pia
+4nuNRYFzc4jujsM+n2d7jRgJ3itDfrKnTJk/IEap9cuN+B/qDuBrd+GZ3K1kICJH
+5fgYeWIDsr4bxgfm7bjbq0e/G0FwxEAswAhRUQmF5qrNnoJiXj0zfqkIUCx3vluk
+8lLNHNRqIkLs3cwGzuI74mH9KZvr8YM6hG7I6AfJ7tWviFHCfeTR54db9h4UXlv1
+NwNC/3SsrljhThOAh7rCYI4bKRhu2CkP03OpUlYb3UH+prYis36n+hFNGNBuCslD
+UuhfV2qQTN0MTjrtnq1MaZnaHBD8IUNc+lN5VoKWe2dObCF8GMxFAzVjqGd3xhwU
+9L7WdUXJbAfHZ7Hm/Gy6I2lD0V3z555eeD2PNfcBPLfJQNYCtirn7KcZoqy1ev/0
+wKq5nuNvkaH9JlIE3peftSFWQIpbnNTXXuUf/aoEeWJuW8nCjq96HxmsaNG/eX3U
+52/ML1D4Ha91GNqj6sBa/A34huBUxuNHiBN+GN62NlorDtDE3JBTVbGAjWX8P8pl
+a2oHUMj3ds2HHapyyqd+HrCOcnTufY+Kvut1Hj16iJWt+d14BuePtgVj4zVj6x14
+HwovJ6Fpn9aGGdKgHCGFemtBfgN43EqLJT46
 -----END X509 CRL-----
 `)
 
@@ -332,39 +723,39 @@ func loggregatorCaCrl() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "loggregator-ca.crl", size: 930, mode: os.FileMode(292), modTime: time.Unix(1531927286, 0)}
+	info := bindataFileInfo{name: "loggregator-ca.crl", size: 930, mode: os.FileMode(292), modTime: time.Unix(1534868436, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _loggregatorCaCrt = []byte(`-----BEGIN CERTIFICATE-----
 MIIE8DCCAtigAwIBAgIBATANBgkqhkiG9w0BAQsFADAYMRYwFAYDVQQDEw1sb2dn
-cmVnYXRvckNBMB4XDTE4MDcxODE1MjEyM1oXDTQzMDcxODE1MjEyM1owGDEWMBQG
+cmVnYXRvckNBMB4XDTE4MDgyMTE2MjAzMloXDTQzMDgyMTE2MjAzMlowGDEWMBQG
 A1UEAxMNbG9nZ3JlZ2F0b3JDQTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC
-ggIBAMvFLKYjnKBA9Ngf1hiWJ6QUGjPr1M25yPpEAF73oldDtAKUzoJYBSOiS+ie
-M4LCzM6wjEJ2/9QmFHE+nHrVqGWRjffQxotWW8t2LurvlyxOPRdwyCba+yVBGaiF
-5NgtbruGh2Hnvb+3+BLNqAKTj7e9KRxfxIiHwNNmsiloLjIhpbeTM87nvOk6p2pa
-RSs6PYjaHXMzbpZu1MgR8SNbB+2Y8HxqL0Xgy8oLw9snA25kpwCMCS9AuUtuupE8
-x2fjEm42UHoaZLxe8D7IDI23QgyAYn2ywKsu2sNuwT89Rtd9dnOE9GbB9pbD1NkO
-bKQFv464W54WoARoSfiM1SLDoBXrmOrSNt0hJGIkGPD5mQaK2MLis1aH69DIpIAQ
-DRtBIYNYhqTuHEjpTsSk5xLlaibX7OyXExJS4LPpm4WtRlepOR6Mz+UwNpZf0i/L
-6YyYNJzWeQJHhm61ZmE3a4i+H02ij2kwNEkQrHuvZgMJOpz/pW7vXSzT6AwuO8se
-IzRlCT+uWfoOQYthYhnx7eDzPnjhHZWRQ/fhFHrXl4LnlulCQOJktAylHCqul6pe
-uMdbzCnqojl6/lTyTCW6CnrkBE1wsc489KCrGNmOuz/zzmrEugmpVWiGB3UPT/6V
-pGWa9fjbJW/oy4GHwWhUBEVJ4CuoVcGLPDeq0R2hMk6GhUKRAgMBAAGjRTBDMA4G
-A1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBRqgfJN
-D2vBKL5KKWspk5UcwUkevjANBgkqhkiG9w0BAQsFAAOCAgEAtEToka/rS/SdZcYS
-/3zU/JDzJ+zuNFkRwuzE9s5Ku0JVqP/yzfpZ7tZ08RuKN50weWOUjDQXnGdGq7dh
-cl7vpcs0zHjk2MlKeLKWp2DE27W+1LKlFhzWAMA4LQzwaQnmaQwrfaolE25szFzV
-47VdSBqKUddJ5/UqCKBEd6eXV2AqQ6NBR9a7cnTNI935mTD4eAbHDmrEv2FDlnfZ
-UYX9Ij04NjZX7w7MlsvN2MigPAEoksRlTvKLInd/NeeN9GYrsE+bkxKaFPQtrTTc
-2fL/CtNOxlpsI/CcdTkrubBeqNzqooMcE9IqJLJd0dH1pGhNvmB+xzcGP4fPOgtU
-umiA7eouLV4jCGCdyzsQXHDW1Kfs6q9ys0fw3e9nmR6x1FQbll8aR8aWpuB3HqhX
-tRkstHaC85jgDfO/qKf8oP5+W5Hr+nOtOfb6fpAj9siUH+4nYVmWxtSZxztlzKZ0
-SIhvi/Bz0wRFiUh2YzzZFbaICF7P+v9LvFjLEm078lBCxO8mzPIBP63zisv/3Jk3
-QtC7CEhIS0HVlwndByILa3P0SVUbM6p21oIFI5M0m/7yu/GMQ+R+H5sAetjfLWrn
-qemAA9MmruTVNj84pIWuIR8GAu/oj/o79ndcXFiBr6ePFwwDWKfOGp0u7EyZZyjQ
-lgJ9r3ICJWAilEeYF0ufGEEZub0=
+ggIBAM72DrX0ckLOxIswJOLCZ4k0pB72Uhumccpp+1ZFrjuX/59fxNvZSokkwDWS
+co6UBgQ2vNwK6438dlJ1vinN2HzQ3a+oG7VJp/tdCYcdgdzYQ6xxq0vzcqn+huUf
+K+Fvio1wA1HwGHt28ap/7hOiQzVesrgCEAWgzR79k5DTk59FXOWcTuiHxfHSGvZe
+vIC4rgnzHad18M4zvvgdDS6xaFchWbXlkaeso+6AR1IYphIXoR5OuJgl6TWvl5UO
+liCwKRKeQ1Am2kvGSV+FGGDQkLXRhhF+l341xKQoOVozj9k4iJE7A7+zdwkhMs1C
+06zt+66FGFIFej4GlD+3ANiTjlEUYiYPPU4vEnqNLHf7t+BpHNRsB+wz6rqfPQbn
+urY513tORSybBhV9yy94qhhJmg0Zw7MmnW5jpH+jJcNy4vyMREyZKPA2zH4ogysA
+Z2bHYGzNZ+vYzM46UzfDOOKcmhWMnhYTNORghlUo+hhMSwiQ05H5kTZUJ4Csxgxp
+7zqp7zaj1X3/qZs6tKA5dw/5xDylSZ90T9Pwuwe7dk+S1UMfByEhKZNV15TmWsVq
+xxvhj7fVhvhT+yoxQfUy89OZaDqXnV7B4XbaIsakwUi1Tx9r+XkIRoTNI7Z/SVUi
+0paUhrWIeXjwWdf5xJMeWRotkIdjiDpJMP8giHMqzbCCDTcBAgMBAAGjRTBDMA4G
+A1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBRaoO9P
+oeydILmUkAnGdYo4p7Q0xDANBgkqhkiG9w0BAQsFAAOCAgEAPOy+k+t4F1eaPy/O
+sUNJK288OfWS7XBuxHrQtBq4vHjOSCx0AY2vQ+H7/l5rIMqPHg36J5ixTPoTvsQX
+SQa21BPXxza+9im7D+Y4AeeRTUarpQt+26mjxi/XMM4IeCKYkhD9gZ8zZwA5s/Ju
+O8IV3dnSDm0AtdRkPKwMz2wAJw4HZgXFkEAHLy1Qgxe/Nt4Zp1mrApapdR487b8A
+d43RiwXcVdL7XAm4SHsN6MVwsAshb2PAs5W74JsXu+qTa1PhhXY9tGvNeV2IF/vx
+efY9Yw9tPggcLd5st8hbvsr4rWHScjmTzTM3vzkLPzqb05fAvFYg2s2J7295uIZC
+t2J4aHbuDyInkUkPMDldJ7o+JfIkNEcKjzE9Yn5BfCIy2ja+bKhG+htoGFGte958
++k/XGDRBuNyI/VmE61qlES7jllesRe5IxAdelQ3h5sRQT7a/M6vSg70frluBzP7G
+7h11G/MdDxFwGdBpAgv4HnD7qQHX2LpJD0me7+1ZKZqr+3yAbeTf29Fk/IMNTGAL
+YUFMtMxqP6G/hTeBZWr3Jy2V822393rq5BM9FrihF9VsRlQLaewiOUTPMkfIaLwY
+YsGkHlo3JX88LuFEsO+/Z21YVbksgMSZ+oXlfc0XwQpSIXP+jWtfrvUpjsDRm+pB
+mUj8oIzdmvZ/JC9xQ/2FRx/ZI3k=
 -----END CERTIFICATE-----
 `)
 
@@ -378,61 +769,61 @@ func loggregatorCaCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "loggregator-ca.crt", size: 1773, mode: os.FileMode(292), modTime: time.Unix(1531927286, 0)}
+	info := bindataFileInfo{name: "loggregator-ca.crt", size: 1773, mode: os.FileMode(292), modTime: time.Unix(1534868436, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _loggregatorCaKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -446,35 +837,35 @@ func loggregatorCaKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "loggregator-ca.key", size: 3243, mode: os.FileMode(288), modTime: time.Unix(1531927286, 0)}
+	info := bindataFileInfo{name: "loggregator-ca.key", size: 3247, mode: os.FileMode(288), modTime: time.Unix(1534868436, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _metronCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIEJTCCAg2gAwIBAgIRAJOrjsk6ishoLmyfI+wzLWEwDQYJKoZIhvcNAQELBQAw
-GDEWMBQGA1UEAxMNbG9nZ3JlZ2F0b3JDQTAeFw0xODA3MTgxNTIxMjdaFw00MzA3
-MTgxNTIxMjJaMBExDzANBgNVBAMTBm1ldHJvbjCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAO9uU9Dc2nU3gWXvr9Rxc2rVvvIXjRFecJZNrSER8DMW1kQN
-UBEVX8bNecEfmvHjPtQZ3B26waDJNSFQU7VYKmbsKsJVwkCHBHhnFGtLAca74v4l
-s8AGVm2l5F524XovQhhsA1eXCuSGczwQl+K5rhIDO7dc54a3++WeBP7Rb/lE34CS
-n+cin492CDAXSbJWUQFceq0iH9QsgXRMqfRTXMZJDl9051h9eHplXNeXY9LeCKWF
-ecQuH19Q113zfJE4fkM+AVnL5IbS2R2qtxO6w7SvmSOyHsi1OIfAkybD5YYJLik5
-SDeUxME63725jB15rRjf/Mv8/56OM45omfUyuWECAwEAAaNxMG8wDgYDVR0PAQH/
-BAQDAgO4MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAdBgNVHQ4EFgQU
-n7pPKfJxRL9sumsX34D3Mc6WZ7IwHwYDVR0jBBgwFoAUaoHyTQ9rwSi+SilrKZOV
-HMFJHr4wDQYJKoZIhvcNAQELBQADggIBAI295n0bA2iwg1pLQkNQI7RBQqN6xp4h
-tockmYMKTFIrxbZtm2PqmjJD9g0/zzqjkdu7HZXp038WvedOoXF7K+QTWaCBa+r0
-mUI+WS9bNKoVslmQAIupq5pbPBf3FF0X7nDrsOgOymuCSdSJHOxUnGo3N5fgbZj0
-hbu2TvXx+6JfuvPpaKCFNWa6oWIOxvTkAtuW/YSIYK6uvoPtsm4HaTCr/RiE90DT
-crncUDdr0laXPyusrt7TR7pZdWGSDZySDd/zhJZkYsc0AagTD16FFeGuaMyhhV9+
-K9F0UYY4+eqkNOFbcNP1wxCfoE0G/OLvAeXyHjZl2ZFgB9Wod74p+24wNprmC+0J
-bKwX1nPEAF+jkqIkhLmjDmMeAPRwERDOuQZTj2BfejEYP8CArcdIFFZWUPnZZ1ZF
-Tvnxd2tnPdd9IVwfMxbxOJcRsdmERkSH4K4DJj4OinTOIYxS2e6Gd+6jMOcmJxdq
-P2ZmGFyfdlj2E3xoX76l6MsbbEvkTxhbjFmhXOD2eirkA8gglR2ZsOTd0pxka56N
-MEmEYVAa9Jp0ZDGOp1eYrIoOHL7Gm3D2wNE8hyK8qbOkATowtE4HFnS5Gnf2xMsU
-OL8kvBUGo3lmjoFWs+dwDr5tAngk+0v39Q5S+KPt33V/fnKv1unum98BJzDji/w2
-eqy7f/WY5sHp
+MIIEJDCCAgygAwIBAgIQdXDjdNev5O9F8HOug5GJZDANBgkqhkiG9w0BAQsFADAY
+MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDgyMTE2MjAzOVoXDTQzMDgy
+MTE2MjAzMVowETEPMA0GA1UEAxMGbWV0cm9uMIIBIjANBgkqhkiG9w0BAQEFAAOC
+AQ8AMIIBCgKCAQEAxnjQU3d8vxa7QANCby2o2Ao/+A4DocngWx3O9DS18awmmQZ+
+ZhzfEU2mW88qx378LBpzsnfiH93BLGBy4ThuRijneFNKuwzceeOpsiazJpsnhg5Y
+U8J7n63lm0ob2ojVyFUyxhpjTK3LXXC78TxapCAR1QocexBVATTja9bSkuPi62af
+MkKWUlOnyy/ek+9QAkhwuXSNsg2j77yfSEOXhCxpCJozsC7v/F1V4ElZJ5Zttc3u
+oBgWuAf9bOlv9GE3qLQgeuiM9lqMptt+OS5+zl3PNg6NxWISow1GP7IS6b+GYp0k
+zejKvExjxBF2pSD4sUMlMHo0VwncmQtjrGw/twIDAQABo3EwbzAOBgNVHQ8BAf8E
+BAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0GA1UdDgQWBBT6
+bcUGYcMzubX4fxvk52ooW9/ohTAfBgNVHSMEGDAWgBRaoO9PoeydILmUkAnGdYo4
+p7Q0xDANBgkqhkiG9w0BAQsFAAOCAgEAHY+fNKvCYMgYJkd/UkQh22fPand8xmrG
+LbYvuFwuHrMPV+GZa4XsHoHqEDJQ/37H74RdMhX+W5gzqAUvS8H13iJzNTNtfd4B
+TWYy05+FGzOFXkUhbbH9XLreGoaSy38w+zdStrtNV41/bXewDlR6G1eXK3z0+u6l
+6GiKEABoau8pkf9viMdxHxAXmqfV/WgqKQXxDNs1kaHQTjyQhf5WWvOGY58jPgoM
+bRONi3LVEAnMEE/ZDd+zUpZtB8qEOGone7F1gIQeiElbtFPtz7TGET0O0XoS9tRt
++R3w4f3Ai1Yy7K7sMLCUOTt/fa5un2iG1geoIdj4DYbVzrHfQwUgVPy+OvPVLjRh
+JxvLqLsMMvjR8IS2YY2d8EUo6fAYn2y96TOuAuzdMou67fWYgtoSqL7WPLr6ymzA
+TqmhW8ao8sk+hF41LZ++YTj5zHpN+gKde0saLUh89ddE77/t+D3jPVOM472KaC1p
+NACHlep2Tng+AvNOVrHujweN2K0FYD0r1tYm/osKo505b6VZ9hH4YUFytaEPPTjC
+zriP4phQJyUchMEftJVCqE2rK83cYw7QhvBlJwLqHMBXT9nHyuHlNZUr8EWlFxvu
+HQMERwX7xo4Xi6+g4BFFimpI8VEMNiBGnuU7O4MP4dFFlo+Ucy7YzpHR7ZUMGkoj
+FlHCOu0jslg=
 -----END CERTIFICATE-----
 `)
 
@@ -488,25 +879,25 @@ func metronCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "metron.crt", size: 1497, mode: os.FileMode(292), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "metron.crt", size: 1497, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _metronCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICVjCCAT4CAQAwETEPMA0GA1UEAxMGbWV0cm9uMIIBIjANBgkqhkiG9w0BAQEF
-AAOCAQ8AMIIBCgKCAQEA725T0NzadTeBZe+v1HFzatW+8heNEV5wlk2tIRHwMxbW
-RA1QERVfxs15wR+a8eM+1BncHbrBoMk1IVBTtVgqZuwqwlXCQIcEeGcUa0sBxrvi
-/iWzwAZWbaXkXnbhei9CGGwDV5cK5IZzPBCX4rmuEgM7t1znhrf75Z4E/tFv+UTf
-gJKf5yKfj3YIMBdJslZRAVx6rSIf1CyBdEyp9FNcxkkOX3TnWH14emVc15dj0t4I
-pYV5xC4fX1DXXfN8kTh+Qz4BWcvkhtLZHaq3E7rDtK+ZI7IeyLU4h8CTJsPlhgku
-KTlIN5TEwTrfvbmMHXmtGN/8y/z/no4zjmiZ9TK5YQIDAQABoAAwDQYJKoZIhvcN
-AQELBQADggEBAHqn62ESRYlvlY0vyR4DEC23OupHWXhz55P6RCTXoL3PB2Ao9U9b
-QUprv0ibV8wB1kRIPYzuTX/c2dEiqcJRs8FhD2dQzLMbA4L3F2wiMsncf8sQ7Ai3
-hls4elEFu1326wXkFGE0x5lPLTKOL1EWtv/oQLPysop/WGW1oxeRO2VZ7XMiZOUS
-U6vSspHRWRYfKousGJgeVGe5+KDQlNzC62oVXifw7biUAYIk3ZMqvrdaVaMApCq7
-VW3ByE4u2XaeqNDg1s3tf7L6cSd2hgN6SvzQuXT42jF8ROy4vINHk8aZaRH0YenQ
-gTINHXXbt5081hNwvMJ9tjwd9MbrXlasvn8=
+AAOCAQ8AMIIBCgKCAQEAxnjQU3d8vxa7QANCby2o2Ao/+A4DocngWx3O9DS18awm
+mQZ+ZhzfEU2mW88qx378LBpzsnfiH93BLGBy4ThuRijneFNKuwzceeOpsiazJpsn
+hg5YU8J7n63lm0ob2ojVyFUyxhpjTK3LXXC78TxapCAR1QocexBVATTja9bSkuPi
+62afMkKWUlOnyy/ek+9QAkhwuXSNsg2j77yfSEOXhCxpCJozsC7v/F1V4ElZJ5Zt
+tc3uoBgWuAf9bOlv9GE3qLQgeuiM9lqMptt+OS5+zl3PNg6NxWISow1GP7IS6b+G
+Yp0kzejKvExjxBF2pSD4sUMlMHo0VwncmQtjrGw/twIDAQABoAAwDQYJKoZIhvcN
+AQELBQADggEBAAAn7Exbg0Gcqo0dPcOVTedjI3eGluDICLNUAx5MaSEfnv1IfYFK
++RHEdQeWTjfrIG+CLn//ucKwGe61o/J30cxoy9RWAPDTSyOCWMOtQPMsh8lnBAng
+nDrgvOKD9Z59ODADY3Q0W31lmReGMDEitIki5+9rQn70v5FJQgEBonYy5Y7XQJN5
+DiOCTYGGD/kbdQ17I3GKpSXsJ/sre2wZ862cpB6qYnVgfe9Uqqu6BtB6Z4VFHgpi
+9Z6FOoc+48ObLujuASaWvCYVuki8hkz2Lz9kQPAdVDBFs2jhr5gB/JZro2OmuCzz
++chFSRwtxq5HSxpddeZ4aKwjxrRc5v+BBdA=
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -520,37 +911,37 @@ func metronCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "metron.csr", size: 887, mode: os.FileMode(292), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "metron.csr", size: 887, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _metronKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -564,35 +955,35 @@ func metronKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "metron.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "metron.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _reverselogproxyCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIELTCCAhWgAwIBAgIQCo/NXzcKn6p36W8mFe0/4TANBgkqhkiG9w0BAQsFADAY
-MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDcxODE1MjEyOFoXDTQzMDcx
-ODE1MjEyMlowGjEYMBYGA1UEAxMPcmV2ZXJzZWxvZ3Byb3h5MIIBIjANBgkqhkiG
-9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnHTy3KJ6nAZMNr1jFNh64RkQVXv0CgIh7YC2
-wW5F20uuDLF9ODsuyq5GaoIFI0XmpCzIs64ErI5g8z64XxMRfw9VJRsOcVs94Szu
-WdiKl0smDjRLdTTNw0GQNHeNnPKwNvW5yJb3xk++gxPfL37MwN5x+QQQeTaygnZh
-6+wuNY6eOcMxekivLX9Ahkfybl0L6zH6yfXMCvKeiGZIuFGjNVtVicc8Ucwgx0Hl
-py95VARPENhrWrfaWKxW41PGD6az1S0ueUuk/dTvEH3t8xN1YxDpDJo9VA9fF8Fb
-5U2lkXgEI0+oAmw/4TIgVXJK7lv+VPbsa+IfxCicoiW+lePUBQIDAQABo3EwbzAO
+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
-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
-gPf25O2r1+LJYOxRQa0FD1M=
+A1UdDgQWBBSwYVfcD3eSJDybQ8HmwTxMV0QZzTAfBgNVHSMEGDAWgBRaoO9Poeyd
+ILmUkAnGdYo4p7Q0xDANBgkqhkiG9w0BAQsFAAOCAgEAX213iC5YplVMn33DIjfA
+NKipKKyHkia7soDZvnHWRLQvsnaVZ8AyX6fnHLrw1W2YC+qIo2SL6dzVvmRXjt4u
+LhRPop6zRm/qRDy4CTSl+glYwR6V4B3Tl8TUj2N24FJ8e8AkyHDpCFiSK8lH72vu
+js4PP98l9aJT4a97fnJwDPOJV4nIB2i/qmL94ipkdfaiuSh5smncAD4q+o8RRbAU
+KrSpkEK0juhaJQo6SNwfGJOu8+5lAYrwUn9StvgMkyH4CHvEdW8C53NzTbRXrRmg
+HkSsLV299NuMUrLETcatikHX831ApiE3ajoQ47xO93etzT0Fvy2kR2YkF7NdxwCY
+Bg7CYVVhXBlw2VkgcoUreU3AyHu2CIVfUPedHILYw3JsOCC+5BSaYMUtNUXvO/g4
+lB1Anu+OZ8RcKQYADIuBUFKlsns7jmcitFpFyjM+LjzELfV+jvEKioGAjQ8qnR3r
+TEzQ1bCnr1d1vyfFib3S57RiVitBSsSxVWsM9PqzTY1ZiEZJ21D8Kx5mA7JzfKuT
+BKBRB+83kl0SIgiF05712udeweJZkvLgxMUlny5TYp0DSwseJ+vbRo17JsACgwJg
+TyW4jJpv0d43klsyRwXEcR8BtJjXaVWFMrAZS+YdeslvPVN1hdbIBJ3gC1/qhzAp
+05nCO/XQLQhBk/5sC938K1w=
 -----END CERTIFICATE-----
 `)
 
@@ -606,25 +997,25 @@ func reverselogproxyCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "reverselogproxy.crt", size: 1509, mode: os.FileMode(292), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "reverselogproxy.crt", size: 1509, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _reverselogproxyCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICXzCCAUcCAQAwGjEYMBYGA1UEAxMPcmV2ZXJzZWxvZ3Byb3h5MIIBIjANBgkq
-hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnHTy3KJ6nAZMNr1jFNh64RkQVXv0CgIh
-7YC2wW5F20uuDLF9ODsuyq5GaoIFI0XmpCzIs64ErI5g8z64XxMRfw9VJRsOcVs9
-4SzuWdiKl0smDjRLdTTNw0GQNHeNnPKwNvW5yJb3xk++gxPfL37MwN5x+QQQeTay
-gnZh6+wuNY6eOcMxekivLX9Ahkfybl0L6zH6yfXMCvKeiGZIuFGjNVtVicc8Ucwg
-x0Hlpy95VARPENhrWrfaWKxW41PGD6az1S0ueUuk/dTvEH3t8xN1YxDpDJo9VA9f
-F8Fb5U2lkXgEI0+oAmw/4TIgVXJK7lv+VPbsa+IfxCicoiW+lePUBQIDAQABoAAw
-DQYJKoZIhvcNAQELBQADggEBAEsGQCiOIzwpVptu/X/hXm1yUh1dbqj9CtGCCdcT
-pPAz+6bExwHnuleju/lC2mW+qE6IdiXQzGej0B9EXIbooapIEcg4CE3trlAhPtCU
-bCKWJd4hPXE74LUmTjujgsC5+EVuLT82T6OyuTbdXxxEutOIRjLg8bvWaI3Umv06
-J0TNMnkYF2pw2ai0A1DLZCnoOEZCwOz5M0FJxMeqig04W/MYMlbAuB8+Iser0tBN
-kVgD/hqlTLLFqXVbPmZJEPP9QIiIgt93HJhSH8V0b3KKMlTBeV/+Xy8FSlrqtPGF
-E/wA616VEASCR8xVaigsiQFz+/gTaYGBFvHi5Xf0+yBQ5KE=
+hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwYHBE0k7fvDlfdpQVe22RvdytWjB9Ct+
+Vu8mCRKTANj5lvXxZMAtPrSi9HIWXl8ZzGnGk/mzjxE/Uz+hq8cJvb/pzogctGIf
+p9QBJuzzE2BWa8gpSYxdun40JdBnMG76ph9DMS40oNM3RIrZXGWIzNMwtTeA7NwS
+DMfvIQo6zXEM9vBSZWYmoKV03kWPlVDVYKwr+qAF6aEkERlNr96XBRcJKXwASozN
+/3yiMPgl2r8rC5Rp0Btw0e0NRxZ0NY5oUgslHZFF7q0hb2oTpO6mLWvn3PjmVBI0
+xCzhzpXZF3K6O/yy7A24cWhOibDhhZeZIeC287SFvNxP7UJjdAr60wIDAQABoAAw
+DQYJKoZIhvcNAQELBQADggEBABoU1a5AOkC//N4uTOWnbEjMCCy2bRrLGR21toxQ
+fPAU1tv4wYvjmYUgV7nKJrgWWpkitLuedxl2bal99xbrUToAz6/5LfIBN6fdDomX
+UXmqo9hCtMWwRk93+kUIA1yvbGRes6juFICln3NZ/6HSAOr+NDJ5IMy9ZvmBsXgD
+rYQ+oJOUfkzdYNKIdpF+JOjQX5ltXCmoE9aZXdkg7mtGiHlhjnOVqk0TrMdcf7ia
+th4kB8Gq0Y17j3O5IjhTE9qIeOOEDy+LIXcB+iQ76mYmtjWYZsiYGoUiEkUDb8FN
+W3DYmY/vrH5u0uvUJ5D8GNVpqBy3oYMnOUJcRL7SuTpn/Pk=
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -638,37 +1029,37 @@ func reverselogproxyCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "reverselogproxy.csr", size: 899, mode: os.FileMode(292), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "reverselogproxy.csr", size: 899, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _reverselogproxyKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAnHTy3KJ6nAZMNr1jFNh64RkQVXv0CgIh7YC2wW5F20uuDLF9
-ODsuyq5GaoIFI0XmpCzIs64ErI5g8z64XxMRfw9VJRsOcVs94SzuWdiKl0smDjRL
-dTTNw0GQNHeNnPKwNvW5yJb3xk++gxPfL37MwN5x+QQQeTaygnZh6+wuNY6eOcMx
-ekivLX9Ahkfybl0L6zH6yfXMCvKeiGZIuFGjNVtVicc8Ucwgx0Hlpy95VARPENhr
-WrfaWKxW41PGD6az1S0ueUuk/dTvEH3t8xN1YxDpDJo9VA9fF8Fb5U2lkXgEI0+o
-Amw/4TIgVXJK7lv+VPbsa+IfxCicoiW+lePUBQIDAQABAoIBAHfMIG2KR4GSXOcJ
-KoW6oJQdAeHCsIC9U0cs6ELB8eFRWGrFuJDG2DQ/LxG8jryMeGa7F85k75VEy71V
-CA1cZ2g30EVCK1PmvkHdin/nC29/DhuQNTsAfJEGcamK5TcIqJ7cli2eUwhY5RIu
-tBUE7Ti82t4GG6sEk7jLdn0T8en1IEDTlWyaif1yHWY68fkuiAbJK8VxTzuYrCP5
-pYnP2j/+SgqszGHfNe2YVmP4sOvUxhwnvrQ/cbrYjPLayeM5xuh94UXL8Ujxe6GU
-lbm+LrzXA0eFFA4chTmHx/TGFlHN6PZyGNoQiKqrK96RyA7Vq3ikCl9pb4HD4HzB
-d8uyDT0CgYEA0BdmdfmGQ/hOjols7bzdtOMYRnIoX+gv+tPaKSxhBZ5jZjLvmCY2
-zUS/uAgFhY9ozt1XlDSvnGfMTCRg2VRT/qECQmCQ0bDjVzGpkZePSGeUms1IUvY4
-Or7RWe9JR7lJbiyO+RWqjtFAgYQVNryYEklgmYdrhAzkhGofUnxKQD8CgYEAwHpI
-arbSETeBepQFu4BCjI4oT/o241azEikMCqIUHJp11eCudNHLFlFibnNPiSdMUfix
-jPJiLp1Lmo5Xxeye8xWA4RGYxGOtZevGr+YErk0OJH5iIA8pYIEh6dksOr8YuMj9
-2rCnSucu9A+HDRRoSrfJbP/w7ufSBzUFQE6/mrsCgYBiKrfebeGGTSyaF4C4wsGA
-pSV9jjs3y2xfEvQ3OkVnBip0OxFGoLh3q7gaFEaulFHoTQkU1KoHyfvZ68t4m0yo
-scJEGBQZqC4Ho1kQYwRoLt0vDirRYHB0XjKbD8RtPp7Ch+jG3w7AIz0gHHR5hwzi
-i5UzuGvjNsXTJdEy84l/twKBgQCd8HmV33iWmhZMEER37DIvhcL8hZQejhkYsMfp
-vb+FDRXeL6TXxQLByHxdp48/Oxj8Nnby8j2whG/yXhUWGyj+zMlZZggWNrilZog9
-9CApKp+NQIuiRO6t+qhqbENH3WEa2Aq+NbDA3N0BdfBawkEl9pN5NrdsQptsQIyT
-jUraWwKBgQCE85mlfi7j3W9CYvRRDWksY3UUM1oWnJ6TLon+VEDbkktLIelrhzgy
-naB83JdHWiMOqPzPX86pbqFIP9fiQpN5oB7qG+ahTPUf8YoLrFrtNJ6aczBuJzZa
-L/4ckRf9dpwC2mvZgW4FV7WQ9IuGCZeB86Rpa/kMz/sSmos+2J9oQw==
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -682,35 +1073,35 @@ func reverselogproxyKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "reverselogproxy.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "reverselogproxy.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _rlpgatewayCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIEKDCCAhCgAwIBAgIQRxVxs84CXyMQp1i5+ssEljANBgkqhkiG9w0BAQsFADAY
-MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDcxODE1MjEyOFoXDTQzMDcx
-ODE1MjEyMlowFTETMBEGA1UEAxMKcmxwZ2F0ZXdheTCCASIwDQYJKoZIhvcNAQEB
-BQADggEPADCCAQoCggEBANdsa/ZiFqRZC/lXmAK2YditHJ15h4ov3SR6114rnDQL
-1z6cXqc4FI3JTH4Eo5e3g8lhN4xFEapgah9qeTGyFW+AbezpM1Z0X/20jndlM0h+
-Qa+0IR20NQpIWPbAJvYXvcE8eSDt78yQjbvbUP7yGfzzy0Yskmz+jfO0UTuUUQKZ
-LNzTaK689LRCq8AkUgFhTny0Ea8bYs4XAAuAyGsiPARwNxBZG8QIlCNOWqbPnKal
-v0OgAlVV+xGTywJDteTeIQ4dTvC/Zv7ItATbT25G+tVoP40l1FJgvb97Epq4/EGM
-jnqIpc5xdSkWGUou/aIEs5B2YHfT5wNOJjWLfwtbC0kCAwEAAaNxMG8wDgYDVR0P
-AQH/BAQDAgO4MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAdBgNVHQ4E
-FgQUox4A2IEzTxngeJOxTraK+omKRQAwHwYDVR0jBBgwFoAUaoHyTQ9rwSi+Silr
-KZOVHMFJHr4wDQYJKoZIhvcNAQELBQADggIBAFBPhPCZCkdDVXAAnO90ZcICKHvI
-u+BiYsm8EOLlRuMjgPOfg3t31to2E8wlXmZCAntM2k6gWhJS0SBi7TpGWKjcEC5H
-EWY3N3GeabXBWRkh9mXXkKRb5clW0bw8sddFyF8e3Ky2AdZWbovsVaVvYZwbLoLj
-K1/6+T4f+PLojCuNY9/ZxDTf//7iusHMaVL1pmukrEacaTG8LONmEHe0WTIERRki
-88Ryfaga14tQdTEYmLAiC+5qpz15W0xhN3KqSiR/HE5O33aotP5YSHE2N49IxNG2
-7AcsAeIkXzJ9QkkBEd/rhnwx7deKzvkHPzJb4s37duWTC6ThbVAooCw71rJO1rvm
-Fmf/ExT2x7FROaBz2dKJlVFEUuhMujqHB+nqcW1tL1o+vXv7p2Dk6X1rKS1xJufS
-5qMEsGCkjeUlkRV6dSTo/FWHlBaB0eJKqCWYrGm5MnsUdWpTUsEUZE0YX0hk5ToJ
-io5lb2UeR5o83UBaAJZzN3DPLOi+JStVF0ciGCydQc5pUpj6Cnn2I5Au4gX1y98+
-35z/6CpDY+z2jdPKy0YPtXZzLXaCn+Tq2jBuA3i1qw+/cfrB68IP8Y1vzoe1uTEU
-ABEsTH3i3hby81PPfe/Iao0rHePM8joowvaD7D6l6AmQgX2I1LEdAyqK0sKrG+5v
-f8gCTV5yqgbfeJN6
+MIIEKTCCAhGgAwIBAgIRANEv2i4CEF0eChI67VEHiqEwDQYJKoZIhvcNAQELBQAw
+GDEWMBQGA1UEAxMNbG9nZ3JlZ2F0b3JDQTAeFw0xODA4MjExNjIwNDBaFw00MzA4
+MjExNjIwMzFaMBUxEzARBgNVBAMTCnJscGdhdGV3YXkwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQCw2btGFHap3FV3gt6+dWFKMiGBKUwHcf7Raxapeke3
+fVSEXHFGzo1VZ8a11+zdNRWEUJ8dPU9+03XbrtJ4N6131GfCPHcocwIH/nqaU/ZK
+RMnXlLsT+sQlkcAJmY2YjBGIwHLE2pB80JIQtbj1EXCuiZ5Z7RWvtFYLnmYkDOUq
+ig+SiQ6h2ft+E+52S0koMnbcMVhm+1r+7AHcLmm7DjvvPa22RSPPLLTQSOdIo2jR
+ScsCIVz0CuurKOVrRZLR9WGHFHQjpUTZgwLtQr1/C5tzDQ1ZY3Wl+iEbJUFCsppO
+PCMRQTPNU4pq9gZh2Y+SjMZ9FCTLIR5E+DlVjuL+2/CXAgMBAAGjcTBvMA4GA1Ud
+DwEB/wQEAwIDuDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0O
+BBYEFKn+fgSUcHLxNBg6RsM+YJFXxhjQMB8GA1UdIwQYMBaAFFqg70+h7J0guZSQ
+CcZ1ijintDTEMA0GCSqGSIb3DQEBCwUAA4ICAQDN8UTKUV7gx/FcexC3C6Ngfzao
+xYmh80bP/B1zc7h8EQRyGD9y0SPtJNOZcvCIAN022nEIocXN6Jo5jboZsvAnu3r9
+dUSloy65v5GxXqHvouPfd3ck1G1cZ/JX/1tJpunYC9pWcmg3poa7fWDVTgXgFclL
+jvd6K6BbVRnZQUWU4zT+i7uR5EAJgi68ABaQa9XF6di5L7oKvtcPaoaLAsCr/A0X
+j6p4dddmDdmj+WZVmvR+TseFucHvXEnmVqe3rwETBSs3jqQeTQst6hEjIOtjOUiL
+QXw4CeLG2moFjukouEia97Ui7i0Y4Uay6xTEaE+S70VPHIpM12L1dmoLm5LFUDx5
+VRYFpNgsp9JQiTx39VkyOzJmK997qwTxdw1EVdbylG5qUsxsvP7F9zw9Pei1Ulfd
+0MatFWvfRNsZwFqYtErKLn4rEzH9UXRvG6jjRBCvS4ys6ARTyKBIzY5c3bBlGlTw
+shZttGIqNUf0+ik2V6jUHn30gCSU91ZYoPICdJrr8LdyB47ERz6aC//mUK1dab5C
+Y0sEVB5Uz+UNTXfEXzv/gHHCPrHcG+JEuswMKrQQMGTKWP06Ap7RWf2tF5ET4h0m
+S9DoEwy6vdIafrK7DefyqC30agLl/ex2DCg8Ydvqt0oPz1I3mt/eSHrTTHsbt22s
+dk3EeWBezlZsJF/8AQ==
 -----END CERTIFICATE-----
 `)
 
@@ -724,25 +1115,25 @@ func rlpgatewayCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "rlpgateway.crt", size: 1501, mode: os.FileMode(292), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "rlpgateway.crt", size: 1505, mode: os.FileMode(292), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _rlpgatewayCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICWjCCAUICAQAwFTETMBEGA1UEAxMKcmxwZ2F0ZXdheTCCASIwDQYJKoZIhvcN
-AQEBBQADggEPADCCAQoCggEBANdsa/ZiFqRZC/lXmAK2YditHJ15h4ov3SR6114r
-nDQL1z6cXqc4FI3JTH4Eo5e3g8lhN4xFEapgah9qeTGyFW+AbezpM1Z0X/20jndl
-M0h+Qa+0IR20NQpIWPbAJvYXvcE8eSDt78yQjbvbUP7yGfzzy0Yskmz+jfO0UTuU
-UQKZLNzTaK689LRCq8AkUgFhTny0Ea8bYs4XAAuAyGsiPARwNxBZG8QIlCNOWqbP
-nKalv0OgAlVV+xGTywJDteTeIQ4dTvC/Zv7ItATbT25G+tVoP40l1FJgvb97Epq4
-/EGMjnqIpc5xdSkWGUou/aIEs5B2YHfT5wNOJjWLfwtbC0kCAwEAAaAAMA0GCSqG
-SIb3DQEBCwUAA4IBAQASYfJ2NffAMTr15unpS0UPlzlXqQr7sDAqYbuL2/aOBN0p
-2Tvg+oDDgqS7ZK3TGyv1UdzLHPwANUNFUsTzYpu5KU6L70ZhJtCsrqxWGcN2vafh
-NG2QT/mYfjUtJGQPC90EhDk0cgSz1D6tzE47yEqWPJBl+Vo0oFt4ajf2MECtiODq
-DPWjjH227RuiCfKF4TdHHXWKScEH0/uWXvi+XeOTtbRU4lU9vDJi/LGQjbjZfWwn
-sGNESfH8yvtfZradiO1IghgtPZ+KwYPZJs2b2rn5iRJet9bcW2otCSi5sRDyEu8d
-kvaTHmx/kKrNZGKQYSlXPqoC1AEO3fKs8Ys8ea8B
+AQEBBQADggEPADCCAQoCggEBALDZu0YUdqncVXeC3r51YUoyIYEpTAdx/tFrFql6
+R7d9VIRccUbOjVVnxrXX7N01FYRQnx09T37Tdduu0ng3rXfUZ8I8dyhzAgf+eppT
+9kpEydeUuxP6xCWRwAmZjZiMEYjAcsTakHzQkhC1uPURcK6JnlntFa+0VgueZiQM
+5SqKD5KJDqHZ+34T7nZLSSgydtwxWGb7Wv7sAdwuabsOO+89rbZFI88stNBI50ij
+aNFJywIhXPQK66so5WtFktH1YYcUdCOlRNmDAu1CvX8Lm3MNDVljdaX6IRslQUKy
+mk48IxFBM81Timr2BmHZj5KMxn0UJMshHkT4OVWO4v7b8JcCAwEAAaAAMA0GCSqG
+SIb3DQEBCwUAA4IBAQCne99+w2tTL+/PViWxtBqkhFW3CjHarjT6axtXT6MyoLTt
+t3mO3eJfJcXGTGjaszAl8PJgJ/qwNMScBOCg/zfg6xrCKXuSgqGT5aKU349l9z0F
+DNv47OB74tVTE/qduKphow8/tRjKuY+ZuoUSraR0Zbg8NwGbh1MFpKkABQhqOtT9
+9fZ14pmhbOsGHGywJrGKNdRHh5goKrh5NbUjXxnBSOW6eK0F1h7n2DgxaFpmTuMJ
+UMRgZPkI6xGDexlpEV/Gn7EnMRlqgWeJkTJ6YoP828yclNF/reluCNTsNZ720i4f
++KWyWFcBjug9rot6JwLCx+e1muoUnt6NsZlJ5l7P
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -756,37 +1147,37 @@ func rlpgatewayCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "rlpgateway.csr", size: 891, mode: os.FileMode(292), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "rlpgateway.csr", size: 891, mode: os.FileMode(292), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _rlpgatewayKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -800,35 +1191,35 @@ func rlpgatewayKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "rlpgateway.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "rlpgateway.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _syslogdrainbinderCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIELzCCAhegAwIBAgIQWCgn/UTjklDvGtfwivc7FjANBgkqhkiG9w0BAQsFADAY
-MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDcxODE1MjEyOFoXDTQzMDcx
-ODE1MjEyMlowHDEaMBgGA1UEAxMRc3lzbG9nZHJhaW5iaW5kZXIwggEiMA0GCSqG
-SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCtM4viZxfSSZLdW35/NCiPUHrDJjJcEEMC
-xAy88gm69Rb6r9FjjZAklS+Dw3oWp0j59zmEliRjQh/Menbszfb5O5Eb2ZkaXmUM
-eSE2/l8tBnOH9yHu0auLyOsEJ/WvfahKQolcGRWVxhXu8Bi1mhcPpv5xpwJWr7cv
-5f4Dv0PXzcfa5eP8Ugtx2sketeyEhdM/fFCp4NREcAibmU5QdM6chZD3Vt0EFw/S
-DVqYU7YyxjsZ+4dlCrfUcwdT7PBY1cApJ8pyiYA+MSRbSTGCESpasq1o7Jjm70bm
-GG3uNKyg79t/YeuvhTnCAbjVw+mHPjTGHPDam8vG0NCpV0AGlZXVAgMBAAGjcTBv
-MA4GA1UdDwEB/wQEAwIDuDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw
-HQYDVR0OBBYEFNHqvKIWyb/iGl9yjyuhysc9Iuo4MB8GA1UdIwQYMBaAFGqB8k0P
-a8EovkopaymTlRzBSR6+MA0GCSqGSIb3DQEBCwUAA4ICAQCV/9TILPp468Tf2O9Q
-gjJIE04IkmgEWm+p7qmzZNP4kBA0PnwH1hULITU3N3dmDou1CY7RE3cFr3ij57m5
-PWIiUKPtPrih1ltrrLeDOMSkRPIYCjunQO9aAktSkFNPj+Uv8sltvDhQcJeSz/v+
-JyAVyGiT6uliQWLOBojwFba75J5VCFGFlJhFkU8AvnineTv2U9puKdmt+imZxc6V
-maf5VXwfkxNWg4QWRoDUtq3W34ZgpGWsTW75IDUErvjJUTGHLO2S43u+19y7oKfL
-A1CIIrQsmFMkIugjabxS9qyAlRilDxEwOe73fgvSUAzmbsLJ8P9l3lOf75wxC0tp
-u8POrk9TX/SbKpovpzv7rKqG3rvGiIvgDCoBa2HxUQtFOZht+gl67g4yXe7GjU2u
-pqK6ba5smPpHmRDqot29vUZ6dkcVdx10iWNhLx9yo8nj0g2BxcISOnYh3esM0olA
-q1GB7SddJ67cqj2HIC2ZrDkSlDZhKNJSvtCjHKWA1JZH+2yuoVVcSBdvbx5G0JmP
-z8L59RikgofDk3y+NRPvuXid/RICbz7qgX2+Pk9hQt2FB3myIcleoc5pO4sMXFS7
-/DdIVdKE7/PWzF+VokGs2burmL3BIU94UPHnqSCQHsa5mYVrZzLm523pVRK+3xCt
-WiM3/gMqLCkZY+JW/pPbjBp+iQ==
+MIIEMDCCAhigAwIBAgIRANdTySWCAZwU0huhpXA92nIwDQYJKoZIhvcNAQELBQAw
+GDEWMBQGA1UEAxMNbG9nZ3JlZ2F0b3JDQTAeFw0xODA4MjExNjIwNDBaFw00MzA4
+MjExNjIwMzFaMBwxGjAYBgNVBAMTEXN5c2xvZ2RyYWluYmluZGVyMIIBIjANBgkq
+hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxevCs4WlqTOe04xWPSOSX/FLzxbJTVtW
+H6jE+15jjkH+L8mC4l7/DlhQ5E8YEQPdMpo+elDJtKa0OhO7cTyIoeuWssUkaD5I
+d2dkxzxhA6jgh8XJ+Jd6IttBrJJY5Vm4/ANuq9GtrH/bb4BTh93ILRXg/w7us0VM
+7FwBA/K7D9tIxnPxy5HL5mHG1ipA22f/RXwhjdj5KDu/XPFSeR9X0Zi5kNPHPNNf
+q2YJLOWfzPGfwpjzyPCqnVk9nN6bXhzolOKAluKqhCJ36loezqiVU49qui4PsPIq
+gxGP+GOiDLyXbDRMyeUL3Os7o8xGG4tEk4Hy7NZR3mc3tiAdmbi9WwIDAQABo3Ew
+bzAOBgNVHQ8BAf8EBAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMC
+MB0GA1UdDgQWBBRGGmcMH8k4XjtB99J6m2zzgPs4sTAfBgNVHSMEGDAWgBRaoO9P
+oeydILmUkAnGdYo4p7Q0xDANBgkqhkiG9w0BAQsFAAOCAgEAfmA6Au062F7RweCZ
+zlpc4tQIL0e9bapOrbgw+yfvahQPv3XA0AbrGTMZpv5cQKbufdUhA9Og6riJUKUe
+S21yjb8du9EKyA1ShQoShXYdtgmoIc24LdqBU8rSDXGGBVmQ8mDcPj58iOEQ8c3b
+cGkx2pVFdyC7Mw71e8cHqdXTe51HSWhkXWT2On9wvUAcWx7LjdC7/PnnlmcSBWrn
+qHo+wSUTj4dLWrGzNacNRb0oZ9NP2qWlEIcsCkyL55Ro4bKA13pBrOyU9R6f9vqR
+xuSl/LTicWMAKTqs6zF0IKxRucmO1HwxVz1Qn8ZT+lOodOVu7NHMUiAyd7G0BlPn
+53y+S5RfZU9By/K0gzJ1MEPVMdQ0LLjE/9Qbhj2hXIbqEjSjHXT8EfEyBPFSSKWR
++W8dAcmR7dqSMsTNOHYl5V3XHkM/lQy4MvD3sqT6tLpOYUPnK3ncIiyru9Knioo4
+wrz/F5f/fAPoedTeMPjwU8w0MTcejhuwJwea72WuaaCkBiRY8WOpppgxVx7fABkY
+BBbauno6FU+RZQNtK8y1sd8NM5lxTv6neasOXMbj/UKHlttAq4SXgj/w3f+OmrPO
+ZKlT3AVF+HhgW4+G7CtL21bpjYIOG1oSx9eURBIwxAmRtnhbUmpgexnUTyVNfJ3i
+1ueDnTEtXDT/1MjhIDMuIx4RA9A=
 -----END CERTIFICATE-----
 `)
 
@@ -842,25 +1233,25 @@ func syslogdrainbinderCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "syslogdrainbinder.crt", size: 1513, mode: os.FileMode(292), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "syslogdrainbinder.crt", size: 1513, mode: os.FileMode(292), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _syslogdrainbinderCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICYTCCAUkCAQAwHDEaMBgGA1UEAxMRc3lzbG9nZHJhaW5iaW5kZXIwggEiMA0G
-CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCtM4viZxfSSZLdW35/NCiPUHrDJjJc
-EEMCxAy88gm69Rb6r9FjjZAklS+Dw3oWp0j59zmEliRjQh/Menbszfb5O5Eb2Zka
-XmUMeSE2/l8tBnOH9yHu0auLyOsEJ/WvfahKQolcGRWVxhXu8Bi1mhcPpv5xpwJW
-r7cv5f4Dv0PXzcfa5eP8Ugtx2sketeyEhdM/fFCp4NREcAibmU5QdM6chZD3Vt0E
-Fw/SDVqYU7YyxjsZ+4dlCrfUcwdT7PBY1cApJ8pyiYA+MSRbSTGCESpasq1o7Jjm
-70bmGG3uNKyg79t/YeuvhTnCAbjVw+mHPjTGHPDam8vG0NCpV0AGlZXVAgMBAAGg
-ADANBgkqhkiG9w0BAQsFAAOCAQEAaVIlRf/RJP6aj+QMMH2sNIUBFRDlKnD8bXQa
-STwtJOH/FJJnReI6O3tChK+5y0YYgr0e3xvV3I8FpxnpDOTt2RnJA5Rd9sZwneU/
-9agWMyE+SXQTVQKHlkIp8XwYKfc8r2YsMVEDcRW0gq37K5Mm2u6PMacFi5JmM9D0
-Zw0sq654AfNmG7y0N6SwjS7XGNHcr5bRvzUUSwAO2WJqXXGYKrmfRGX4W8oikwe9
-x6TivMFu4RknYftOpsYbv+ImzLpy5qomRpvWuR6ysxFX2QfZZGAdq0WwuXIr/15Z
-Y3NIrbHRdfyv3E+EOis0UbfWbI0hSgmELZ7KKjpa1jZY8Jbejw==
+CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF68KzhaWpM57TjFY9I5Jf8UvPFslN
+W1YfqMT7XmOOQf4vyYLiXv8OWFDkTxgRA90ymj56UMm0prQ6E7txPIih65ayxSRo
+Pkh3Z2THPGEDqOCHxcn4l3oi20GskljlWbj8A26r0a2sf9tvgFOH3cgtFeD/Du6z
+RUzsXAED8rsP20jGc/HLkcvmYcbWKkDbZ/9FfCGN2PkoO79c8VJ5H1fRmLmQ08c8
+01+rZgks5Z/M8Z/CmPPI8KqdWT2c3pteHOiU4oCW4qqEInfqWh7OqJVTj2q6Lg+w
+8iqDEY/4Y6IMvJdsNEzJ5Qvc6zujzEYbi0STgfLs1lHeZze2IB2ZuL1bAgMBAAGg
+ADANBgkqhkiG9w0BAQsFAAOCAQEAOkZ3bjDLYhaAu998+xKOAaGyzXV2hjz9CXnu
+sgf06uJuDvWe7dvp6vAdm4g07KRcpUaQYwmkkKQteIfONykjJZ+0qhbDJjzW/7cG
+NIUUg+/Jigw16GWD1ocVU14zr74yGyNkHdYu1MmLksfAN9tSjbsNz0+TL6MuJgSE
+7Ryj/Z60q2x3m3mtm4LpRLld2kkG0AY4KoQKHJeyMW7k6k0NwoAGy9iGQ9QWvUWa
+WYrnFeQy3hJl2KMQVzeIKHjNopzVtWnetVcziOzw+xMLd+joxdHlau98Lgx5tMva
+jXstmHbYQ2/ckbTkOWdOBbP2/kv7HMYOHb3DftzZfpY7IViF+A==
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -874,37 +1265,37 @@ func syslogdrainbinderCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "syslogdrainbinder.csr", size: 903, mode: os.FileMode(292), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "syslogdrainbinder.csr", size: 903, mode: os.FileMode(292), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _syslogdrainbinderKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -918,35 +1309,35 @@ func syslogdrainbinderKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "syslogdrainbinder.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1531927288, 0)}
+	info := bindataFileInfo{name: "syslogdrainbinder.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1534868440, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _trafficcontrollerCrt = []byte(`-----BEGIN CERTIFICATE-----
-MIIEMDCCAhigAwIBAgIRAJ3XOoV/isCYdyStqbdx4NkwDQYJKoZIhvcNAQELBQAw
-GDEWMBQGA1UEAxMNbG9nZ3JlZ2F0b3JDQTAeFw0xODA3MTgxNTIxMjdaFw00MzA3
-MTgxNTIxMjJaMBwxGjAYBgNVBAMTEXRyYWZmaWNjb250cm9sbGVyMIIBIjANBgkq
-hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtd+lH+dYnMQRbqz/6hHm+wUIsJiEpfJf
-mj8G/dh+meZxUqXcHb/EcuLcpVmD0Z9JboxYPpBapsy68Z1pxa8xAIuumW9/rKcu
-vI4ttgHTceZDDgbVxBSZcoNA0QEq95423kLdVPJnGL68UsZPbjHs8vEMhrBNB6mw
-sTeMiWIvpqu8I334Dck8LPQkC3nL8LofBhdDUiEwioxyPCVlu94XOYCZUW36Jz81
-M5tVWWdeRdArVJDtnkIGeTLcZTZWEwk9GCLYh4+z6JhmJZYRlxGZKKXg9reATkf1
-tlwllz75F9jal0GG8Kp7nthub8vSV9B7a97yocqeTWNTx5cTEMOm3wIDAQABo3Ew
-bzAOBgNVHQ8BAf8EBAMCA7gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMC
-MB0GA1UdDgQWBBTTkWAMuMg5pMwU9ry5k46Ozfyz9DAfBgNVHSMEGDAWgBRqgfJN
-D2vBKL5KKWspk5UcwUkevjANBgkqhkiG9w0BAQsFAAOCAgEAaszvCaNtR/SLQQuh
-zgJC2dKHkpL6oD3o53kWwKCUCpEeCE4eIbAzR7ENzTUkULinK8fgm3uPIOIE76DD
-Xs4bjIOkvLAc3/EhrV0DldEkX+tsqUzOONZ+M4D6/RzYmtXGo4q3L8TSgEowmrUX
-R9otN4JeYw6AhXI5WnxkGCaTysNyykVAUdvSoY/d39lwhOUqURKRby1Qn0wHcDut
-k0sPK66XX30bfiKsllfA6Do7Ka6U4a2VaEfiKGe5zD/DnCqzw2po+V0VKR/84p4S
-Nq9rBQYL9PcQeNAljrWLwDiG1IF4X0r27GfkfqVdlZIQAWzJngJJBvOkqXZ0Ljet
-L1rEDuDjavc93W64jAlB9+dpWKWIslLC/miFxC2N8YMTea8XrP2TNbkJAsPtiRir
-tf60CQOjxhjLCRqzn1yrdspdAil0ehEprRoc/XwA4LSSfFsaGMhD0lkJfAd3YZ9u
-0ZV/t6PbHCTZlUGU0bqK5TcwsQO/lfeUCObvdCBk6xD3FvyKidc6b4P7stDcaJqe
-pDk2GMzgdbDXMU0JgBXai+mdXjLM3oFLjTb9klb4T6QR8OWtqCJz5lcJqXrLwDPy
-90txPSqJLf4Yt3wnpKuZXMul+EqXcRHag6QJ7T/5m29xlnfAe5TgPhWIgCy9WttC
-RyT3BOINhjUZbksWztgKIqDbr44=
+MIIELzCCAhegAwIBAgIQN3FtlVfUG9gxE4TAn2sP0zANBgkqhkiG9w0BAQsFADAY
+MRYwFAYDVQQDEw1sb2dncmVnYXRvckNBMB4XDTE4MDgyMTE2MjAzOFoXDTQzMDgy
+MTE2MjAzMVowHDEaMBgGA1UEAxMRdHJhZmZpY2NvbnRyb2xsZXIwggEiMA0GCSqG
+SIb3DQEBAQUAA4IBDwAwggEKAoIBAQCqKk/yyMB1teKEMlgXGW6IRQnMHW/yyj4W
+9+4ef36fFwlftINoJd/Qh6zq2Ysjkn5nxC2PjsKBBAzJgQKkGQ0i7HxVKMWtbzbR
+Tl8058wZwVAItihkyGubmWK3DI+uhR11rIWp6v02SJua/kyOm6qMWuf+B8cV+AHl
+IaI5s95Be/CiPRcxbKXJnsF4k605mW8jJQhBEJbkBy20Hzm8tLAGFWa48AOZYRnK
+ymDu8Y6yMxCz1hjpf4m6qrvcLj+wRRcZepQBUcOY28hS4GBsx/jhwoJj++jH4AIt
+hNE6CNTxhjXzRGsVcUoGIhYaRrT2doovInCU6ozWmJKqz54sIf/nAgMBAAGjcTBv
+MA4GA1UdDwEB/wQEAwIDuDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw
+HQYDVR0OBBYEFPT23e6n5Pq6YyHT/Uj2VkS9omRfMB8GA1UdIwQYMBaAFFqg70+h
+7J0guZSQCcZ1ijintDTEMA0GCSqGSIb3DQEBCwUAA4ICAQA4MaWFgaV5zZO6jf9x
+vRibZSigPy4oYxllxZo/EJDBy6CTCHPw6/l6wClyL7e4hMGHe719TH+AJSBPPcIR
+dKS3hW4tW10TmtDttwkAxdsl+9gjIiGOcNQ5b36jJ8xpbMGn5/pJtgimCL10OyIq
+nwRfofcoLHloqWO9stwNkn7YRqZwNxcNq+Efbs5jsou2efbu8eRL8DbWeliQ/EK9
+0SIoNVr9NJuh+apJtrwD+8C4vZ2JrS0lwVSttyemQn4YXAcVZyiz0b9OA454BZwz
+H91jrQJfk1B0UJgt5i2SFQkcAPcST/QlB9lFSmxbGb85hPTdzV9WCPL9c+L4E/ys
+eoaF3DuufkslvKpj5bus7H46c3KzjgFjIB/hIbZ7ejaiz/WBmKIILIpu7TEwjLBs
+F1ZWUjHF90h6aF6SaJWQpcJ9VtR04bTh4edzF4OL6nRDXDvQ0EzMsl079uWvZRzE
+MboONx2H/TUPOlSu8qNWm/BWyuJNI6J5MgQom/ZQxaPFTCx+ILWK5c0y6QZZMxrI
+L0AS4gCtE8Q3S6JidUBcoliFps1jrucn+H9+9oNG/ZK5FKXWh1neukBn4b4c5Bcr
+QvzOfW0C6u1pe+z3pfElRglFDQAa4m7gUXpYJeUwuTNq+lk2Q9/l2ikhTrJCa6Uz
+UodfXwC4n63CTVzf7cZ+AmVLng==
 -----END CERTIFICATE-----
 `)
 
@@ -960,25 +1351,25 @@ func trafficcontrollerCrt() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "trafficcontroller.crt", size: 1513, mode: os.FileMode(292), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "trafficcontroller.crt", size: 1513, mode: os.FileMode(292), modTime: time.Unix(1534868439, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _trafficcontrollerCsr = []byte(`-----BEGIN CERTIFICATE REQUEST-----
 MIICYTCCAUkCAQAwHDEaMBgGA1UEAxMRdHJhZmZpY2NvbnRyb2xsZXIwggEiMA0G
-CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC136Uf51icxBFurP/qEeb7BQiwmISl
-8l+aPwb92H6Z5nFSpdwdv8Ry4tylWYPRn0lujFg+kFqmzLrxnWnFrzEAi66Zb3+s
-py68ji22AdNx5kMOBtXEFJlyg0DRASr3njbeQt1U8mcYvrxSxk9uMezy8QyGsE0H
-qbCxN4yJYi+mq7wjffgNyTws9CQLecvwuh8GF0NSITCKjHI8JWW73hc5gJlRbfon
-PzUzm1VZZ15F0CtUkO2eQgZ5MtxlNlYTCT0YItiHj7PomGYllhGXEZkopeD2t4BO
-R/W2XCWXPvkX2NqXQYbwqnue2G5vy9JX0Htr3vKhyp5NY1PHlxMQw6bfAgMBAAGg
-ADANBgkqhkiG9w0BAQsFAAOCAQEAfOP1Mm36rm7GK/XmFzE0Vn/Nq9shza5m2qtx
-eEYhfAS2mbJiuXfNuYcLmd0DvghL2LEqvdhsmWoiwmrBye7GHjmqKmaV8PPTohjz
-3NtzfyhEW4SjpZkhiIwgoVulREwl7PLGR2Wn5O86+fuhQD4sim5KjO5RViY+QT+/
-hYdlgCrrdeK9PMEhAZGIGEEqOlFgtEIjiSWGNa8n4XVzoVOZxwgT9a9nCU4O7OBW
-WS/RI4zpbruasWL1zO3WBPqf95sgiT3HC6xfTgvg5QWZM/43vxG7V0V0u09+fgQr
-BxjNEe5W5d6qaLLbY3Jo912zzrkY67AsEgo1QrnJbOwXh3a/AQ==
+CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCqKk/yyMB1teKEMlgXGW6IRQnMHW/y
+yj4W9+4ef36fFwlftINoJd/Qh6zq2Ysjkn5nxC2PjsKBBAzJgQKkGQ0i7HxVKMWt
+bzbRTl8058wZwVAItihkyGubmWK3DI+uhR11rIWp6v02SJua/kyOm6qMWuf+B8cV
++AHlIaI5s95Be/CiPRcxbKXJnsF4k605mW8jJQhBEJbkBy20Hzm8tLAGFWa48AOZ
+YRnKymDu8Y6yMxCz1hjpf4m6qrvcLj+wRRcZepQBUcOY28hS4GBsx/jhwoJj++jH
+4AIthNE6CNTxhjXzRGsVcUoGIhYaRrT2doovInCU6ozWmJKqz54sIf/nAgMBAAGg
+ADANBgkqhkiG9w0BAQsFAAOCAQEAHwBg3rlAQDlDQLhb2NJg240vkRwym7sLGMtP
+ELOgSNoCNQ+Jr5oEoHkSRRMkTq56EAtuoa3jSp+z0ebYb23HCvoXu4I/wKNsr8EB
+EMUzhquJQSNBwCeeCQUv/8FHng7bkkdyjX1tvF+3pq1IveH8DADFA09vIztY1BFk
+xex1XSh0rBk7rW5yyDlC7hden/EsjB6uSX0gvMXeDwN3g79fKYJCAHYSs+89+/xZ
+rnEhlf5584SiYKQ1AZg+9Ce4b2hsaeRKSQSP3Zza+cqDTfInVdB9VyY+ycPqESZH
+fj46qklQoSULLUK+7gvrBszm0C3sL97VmOeW9/ikqg/882ZBbw==
 -----END CERTIFICATE REQUEST-----
 `)
 
@@ -992,37 +1383,37 @@ func trafficcontrollerCsr() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "trafficcontroller.csr", size: 903, mode: os.FileMode(292), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "trafficcontroller.csr", size: 903, mode: os.FileMode(292), modTime: time.Unix(1534868438, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
 var _trafficcontrollerKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 `)
 
@@ -1036,7 +1427,7 @@ func trafficcontrollerKey() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "trafficcontroller.key", size: 1679, mode: os.FileMode(288), modTime: time.Unix(1531927287, 0)}
+	info := bindataFileInfo{name: "trafficcontroller.key", size: 1675, mode: os.FileMode(288), modTime: time.Unix(1534868438, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -1096,27 +1487,36 @@ var _bindata = map[string]func() (*asset, error){
 	"cc_trafficcontroller.crt": cc_trafficcontrollerCrt,
 	"cc_trafficcontroller.csr": cc_trafficcontrollerCsr,
 	"cc_trafficcontroller.key": cc_trafficcontrollerKey,
-	"doppler.crt":              dopplerCrt,
-	"doppler.csr":              dopplerCsr,
-	"doppler.key":              dopplerKey,
-	"loggregator-ca.crl":       loggregatorCaCrl,
-	"loggregator-ca.crt":       loggregatorCaCrt,
-	"loggregator-ca.key":       loggregatorCaKey,
-	"metron.crt":               metronCrt,
-	"metron.csr":               metronCsr,
-	"metron.key":               metronKey,
-	"reverselogproxy.crt":      reverselogproxyCrt,
-	"reverselogproxy.csr":      reverselogproxyCsr,
-	"reverselogproxy.key":      reverselogproxyKey,
-	"rlpgateway.crt":           rlpgatewayCrt,
-	"rlpgateway.csr":           rlpgatewayCsr,
-	"rlpgateway.key":           rlpgatewayKey,
-	"syslogdrainbinder.crt":    syslogdrainbinderCrt,
-	"syslogdrainbinder.csr":    syslogdrainbinderCsr,
-	"syslogdrainbinder.key":    syslogdrainbinderKey,
-	"trafficcontroller.crt":    trafficcontrollerCrt,
-	"trafficcontroller.csr":    trafficcontrollerCsr,
-	"trafficcontroller.key":    trafficcontrollerKey,
+	"doppler.crt": dopplerCrt,
+	"doppler.csr": dopplerCsr,
+	"doppler.key": dopplerKey,
+	"log-cache-trafficcontroller.crt": logCacheTrafficcontrollerCrt,
+	"log-cache-trafficcontroller.csr": logCacheTrafficcontrollerCsr,
+	"log-cache-trafficcontroller.key": logCacheTrafficcontrollerKey,
+	"log-cache.crl": logCacheCrl,
+	"log-cache.crt": logCacheCrt,
+	"log-cache.key": logCacheKey,
+	"log_cache.crt": log_cacheCrt,
+	"log_cache.csr": log_cacheCsr,
+	"log_cache.key": log_cacheKey,
+	"loggregator-ca.crl": loggregatorCaCrl,
+	"loggregator-ca.crt": loggregatorCaCrt,
+	"loggregator-ca.key": loggregatorCaKey,
+	"metron.crt": metronCrt,
+	"metron.csr": metronCsr,
+	"metron.key": metronKey,
+	"reverselogproxy.crt": reverselogproxyCrt,
+	"reverselogproxy.csr": reverselogproxyCsr,
+	"reverselogproxy.key": reverselogproxyKey,
+	"rlpgateway.crt": rlpgatewayCrt,
+	"rlpgateway.csr": rlpgatewayCsr,
+	"rlpgateway.key": rlpgatewayKey,
+	"syslogdrainbinder.crt": syslogdrainbinderCrt,
+	"syslogdrainbinder.csr": syslogdrainbinderCsr,
+	"syslogdrainbinder.key": syslogdrainbinderKey,
+	"trafficcontroller.crt": trafficcontrollerCrt,
+	"trafficcontroller.csr": trafficcontrollerCsr,
+	"trafficcontroller.key": trafficcontrollerKey,
 }
 
 // AssetDir returns the file names below a certain
@@ -1158,32 +1558,40 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
-
 var _bintree = &bintree{nil, map[string]*bintree{
-	"cc_trafficcontroller.crt": {cc_trafficcontrollerCrt, map[string]*bintree{}},
-	"cc_trafficcontroller.csr": {cc_trafficcontrollerCsr, map[string]*bintree{}},
-	"cc_trafficcontroller.key": {cc_trafficcontrollerKey, map[string]*bintree{}},
-	"doppler.crt":              {dopplerCrt, map[string]*bintree{}},
-	"doppler.csr":              {dopplerCsr, map[string]*bintree{}},
-	"doppler.key":              {dopplerKey, map[string]*bintree{}},
-	"loggregator-ca.crl":       {loggregatorCaCrl, map[string]*bintree{}},
-	"loggregator-ca.crt":       {loggregatorCaCrt, map[string]*bintree{}},
-	"loggregator-ca.key":       {loggregatorCaKey, map[string]*bintree{}},
-	"metron.crt":               {metronCrt, map[string]*bintree{}},
-	"metron.csr":               {metronCsr, map[string]*bintree{}},
-	"metron.key":               {metronKey, map[string]*bintree{}},
-	"reverselogproxy.crt":      {reverselogproxyCrt, map[string]*bintree{}},
-	"reverselogproxy.csr":      {reverselogproxyCsr, map[string]*bintree{}},
-	"reverselogproxy.key":      {reverselogproxyKey, map[string]*bintree{}},
-	"rlpgateway.crt":           {rlpgatewayCrt, map[string]*bintree{}},
-	"rlpgateway.csr":           {rlpgatewayCsr, map[string]*bintree{}},
-	"rlpgateway.key":           {rlpgatewayKey, map[string]*bintree{}},
-	"syslogdrainbinder.crt":    {syslogdrainbinderCrt, map[string]*bintree{}},
-	"syslogdrainbinder.csr":    {syslogdrainbinderCsr, map[string]*bintree{}},
-	"syslogdrainbinder.key":    {syslogdrainbinderKey, map[string]*bintree{}},
-	"trafficcontroller.crt":    {trafficcontrollerCrt, map[string]*bintree{}},
-	"trafficcontroller.csr":    {trafficcontrollerCsr, map[string]*bintree{}},
-	"trafficcontroller.key":    {trafficcontrollerKey, map[string]*bintree{}},
+	"cc_trafficcontroller.crt": &bintree{cc_trafficcontrollerCrt, map[string]*bintree{}},
+	"cc_trafficcontroller.csr": &bintree{cc_trafficcontrollerCsr, map[string]*bintree{}},
+	"cc_trafficcontroller.key": &bintree{cc_trafficcontrollerKey, map[string]*bintree{}},
+	"doppler.crt": &bintree{dopplerCrt, map[string]*bintree{}},
+	"doppler.csr": &bintree{dopplerCsr, map[string]*bintree{}},
+	"doppler.key": &bintree{dopplerKey, map[string]*bintree{}},
+	"log-cache-trafficcontroller.crt": &bintree{logCacheTrafficcontrollerCrt, map[string]*bintree{}},
+	"log-cache-trafficcontroller.csr": &bintree{logCacheTrafficcontrollerCsr, map[string]*bintree{}},
+	"log-cache-trafficcontroller.key": &bintree{logCacheTrafficcontrollerKey, map[string]*bintree{}},
+	"log-cache.crl": &bintree{logCacheCrl, map[string]*bintree{}},
+	"log-cache.crt": &bintree{logCacheCrt, map[string]*bintree{}},
+	"log-cache.key": &bintree{logCacheKey, map[string]*bintree{}},
+	"log_cache.crt": &bintree{log_cacheCrt, map[string]*bintree{}},
+	"log_cache.csr": &bintree{log_cacheCsr, map[string]*bintree{}},
+	"log_cache.key": &bintree{log_cacheKey, map[string]*bintree{}},
+	"loggregator-ca.crl": &bintree{loggregatorCaCrl, map[string]*bintree{}},
+	"loggregator-ca.crt": &bintree{loggregatorCaCrt, map[string]*bintree{}},
+	"loggregator-ca.key": &bintree{loggregatorCaKey, map[string]*bintree{}},
+	"metron.crt": &bintree{metronCrt, map[string]*bintree{}},
+	"metron.csr": &bintree{metronCsr, map[string]*bintree{}},
+	"metron.key": &bintree{metronKey, map[string]*bintree{}},
+	"reverselogproxy.crt": &bintree{reverselogproxyCrt, map[string]*bintree{}},
+	"reverselogproxy.csr": &bintree{reverselogproxyCsr, map[string]*bintree{}},
+	"reverselogproxy.key": &bintree{reverselogproxyKey, map[string]*bintree{}},
+	"rlpgateway.crt": &bintree{rlpgatewayCrt, map[string]*bintree{}},
+	"rlpgateway.csr": &bintree{rlpgatewayCsr, map[string]*bintree{}},
+	"rlpgateway.key": &bintree{rlpgatewayKey, map[string]*bintree{}},
+	"syslogdrainbinder.crt": &bintree{syslogdrainbinderCrt, map[string]*bintree{}},
+	"syslogdrainbinder.csr": &bintree{syslogdrainbinderCsr, map[string]*bintree{}},
+	"syslogdrainbinder.key": &bintree{syslogdrainbinderKey, map[string]*bintree{}},
+	"trafficcontroller.crt": &bintree{trafficcontrollerCrt, map[string]*bintree{}},
+	"trafficcontroller.csr": &bintree{trafficcontrollerCsr, map[string]*bintree{}},
+	"trafficcontroller.key": &bintree{trafficcontrollerKey, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
@@ -1232,3 +1640,4 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
+

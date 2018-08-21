@@ -22,9 +22,10 @@ type GRPC struct {
 
 // LogCacheTLSConfig stores TLS configuration for gRPC communcation to router and agent.
 type LogCacheTLSConfig struct {
-	CAFile   string `env:"RECENT_LOG_PROVIDER_CA_FILE"`
-	CertFile string `env:"RECENT_LOG_PROVIDE_CERT_FILE"`
-	KeyFile  string `env:"RECENT_LOG_PROVIDE_KEY_FILE"`
+	CAFile     string `env:"LOG_CACHE_CA_FILE"`
+	CertFile   string `env:"LOG_CACHE_CERT_FILE"`
+	KeyFile    string `env:"LOG_CACHE_KEY_FILE"`
+	ServerName string `env:"LOG_CACHE_SERVER_NAME"`
 }
 
 // CCTLSClientConfig stores TLS cofiguration for communication with cloud
@@ -66,6 +67,9 @@ func LoadConfig() (*Config, error) {
 	config := Config{
 		MetricEmitterInterval: time.Minute,
 		HealthAddr:            "localhost:14825",
+		LogCacheTLSConfig: LogCacheTLSConfig{
+			ServerName: "log_cache",
+		},
 	}
 
 	err := envstruct.Load(&config)

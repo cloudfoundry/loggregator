@@ -43,6 +43,11 @@ func BuildTrafficControllerConf(dopplerGRPCPort, agentPort, logCachePort int) tc
 			KeyFile:  Cert("trafficcontroller.key"),
 			CAFile:   Cert("loggregator-ca.crt"),
 		},
+		LogCacheTLSConfig: tcConf.LogCacheTLSConfig{
+			CertFile: Cert("log-cache-trafficcontroller.crt"),
+			KeyFile:  Cert("log-cache-trafficcontroller.key"),
+			CAFile:   Cert("log-cache.crt"),
+		},
 	}
 }
 

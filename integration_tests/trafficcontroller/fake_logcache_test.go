@@ -8,6 +8,8 @@ import (
 
 	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	"code.cloudfoundry.org/loggregator/plumbing"
+	"code.cloudfoundry.org/loggregator/testservers"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -22,14 +24,23 @@ type stubGrpcLogCache struct {
 
 func newStubGrpcLogCache(port int) *stubGrpcLogCache {
 	s := &stubGrpcLogCache{}
+	lcCredentials, err := plumbing.NewServerCredentials(
+		testservers.Cert("log_cache.crt"),
+		testservers.Cert("log_cache.key"),
+		testservers.Cert("log-cache.crt"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(err)
 	}
+
 	s.lis = lis
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.Creds(lcCredentials))
 	logcache_v1.RegisterEgressServer(srv, s)
-	logcache_v1.RegisterPromQLQuerierServer(srv, s)
 
 	go func() {
 		err = srv.Serve(lis)
@@ -81,10 +92,6 @@ func (s *stubGrpcLogCache) Read(c context.Context, r *logcache_v1.ReadRequest) (
 			},
 		},
 	}, nil
-}
-
-func (s *stubGrpcLogCache) InstantQuery(c context.Context, r *logcache_v1.PromQL_InstantQueryRequest) (*logcache_v1.PromQL_QueryResult, error) {
-	panic("InstantQuery is not implemented")
 }
 
 func (s *stubGrpcLogCache) Meta(context.Context, *logcache_v1.MetaRequest) (*logcache_v1.MetaResponse, error) {
