@@ -2,12 +2,14 @@ package agent_test
 
 import (
 	"net"
+	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 )
 
 type DopplerIngestorServer interface {
@@ -40,7 +42,15 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
-	s := grpc.NewServer(grpc.Creds(transportCreds))
+	s := grpc.NewServer(
+		grpc.Creds(transportCreds),
+		grpc.KeepaliveEnforcementPolicy(
+			keepalive.EnforcementPolicy{
+				MinTime:             10 * time.Second,
+				PermitWithoutStream: true,
+			},
+		),
+	)
 	plumbing.RegisterDopplerIngestorServer(s, mockDopplerV1)
 	loggregator_v2.RegisterIngressServer(s, mockDopplerV2)
 
