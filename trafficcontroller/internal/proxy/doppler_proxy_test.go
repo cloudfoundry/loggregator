@@ -54,6 +54,7 @@ var _ = Describe("DopplerProxy", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 
 		recorder = httptest.NewRecorder()
@@ -239,6 +240,31 @@ var _ = Describe("DopplerProxy", func() {
 
 		dopplerProxy.ServeHTTP(recorder, req)
 		Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+	})
+
+	It("accepts non-GUIDs when disableAccessControl is set", func() {
+		req, _ := http.NewRequest("GET", "/apps/not-a-valid-guid/recentlogs?limit=2", nil)
+		req.Header.Add("Authorization", "token")
+		recentLogResp := [][]byte{
+			[]byte("log1"),
+			[]byte("log2"),
+			[]byte("log3"),
+		}
+		mockGrpcConnector.RecentLogsOutput.Ret0 <- recentLogResp
+
+		dopplerProxy = proxy.NewDopplerProxy(
+			auth.Authorize,
+			adminAuth.Authorize,
+			mockGrpcConnector,
+			"cookieDomain",
+			50*time.Millisecond,
+			time.Hour,
+			mockSender,
+			mockHealth,
+			true,
+		)
+		dopplerProxy.ServeHTTP(recorder, req)
+		Expect(recorder.Code).To(Equal(http.StatusOK))
 	})
 
 	It("ignores limit if it is negative", func() {

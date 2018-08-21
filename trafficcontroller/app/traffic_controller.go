@@ -138,6 +138,7 @@ func (t *TrafficController) Start() {
 			5*time.Second,
 			t.metricClient,
 			healthRegistry,
+			t.disableAccessControl,
 		),
 	)
 

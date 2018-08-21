@@ -55,6 +55,7 @@ func NewDopplerProxy(
 	slowConsumerTimeout time.Duration,
 	m MetricClient,
 	health Health,
+	disableAccessControl bool,
 ) *DopplerProxy {
 	// metric-documentation-v2: (doppler_proxy.firehoses) Number of open firehose streams
 	firehoseConnMetric := m.NewGauge("doppler_proxy.firehoses", "connections",
@@ -69,7 +70,7 @@ func NewDopplerProxy(
 	r := mux.NewRouter()
 
 	adminAccessMiddleware := NewAdminAccessMiddleware(adminAuthorizer)
-	logAccessMiddleware := NewLogAccessMiddleware(logAuthorizer)
+	logAccessMiddleware := NewLogAccessMiddleware(logAuthorizer, disableAccessControl)
 	corsMiddleware := NewCORSMiddleware()
 
 	r.Handle(

@@ -10,12 +10,14 @@ import (
 )
 
 type LogAccessMiddleware struct {
-	authorize auth.LogAccessAuthorizer
+	authorize            auth.LogAccessAuthorizer
+	disableAccessControl bool
 }
 
-func NewLogAccessMiddleware(authorize auth.LogAccessAuthorizer) *LogAccessMiddleware {
+func NewLogAccessMiddleware(authorize auth.LogAccessAuthorizer, disableAccessControl bool) *LogAccessMiddleware {
 	return &LogAccessMiddleware{
-		authorize: authorize,
+		authorize:            authorize,
+		disableAccessControl: disableAccessControl,
 	}
 }
 
@@ -24,6 +26,11 @@ func (m *LogAccessMiddleware) Wrap(h http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appID := mux.Vars(r)["appID"]
+		if m.disableAccessControl {
+			h.ServeHTTP(w, r)
+			return
+		}
+
 		if !guid.MatchString(appID) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -41,7 +48,6 @@ func (m *LogAccessMiddleware) Wrap(h http.Handler) http.Handler {
 			default:
 				status = http.StatusInternalServerError
 			}
-
 			w.WriteHeader(status)
 
 			return

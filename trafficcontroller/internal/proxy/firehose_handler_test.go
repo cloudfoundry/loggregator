@@ -51,8 +51,8 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
-
 		req, _ := http.NewRequest("GET", "/firehose/abc-123", nil)
 		req.Header.Add("Authorization", "token")
 
@@ -75,6 +75,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=logs", nil)
@@ -104,6 +105,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=metrics", nil)
@@ -133,6 +135,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 
 		adminAuth.Result = AuthorizerResult{Status: http.StatusUnauthorized, ErrorMessage: "Error: Invalid authorization"}
@@ -159,6 +162,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 
 		req, _ := http.NewRequest("GET", "/firehose/", nil)
@@ -179,6 +183,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 		server := httptest.NewServer(handler)
 		defer server.CloseClientConnections()
@@ -207,6 +212,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			false,
 		)
 		server := httptest.NewServer(handler)
 		defer server.CloseClientConnections()
