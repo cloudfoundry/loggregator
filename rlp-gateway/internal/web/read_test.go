@@ -135,7 +135,7 @@ var _ = Describe("Read", func() {
 					Message: &loggregator_v2.Envelope_Gauge{
 						Gauge: &loggregator_v2.Gauge{
 							Metrics: map[string]*loggregator_v2.GaugeValue{
-								"cpu": &loggregator_v2.GaugeValue{
+								"cpu": {
 									Unit:  "percent",
 									Value: 0.0,
 								},

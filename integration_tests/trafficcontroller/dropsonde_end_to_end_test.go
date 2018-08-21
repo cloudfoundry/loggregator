@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"code.cloudfoundry.org/loggregator/plumbing"
@@ -23,7 +22,7 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 	var wsPort int
 
 	BeforeEach(func() {
-		cfg := testservers.BuildTrafficControllerConf(1236, 37474)
+		cfg := testservers.BuildTrafficControllerConf(1236, 37474, 1287)
 
 		var tcPorts testservers.TrafficControllerPorts
 		tcCleanupFunc, tcPorts = testservers.StartTrafficController(cfg)
@@ -43,160 +42,164 @@ var _ = Describe("TrafficController for dropsonde messages", func() {
 			}
 			return err
 		}, 10).Should(Succeed())
-
-		fakeDoppler = NewFakeDoppler()
-		fakeDoppler.Start()
-		dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
 	})
 
-	AfterEach(func(done Done) {
-		defer close(done)
-		fakeDoppler.Stop()
-	}, 30)
-
-	Context("Streaming", func() {
-		var (
-			client   *consumer.Consumer
-			messages <-chan *events.Envelope
-			errors   <-chan error
-		)
-
-		JustBeforeEach(func() {
-			client = consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
-			messages, errors = client.StreamWithoutReconnect(APP_ID, AUTH_TOKEN)
-		})
-
-		It("passes messages through", func() {
-			var grpcRequest *plumbing.SubscriptionRequest
-			Eventually(fakeDoppler.SubscriptionRequests, 10).Should(Receive(&grpcRequest))
-			Expect(grpcRequest.Filter).ToNot(BeNil())
-			Expect(grpcRequest.Filter.AppID).To(Equal(APP_ID))
-
-			currentTime := time.Now().UnixNano()
-			dropsondeMessage := makeDropsondeMessage("Hello through NOAA", APP_ID, currentTime)
-			fakeDoppler.SendLogMessage(dropsondeMessage)
-
-			var receivedEnvelope *events.Envelope
-			Eventually(messages).Should(Receive(&receivedEnvelope))
-			Consistently(errors).ShouldNot(Receive())
-
-			receivedMessage := receivedEnvelope.GetLogMessage()
-			Expect(receivedMessage.GetMessage()).To(BeEquivalentTo("Hello through NOAA"))
-			Expect(receivedMessage.GetAppId()).To(Equal(APP_ID))
-			Expect(receivedMessage.GetTimestamp()).To(Equal(currentTime))
-
-			client.Close()
-		})
-
-		It("closes the upstream websocket connection when done", func() {
-			var server plumbing.Doppler_BatchSubscribeServer
-			Eventually(fakeDoppler.SubscribeServers, 10).Should(Receive(&server))
-
-			client.Close()
-
-			Eventually(server.Context().Done()).Should(BeClosed())
-		})
-	})
-
-	Context("Firehose", func() {
-		var (
-			messages <-chan *events.Envelope
-			errors   <-chan error
-		)
-
-		It("passes messages through for every app for uaa admins", func() {
-			client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
-			defer client.Close()
-			messages, errors = client.FirehoseWithoutReconnect(SUBSCRIPTION_ID, AUTH_TOKEN)
-
-			var grpcRequest *plumbing.SubscriptionRequest
-			Eventually(fakeDoppler.SubscriptionRequests, 10).Should(Receive(&grpcRequest))
-			Expect(grpcRequest.ShardID).To(Equal(SUBSCRIPTION_ID))
-
-			currentTime := time.Now().UnixNano()
-			dropsondeMessage := makeDropsondeMessage("Hello through NOAA", APP_ID, currentTime)
-			fakeDoppler.SendLogMessage(dropsondeMessage)
-
-			var receivedEnvelope *events.Envelope
-			Eventually(messages).Should(Receive(&receivedEnvelope))
-			Consistently(errors).ShouldNot(Receive())
-
-			Expect(receivedEnvelope.GetEventType()).To(Equal(events.Envelope_LogMessage))
-			receivedMessage := receivedEnvelope.GetLogMessage()
-			Expect(receivedMessage.GetMessage()).To(BeEquivalentTo("Hello through NOAA"))
-			Expect(receivedMessage.GetAppId()).To(Equal(APP_ID))
-			Expect(receivedMessage.GetTimestamp()).To(Equal(currentTime))
-		})
-	})
-
-	Context("Recent", func() {
-		var expectedMessages [][]byte
-
+	Describe("Loggregator Router Paths", func() {
 		BeforeEach(func() {
-			expectedMessages = make([][]byte, 5)
-
-			for i := 0; i < 5; i++ {
-				message := makeDropsondeMessage(strconv.Itoa(i), "efe5c422-e8a7-42c2-a52b-98bffd8d6a07", 1234)
-				expectedMessages[i] = message
-				fakeDoppler.SendLogMessage(message)
-			}
-			fakeDoppler.CloseLogMessageStream()
+			fakeDoppler = NewFakeDoppler()
+			fakeDoppler.Start()
+			dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
 		})
 
-		It("returns a multi-part HTTP response with all recent messages", func() {
-			client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+		AfterEach(func(done Done) {
+			defer close(done)
+			fakeDoppler.Stop()
+		}, 30)
 
-			Eventually(func() bool {
-				messages, err := client.RecentLogs("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
-				Expect(err).NotTo(HaveOccurred())
-				select {
-				case request := <-fakeDoppler.RecentLogsRequests:
-					Expect(request.AppID).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
-					Expect(messages).To(HaveLen(5))
-					for i, message := range messages {
-						Expect(message.GetMessage()).To(BeEquivalentTo(strconv.Itoa(i)))
-					}
-					return true
-				default:
-					return false
+		Context("Streaming", func() {
+			var (
+				client   *consumer.Consumer
+				messages <-chan *events.Envelope
+				errors   <-chan error
+			)
+
+			JustBeforeEach(func() {
+				client = consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+				messages, errors = client.StreamWithoutReconnect(APP_ID, AUTH_TOKEN)
+			})
+
+			It("passes messages through", func() {
+				var grpcRequest *plumbing.SubscriptionRequest
+				Eventually(fakeDoppler.SubscriptionRequests, 10).Should(Receive(&grpcRequest))
+				Expect(grpcRequest.Filter).ToNot(BeNil())
+				Expect(grpcRequest.Filter.AppID).To(Equal(APP_ID))
+
+				currentTime := time.Now().UnixNano()
+				dropsondeMessage := makeDropsondeMessage("Hello through NOAA", APP_ID, currentTime)
+				fakeDoppler.SendLogMessage(dropsondeMessage)
+
+				var receivedEnvelope *events.Envelope
+				Eventually(messages).Should(Receive(&receivedEnvelope))
+				Consistently(errors).ShouldNot(Receive())
+
+				receivedMessage := receivedEnvelope.GetLogMessage()
+				Expect(receivedMessage.GetMessage()).To(BeEquivalentTo("Hello through NOAA"))
+				Expect(receivedMessage.GetAppId()).To(Equal(APP_ID))
+				Expect(receivedMessage.GetTimestamp()).To(Equal(currentTime))
+
+				client.Close()
+			})
+
+			It("closes the upstream websocket connection when done", func() {
+				var server plumbing.Doppler_BatchSubscribeServer
+				Eventually(fakeDoppler.SubscribeServers, 10).Should(Receive(&server))
+
+				client.Close()
+
+				Eventually(server.Context().Done()).Should(BeClosed())
+			})
+		})
+
+		Context("Firehose", func() {
+			var (
+				messages <-chan *events.Envelope
+				errors   <-chan error
+			)
+
+			It("passes messages through for every app for uaa admins", func() {
+				client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+				defer client.Close()
+				messages, errors = client.FirehoseWithoutReconnect(SUBSCRIPTION_ID, AUTH_TOKEN)
+
+				var grpcRequest *plumbing.SubscriptionRequest
+				Eventually(fakeDoppler.SubscriptionRequests, 10).Should(Receive(&grpcRequest))
+				Expect(grpcRequest.ShardID).To(Equal(SUBSCRIPTION_ID))
+
+				currentTime := time.Now().UnixNano()
+				dropsondeMessage := makeDropsondeMessage("Hello through NOAA", APP_ID, currentTime)
+				fakeDoppler.SendLogMessage(dropsondeMessage)
+
+				var receivedEnvelope *events.Envelope
+				Eventually(messages).Should(Receive(&receivedEnvelope))
+				Consistently(errors).ShouldNot(Receive())
+
+				Expect(receivedEnvelope.GetEventType()).To(Equal(events.Envelope_LogMessage))
+				receivedMessage := receivedEnvelope.GetLogMessage()
+				Expect(receivedMessage.GetMessage()).To(BeEquivalentTo("Hello through NOAA"))
+				Expect(receivedMessage.GetAppId()).To(Equal(APP_ID))
+				Expect(receivedMessage.GetTimestamp()).To(Equal(currentTime))
+			})
+		})
+
+		Context("ContainerMetrics", func() {
+			BeforeEach(func() {
+				for i := 0; i < 5; i++ {
+					message := makeContainerMetricMessage("appID", i, i, i, i, 100000)
+					fakeDoppler.SendLogMessage(message)
 				}
-			}, 5).Should(BeTrue())
+
+				oldmessage := makeContainerMetricMessage("appID", 1, 6, 7, 8, 50000)
+				fakeDoppler.SendLogMessage(oldmessage)
+
+				fakeDoppler.CloseLogMessageStream()
+			})
+
+			It("returns a multi-part HTTP response with the most recent container metrics for all instances for a given app", func() {
+				client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+
+				Eventually(func() bool {
+					messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
+					Expect(err).NotTo(HaveOccurred())
+
+					select {
+					case request := <-fakeDoppler.ContainerMetricsRequests:
+						Expect(request.AppID).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
+						Expect(messages).To(HaveLen(5))
+						for i, message := range messages {
+							Expect(message.GetInstanceIndex()).To(BeEquivalentTo(i))
+							Expect(message.GetCpuPercentage()).To(BeEquivalentTo(i))
+						}
+						return true
+					default:
+						return false
+					}
+				}, 5).Should(BeTrue())
+			})
 		})
 	})
 
-	Context("ContainerMetrics", func() {
+	Describe("LogCache API Paths", func() {
+		var (
+			logCache *stubGrpcLogCache
+		)
 		BeforeEach(func() {
-			for i := 0; i < 5; i++ {
-				message := makeContainerMetricMessage("appID", i, i, i, i, 100000)
-				fakeDoppler.SendLogMessage(message)
-			}
+			fakeDoppler = NewFakeDoppler()
+			fakeDoppler.Start()
+			dropsondeEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, wsPort)
 
-			oldmessage := makeContainerMetricMessage("appID", 1, 6, 7, 8, 50000)
-			fakeDoppler.SendLogMessage(oldmessage)
-
-			fakeDoppler.CloseLogMessageStream()
+			logCache = newStubGrpcLogCache(1287)
 		})
 
-		It("returns a multi-part HTTP response with the most recent container metrics for all instances for a given app", func() {
-			client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
+		AfterEach(func(done Done) {
+			defer close(done)
+			fakeDoppler.Stop()
+		}, 30)
 
-			Eventually(func() bool {
-				messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
-				Expect(err).NotTo(HaveOccurred())
+		Context("Recent", func() {
+			It("returns a multi-part HTTP response with all recent messages", func() {
+				client := consumer.New(dropsondeEndpoint, &tls.Config{}, nil)
 
-				select {
-				case request := <-fakeDoppler.ContainerMetricsRequests:
-					Expect(request.AppID).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
-					Expect(messages).To(HaveLen(5))
-					for i, message := range messages {
-						Expect(message.GetInstanceIndex()).To(BeEquivalentTo(i))
-						Expect(message.GetCpuPercentage()).To(BeEquivalentTo(i))
+				Eventually(func() int {
+					messages, err := client.RecentLogs("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
+					Expect(err).NotTo(HaveOccurred())
+
+					if len(logCache.requests()) > 0 {
+						Expect(logCache.requests()[0].SourceId).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
 					}
-					return true
-				default:
-					return false
-				}
-			}, 5).Should(BeTrue())
+
+					return len(messages)
+				}, 5).Should(Equal(2))
+			})
 		})
 	})
 

@@ -51,6 +51,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 
 		req, _ := http.NewRequest("GET", "/firehose/abc-123", nil)
@@ -75,6 +76,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=logs", nil)
@@ -104,6 +106,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=metrics", nil)
@@ -133,6 +136,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 
 		adminAuth.Result = AuthorizerResult{Status: http.StatusUnauthorized, ErrorMessage: "Error: Invalid authorization"}
@@ -159,6 +163,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 
 		req, _ := http.NewRequest("GET", "/firehose/", nil)
@@ -179,6 +184,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 		server := httptest.NewServer(handler)
 		defer server.CloseClientConnections()
@@ -207,6 +213,7 @@ var _ = Describe("FirehoseHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 		server := httptest.NewServer(handler)
 		defer server.CloseClientConnections()

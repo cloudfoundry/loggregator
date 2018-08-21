@@ -70,14 +70,6 @@ type mockGrpcConnector struct {
 	ContainerMetricsOutput struct {
 		Ret0 chan [][]byte
 	}
-	RecentLogsCalled chan bool
-	RecentLogsInput  struct {
-		Ctx   chan context.Context
-		AppID chan string
-	}
-	RecentLogsOutput struct {
-		Ret0 chan [][]byte
-	}
 }
 
 func newMockGrpcConnector() *mockGrpcConnector {
@@ -91,10 +83,6 @@ func newMockGrpcConnector() *mockGrpcConnector {
 	m.ContainerMetricsInput.Ctx = make(chan context.Context, 100)
 	m.ContainerMetricsInput.AppID = make(chan string, 100)
 	m.ContainerMetricsOutput.Ret0 = make(chan [][]byte, 100)
-	m.RecentLogsCalled = make(chan bool, 100)
-	m.RecentLogsInput.Ctx = make(chan context.Context, 100)
-	m.RecentLogsInput.AppID = make(chan string, 100)
-	m.RecentLogsOutput.Ret0 = make(chan [][]byte, 100)
 	return m
 }
 func (m *mockGrpcConnector) Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error) {
@@ -108,12 +96,6 @@ func (m *mockGrpcConnector) ContainerMetrics(ctx context.Context, appID string) 
 	m.ContainerMetricsInput.Ctx <- ctx
 	m.ContainerMetricsInput.AppID <- appID
 	return <-m.ContainerMetricsOutput.Ret0
-}
-func (m *mockGrpcConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
-	m.RecentLogsCalled <- true
-	m.RecentLogsInput.Ctx <- ctx
-	m.RecentLogsInput.AppID <- appID
-	return <-m.RecentLogsOutput.Ret0
 }
 
 type mockContext struct {

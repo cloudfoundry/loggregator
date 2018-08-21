@@ -43,6 +43,7 @@ var _ = Describe("StreamHandler", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			newSpyRecentLogsHandler(),
 		)
 
 		recorder = httptest.NewRecorder()

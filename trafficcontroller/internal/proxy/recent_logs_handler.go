@@ -2,23 +2,36 @@ package proxy
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
+	logcache "code.cloudfoundry.org/go-log-cache"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-
+	"code.cloudfoundry.org/loggregator/plumbing/conversion"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 )
 
+type LogCacheClient interface {
+	Read(
+		ctx context.Context,
+		sourceID string,
+		start time.Time,
+		opts ...logcache.ReadOption,
+	) ([]*loggregator_v2.Envelope, error)
+}
+
 type RecentLogsHandler struct {
-	grpcConn      grpcConnector
-	timeout       time.Duration
-	latencyMetric *metricemitter.Gauge
+	logCacheClient LogCacheClient
+	timeout        time.Duration
+	latencyMetric  *metricemitter.Gauge
 }
 
 func NewRecentLogsHandler(
-	grpcConn grpcConnector,
+	logCacheClient LogCacheClient,
 	t time.Duration,
 	m MetricClient,
 ) *RecentLogsHandler {
@@ -29,9 +42,9 @@ func NewRecentLogsHandler(
 	)
 
 	return &RecentLogsHandler{
-		grpcConn:      grpcConn,
-		timeout:       t,
-		latencyMetric: latencyMetric,
+		logCacheClient: logCacheClient,
+		timeout:        t,
+		latencyMetric:  latencyMetric,
 	}
 }
 
@@ -48,12 +61,37 @@ func (h *RecentLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, _ = context.WithDeadline(ctx, time.Now().Add(h.timeout))
 	defer cancel()
 
-	resp := h.grpcConn.RecentLogs(ctx, appID)
 	limit, ok := limitFrom(r)
-	if ok && len(resp) > limit {
-		resp = resp[:limit]
+	if !ok {
+		limit = 1000
 	}
 
+	envelopes, err := h.logCacheClient.Read(
+		ctx,
+		appID,
+		time.Unix(0, 0),
+		logcache.WithLimit(limit),
+		logcache.WithDescending(),
+	)
+
+	if err != nil {
+		log.Printf("error communicating with log cache: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	var resp [][]byte
+	for _, v2e := range envelopes {
+		for _, v1e := range conversion.ToV1(v2e) {
+			v1bytes, err := proto.Marshal(v1e)
+			if err != nil {
+				log.Printf("error marshalling v1 envelope for recent log response: %s", err)
+				continue
+			}
+			resp = append(resp, v1bytes)
+		}
+	}
 	serveMultiPartResponse(w, resp)
 }
 
