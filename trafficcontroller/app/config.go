@@ -20,8 +20,8 @@ type GRPC struct {
 	KeyFile  string `env:"ROUTER_KEY_FILE"`
 }
 
-// RecentLogProviderTLSConfig stores TLS configuration for gRPC communcation to router and agent.
-type RecentLogProviderTLSConfig struct {
+// LogCacheTLSConfig stores TLS configuration for gRPC communcation to router and agent.
+type LogCacheTLSConfig struct {
 	CAFile   string `env:"RECENT_LOG_PROVIDER_CA_FILE"`
 	CertFile string `env:"RECENT_LOG_PROVIDE_CERT_FILE"`
 	KeyFile  string `env:"RECENT_LOG_PROVIDE_KEY_FILE"`
@@ -53,12 +53,12 @@ type Config struct {
 	HealthAddr            string        `env:"TRAFFIC_CONTROLLER_HEALTH_ADDR"`
 	DisableAccessControl  bool          `env:"TRAFFIC_CONTROLLER_DISABLE_ACCESS_CONTROL"`
 	RouterAddrs           []string      `env:"ROUTER_ADDRS"`
-	RecentLogProvider     string        `env:"RECENT_LOG_PROVIDER"`
+	LogCacheAddr          string        `env:"LOG_CACHE_ADDR"`
 
-	CCTLSClientConfig          CCTLSClientConfig
-	Agent                      Agent
-	GRPC                       GRPC
-	RecentLogProviderTLSConfig RecentLogProviderTLSConfig
+	CCTLSClientConfig CCTLSClientConfig
+	Agent             Agent
+	GRPC              GRPC
+	LogCacheTLSConfig LogCacheTLSConfig
 }
 
 // LoadConfig reads from the environment to create a Config.

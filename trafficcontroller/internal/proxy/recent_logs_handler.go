@@ -25,13 +25,13 @@ type LogCacheClient interface {
 }
 
 type RecentLogsHandler struct {
-	logCacheClient LogCacheClient
-	timeout        time.Duration
-	latencyMetric  *metricemitter.Gauge
+	recentLogProvider LogCacheClient
+	timeout           time.Duration
+	latencyMetric     *metricemitter.Gauge
 }
 
 func NewRecentLogsHandler(
-	logCacheClient LogCacheClient,
+	recentLogProvider LogCacheClient,
 	t time.Duration,
 	m MetricClient,
 ) *RecentLogsHandler {
@@ -42,9 +42,9 @@ func NewRecentLogsHandler(
 	)
 
 	return &RecentLogsHandler{
-		logCacheClient: logCacheClient,
-		timeout:        t,
-		latencyMetric:  latencyMetric,
+		recentLogProvider: recentLogProvider,
+		timeout:           t,
+		latencyMetric:     latencyMetric,
 	}
 }
 
@@ -66,7 +66,7 @@ func (h *RecentLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		limit = 1000
 	}
 
-	envelopes, err := h.logCacheClient.Read(
+	envelopes, err := h.recentLogProvider.Read(
 		ctx,
 		appID,
 		time.Unix(0, 0),

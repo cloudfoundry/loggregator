@@ -129,7 +129,7 @@ func (t *TrafficController) Start() {
 	pool := plumbing.NewPool(20, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(kp))
 	grpcConnector := plumbing.NewGRPCConnector(1000, pool, f, t.metricClient)
 
-	logCacheClient := logcache.NewClient(t.conf.RecentLogProvider, logcache.WithViaGRPC(grpc.WithInsecure()))
+	logCacheClient := logcache.NewClient(t.conf.LogCacheAddr, logcache.WithViaGRPC(grpc.WithInsecure()))
 	recentLogsHandler := proxy.NewRecentLogsHandler(logCacheClient, 5*time.Second, t.metricClient)
 
 	dopplerHandler := http.Handler(

@@ -18,7 +18,7 @@ func BuildTrafficControllerConf(dopplerGRPCPort, agentPort, logCachePort int) tc
 		IP:                    "127.0.0.1",
 		RouterAddrs:           []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
 		HealthAddr:            "localhost:0",
-		RecentLogProvider:     fmt.Sprintf("127.0.0.1:%d", logCachePort),
+		LogCacheAddr:          fmt.Sprintf("127.0.0.1:%d", logCachePort),
 		SystemDomain:          "vcap.me",
 		SkipCertVerify:        true,
 		ApiHost:               "http://127.0.0.1:65530",
