@@ -129,21 +129,28 @@ func (t *TrafficController) Start() {
 	pool := plumbing.NewPool(20, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(kp))
 	grpcConnector := plumbing.NewGRPCConnector(1000, pool, f, t.metricClient)
 
-	logCacheCreds, err := plumbing.NewClientCredentials(
-		t.conf.LogCacheTLSConfig.CertFile,
-		t.conf.LogCacheTLSConfig.KeyFile,
-		t.conf.LogCacheTLSConfig.CAFile,
-		t.conf.LogCacheTLSConfig.ServerName,
-	)
-	if err != nil {
-		log.Fatalf("Could not use LogCache creds for server: %s", err)
+	var logCacheClient *logcache.Client
+	recentLogsEnabled := false
+
+	if t.conf.LogCacheAddr != "" {
+		logCacheCreds, err := plumbing.NewClientCredentials(
+			t.conf.LogCacheTLSConfig.CertFile,
+			t.conf.LogCacheTLSConfig.KeyFile,
+			t.conf.LogCacheTLSConfig.CAFile,
+			t.conf.LogCacheTLSConfig.ServerName,
+		)
+		if err != nil {
+			log.Fatalf("Could not use LogCache creds for server: %s", err)
+		}
+
+		logCacheClient = logcache.NewClient(
+			t.conf.LogCacheAddr,
+			logcache.WithViaGRPC(grpc.WithTransportCredentials(logCacheCreds)),
+		)
+		recentLogsEnabled = true
 	}
 
-	logCacheClient := logcache.NewClient(
-		t.conf.LogCacheAddr,
-		logcache.WithViaGRPC(grpc.WithTransportCredentials(logCacheCreds)),
-	)
-	recentLogsHandler := proxy.NewRecentLogsHandler(logCacheClient, 5*time.Second, t.metricClient)
+	recentLogsHandler := proxy.NewRecentLogsHandler(logCacheClient, 5*time.Second, t.metricClient, recentLogsEnabled)
 
 	dopplerHandler := http.Handler(
 		proxy.NewDopplerProxy(

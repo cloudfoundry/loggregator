@@ -51,6 +51,13 @@ func BuildTrafficControllerConf(routerAddr string, agentPort int, logCacheAddr s
 	}
 }
 
+func BuildTrafficControllerConfWithoutLogCache(routerAddr string, agentPort int) tcConf.Config {
+	conf := BuildTrafficControllerConf(routerAddr, agentPort, "")
+	conf.LogCacheAddr = ""
+	conf.LogCacheTLSConfig = tcConf.LogCacheTLSConfig{}
+	return conf
+}
+
 type TrafficControllerPorts struct {
 	WS     int
 	Health int

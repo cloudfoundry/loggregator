@@ -32,6 +32,7 @@ var _ = Describe("Recent Logs Handler", func() {
 	BeforeEach(func() {
 		logCacheClient = newFakeLogCacheClient()
 		logCacheClient.envelopes = []*loggregator_v2.Envelope{
+			buildV2Gauge(),
 			buildV2Log("log1"),
 			buildV2Log("log2"),
 			buildV2Log("log3"),
@@ -41,6 +42,7 @@ var _ = Describe("Recent Logs Handler", func() {
 			logCacheClient,
 			200*time.Millisecond,
 			testhelper.NewMetricClient(),
+			true,
 		)
 
 		recorder = httptest.NewRecorder()
@@ -114,6 +116,15 @@ var _ = Describe("Recent Logs Handler", func() {
 		Expect(logCacheClient.queryParams.Get("descending")).To(Equal("true"))
 	})
 
+	It("requests envelopes of type LOG", func() {
+		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
+		req.Header.Add("Authorization", "token")
+
+		recentLogsHandler.ServeHTTP(recorder, req)
+
+		Expect(logCacheClient.queryParams.Get("envelope_types")).To(Equal("LOG"))
+	})
+
 	It("returns a helpful error message", func() {
 		logCacheClient.err = errors.New("It failed")
 		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
@@ -125,6 +136,40 @@ var _ = Describe("Recent Logs Handler", func() {
 
 		Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
 		Expect(string(body)).To(Equal("It failed"))
+	})
+
+	It("returns a helpful log message when LogCache is disabled", func() {
+		recentLogsHandler = proxy.NewRecentLogsHandler(
+			logCacheClient,
+			200*time.Millisecond,
+			testhelper.NewMetricClient(),
+			false,
+		)
+
+		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
+		req.Header.Add("Authorization", "token")
+
+		recentLogsHandler.ServeHTTP(recorder, req)
+
+		boundaryRegexp := regexp.MustCompile("boundary=(.*)")
+		matches := boundaryRegexp.FindStringSubmatch(recorder.Header().Get("Content-Type"))
+		Expect(matches).To(HaveLen(2))
+		Expect(matches[1]).NotTo(BeEmpty())
+		reader := multipart.NewReader(recorder.Body, matches[1])
+
+		part, err := reader.NextPart()
+		Expect(err).ToNot(HaveOccurred())
+
+		partBytes, err := ioutil.ReadAll(part)
+		Expect(err).ToNot(HaveOccurred())
+
+		var logEnvelope events.Envelope
+		err = proto.Unmarshal(partBytes, &logEnvelope)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(string(logEnvelope.GetLogMessage().GetMessage())).To(Equal("recent log endpoint requires a log cache. please talk to you operator"))
+		Expect(logEnvelope.GetLogMessage().GetMessageType()).To(Equal(events.LogMessage_ERR))
+		Expect(logEnvelope.GetLogMessage().GetSourceType()).To(Equal("Loggregator"))
 	})
 })
 
@@ -173,13 +218,14 @@ func buildV2Log(msg string) *loggregator_v2.Envelope {
 	}
 }
 
-func buildV1LogBytes(msg string) []byte {
-	envelopeBytes, _ := (&events.Envelope{
-		Origin:    proto.String(""),
-		EventType: events.Envelope_LogMessage.Enum(),
-		LogMessage: &events.LogMessage{
-			Message: []byte(msg),
+func buildV2Gauge() *loggregator_v2.Envelope {
+	return &loggregator_v2.Envelope{
+		Message: &loggregator_v2.Envelope_Gauge{
+			Gauge: &loggregator_v2.Gauge{
+				Metrics: map[string]*loggregator_v2.GaugeValue{
+					"some-metric": &loggregator_v2.GaugeValue{Value: 99},
+				},
+			},
 		},
-	}).Marshal()
-	return envelopeBytes
+	}
 }
