@@ -50,8 +50,6 @@ func main() {
 		log,
 	)
 
-	// logProviderClient := web.ReadHandler(lp)
-
 	middlewareProvider := auth.NewCFAuthMiddlewareProvider(
 		uaaClient,
 		capiClient,

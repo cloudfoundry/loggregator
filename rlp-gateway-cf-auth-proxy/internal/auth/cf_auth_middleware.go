@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"net/http"
 
 	"log"
@@ -80,25 +79,4 @@ func (m CFAuthMiddlewareProvider) Middleware(h http.Handler) http.Handler {
 	})
 
 	return router
-}
-
-type interceptingResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-	search     []byte
-	replace    []byte
-}
-
-func (w *interceptingResponseWriter) WriteHeader(n int) {
-	w.statusCode = n
-
-	w.ResponseWriter.WriteHeader(n)
-}
-
-func (w *interceptingResponseWriter) Write(b []byte) (int, error) {
-	if w.statusCode >= 400 {
-		return w.ResponseWriter.Write(bytes.Replace(b, w.search, w.replace, -1))
-	}
-
-	return w.ResponseWriter.Write(b)
 }
