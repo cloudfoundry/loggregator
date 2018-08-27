@@ -1,6 +1,7 @@
 package proxy_test
 
 import (
+	"context"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -32,7 +33,7 @@ var _ = Describe("ContainerMetricsHandler", func() {
 		mux := mux.NewRouter()
 		mux.Handle("/apps/{appID}/containermetrics", proxy.NewContainerMetricsHandler(
 			spyGrpcConnector,
-			time.Millisecond,
+			time.Hour,
 			spyMetricClient,
 		))
 
@@ -77,6 +78,25 @@ var _ = Describe("ContainerMetricsHandler", func() {
 
 		Expect(es[1].GetTimestamp()).To(Equal(int64(12)))
 		Expect(es[1].ContainerMetric.GetCpuPercentage()).To(Equal(float64(3)))
+	})
+
+	It("uses the context from the HTTP request", func() {
+		spyGrpcConnector.containerMetricsBlock = true
+		req, err := http.NewRequest("GET", server.URL+"/apps/some-id/containermetrics", nil)
+		Expect(err).ToNot(HaveOccurred())
+		ctx, _ := context.WithTimeout(context.Background(), 250*time.Millisecond)
+		req = req.WithContext(ctx)
+
+		go func() {
+			http.DefaultClient.Do(req)
+		}()
+
+		Eventually(func() error {
+			if spyGrpcConnector.ContainerMetricsRequest().ctx != nil {
+				return spyGrpcConnector.ContainerMetricsRequest().ctx.Err()
+			}
+			return nil
+		}).ShouldNot(BeNil())
 	})
 })
 

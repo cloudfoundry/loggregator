@@ -100,11 +100,12 @@ type subscribeRequest struct {
 }
 
 type SpyGRPCConnector struct {
-	mu               sync.Mutex
-	subscriptions    *subscribeRequest
-	subscriptionsErr error
-	recentLogs       *recentLogsRequest
-	containerMetrics *containerMetricsRequest
+	mu                    sync.Mutex
+	subscriptions         *subscribeRequest
+	subscriptionsErr      error
+	recentLogs            *recentLogsRequest
+	containerMetrics      containerMetricsRequest
+	containerMetricsBlock bool
 }
 
 func newSpyGRPCConnector(err error) *SpyGRPCConnector {
@@ -125,15 +126,29 @@ func (s *SpyGRPCConnector) Subscribe(ctx context.Context, req *plumbing.Subscrip
 }
 
 func (s *SpyGRPCConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	s.containerMetrics = &containerMetricsRequest{
+	s.mu.Lock()
+	s.containerMetrics = containerMetricsRequest{
 		ctx:   ctx,
 		appID: appID,
+	}
+	s.mu.Unlock()
+
+	if s.containerMetricsBlock {
+		var block chan int
+		<-block
 	}
 	return [][]byte{
 		s.buildContainerMetric(appID, 10, 1, 1),
 		s.buildContainerMetric(appID, 11, 2, 1), // same index to ensure deduping
 		s.buildContainerMetric(appID, 12, 3, 2),
 	}
+}
+
+func (s *SpyGRPCConnector) ContainerMetricsRequest() containerMetricsRequest {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.containerMetrics
 }
 
 func (s *SpyGRPCConnector) buildContainerMetric(appID string, t int64, cpu float64, instanceIndex int32) []byte {

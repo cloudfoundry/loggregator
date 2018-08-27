@@ -46,8 +46,7 @@ func (h *ContainerMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	appID := mux.Vars(r)["appID"]
 
-	// TODO: Use context from request
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(r.Context())
 	ctx, _ = context.WithDeadline(ctx, time.Now().Add(h.timeout))
 	defer cancel()
 
