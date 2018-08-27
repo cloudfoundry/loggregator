@@ -1,7 +1,6 @@
 package proxy_test
 
 import (
-	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -32,6 +31,8 @@ var _ = Describe("DopplerProxy", func() {
 		mockHealth              *mockHealth
 
 		mockSender *testhelper.SpyMetricClient
+
+		recentLogsHandler *spyRecentLogsHandler
 	)
 
 	BeforeEach(func() {
@@ -45,6 +46,8 @@ var _ = Describe("DopplerProxy", func() {
 
 		mockGrpcConnector.SubscribeOutput.Ret0 <- mockDopplerStreamClient.Recv
 
+		recentLogsHandler = newSpyRecentLogsHandler()
+
 		dopplerProxy = proxy.NewDopplerProxy(
 			auth.Authorize,
 			adminAuth.Authorize,
@@ -54,6 +57,7 @@ var _ = Describe("DopplerProxy", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			recentLogsHandler,
 			false,
 		)
 
@@ -71,7 +75,6 @@ var _ = Describe("DopplerProxy", func() {
 
 	Describe("metrics", func() {
 		It("emits latency value metric for recentlogs request", func() {
-			mockGrpcConnector.RecentLogsOutput.Ret0 <- nil
 			req, _ := http.NewRequest("GET", "/apps/12bdb5e8-ba61-48e3-9dda-30ecd1446663/recentlogs", nil)
 			metricName := "doppler_proxy.recent_logs_latency"
 			requestStart := time.Now()
@@ -171,72 +174,18 @@ var _ = Describe("DopplerProxy", func() {
 		Expect(partBytes).To(Equal(containerResp[0]))
 	})
 
-	It("returns the requested recent logs", func() {
+	It("calls the recent logs handler", func() {
 		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
 		req.Header.Add("Authorization", "token")
-		recentLogResp := [][]byte{
-			[]byte("log1"),
-			[]byte("log2"),
-			[]byte("log3"),
-		}
-		mockGrpcConnector.RecentLogsOutput.Ret0 <- recentLogResp
 
 		dopplerProxy.ServeHTTP(recorder, req)
 
-		boundaryRegexp := regexp.MustCompile("boundary=(.*)")
-		matches := boundaryRegexp.FindStringSubmatch(recorder.Header().Get("Content-Type"))
-		Expect(matches).To(HaveLen(2))
-		Expect(matches[1]).NotTo(BeEmpty())
-		reader := multipart.NewReader(recorder.Body, matches[1])
-
-		for _, payload := range recentLogResp {
-			part, err := reader.NextPart()
-			Expect(err).ToNot(HaveOccurred())
-
-			partBytes, err := ioutil.ReadAll(part)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(partBytes).To(Equal(payload))
-		}
-	})
-
-	It("returns the requested recent logs with limit", func() {
-		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs?limit=2", nil)
-		req.Header.Add("Authorization", "token")
-		recentLogResp := [][]byte{
-			[]byte("log1"),
-			[]byte("log2"),
-			[]byte("log3"),
-		}
-		mockGrpcConnector.RecentLogsOutput.Ret0 <- recentLogResp
-
-		dopplerProxy.ServeHTTP(recorder, req)
-
-		boundaryRegexp := regexp.MustCompile("boundary=(.*)")
-		matches := boundaryRegexp.FindStringSubmatch(recorder.Header().Get("Content-Type"))
-		Expect(matches).To(HaveLen(2))
-		Expect(matches[1]).NotTo(BeEmpty())
-		reader := multipart.NewReader(recorder.Body, matches[1])
-
-		var count int
-		for {
-			_, err := reader.NextPart()
-			if err == io.EOF {
-				break
-			}
-			count++
-		}
-		Expect(count).To(Equal(2))
+		Eventually(func() int { return recentLogsHandler.numCalls }).Should(Equal(1))
 	})
 
 	It("rejects badly-formed app GUIDs", func() {
 		req, _ := http.NewRequest("GET", "/apps/not-a-valid-guid/recentlogs?limit=2", nil)
 		req.Header.Add("Authorization", "token")
-		recentLogResp := [][]byte{
-			[]byte("log1"),
-			[]byte("log2"),
-			[]byte("log3"),
-		}
-		mockGrpcConnector.RecentLogsOutput.Ret0 <- recentLogResp
 
 		dopplerProxy.ServeHTTP(recorder, req)
 		Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
@@ -245,12 +194,6 @@ var _ = Describe("DopplerProxy", func() {
 	It("accepts non-GUIDs when disableAccessControl is set", func() {
 		req, _ := http.NewRequest("GET", "/apps/not-a-valid-guid/recentlogs?limit=2", nil)
 		req.Header.Add("Authorization", "token")
-		recentLogResp := [][]byte{
-			[]byte("log1"),
-			[]byte("log2"),
-			[]byte("log3"),
-		}
-		mockGrpcConnector.RecentLogsOutput.Ret0 <- recentLogResp
 
 		dopplerProxy = proxy.NewDopplerProxy(
 			auth.Authorize,
@@ -261,38 +204,11 @@ var _ = Describe("DopplerProxy", func() {
 			time.Hour,
 			mockSender,
 			mockHealth,
+			recentLogsHandler,
 			true,
 		)
 		dopplerProxy.ServeHTTP(recorder, req)
 		Expect(recorder.Code).To(Equal(http.StatusOK))
-	})
-
-	It("ignores limit if it is negative", func() {
-		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs?limit=-2", nil)
-		req.Header.Add("Authorization", "token")
-		recentLogResp := [][]byte{
-			[]byte("log1"),
-			[]byte("log2"),
-			[]byte("log3"),
-		}
-		mockGrpcConnector.RecentLogsOutput.Ret0 <- recentLogResp
-
-		dopplerProxy.ServeHTTP(recorder, req)
-
-		boundaryRegexp := regexp.MustCompile("boundary=(.*)")
-		matches := boundaryRegexp.FindStringSubmatch(recorder.Header().Get("Content-Type"))
-		Expect(matches).To(HaveLen(2))
-		Expect(matches[1]).NotTo(BeEmpty())
-		reader := multipart.NewReader(recorder.Body, matches[1])
-
-		for _, payload := range recentLogResp {
-			part, err := reader.NextPart()
-			Expect(err).ToNot(HaveOccurred())
-
-			partBytes, err := ioutil.ReadAll(part)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(partBytes).To(Equal(payload))
-		}
 	})
 
 	Context("SetCookie", func() {
@@ -334,7 +250,6 @@ var _ = Describe("DopplerProxy", func() {
 		})
 
 		It("configures CORS for recentlogs", func() {
-			mockGrpcConnector.RecentLogsOutput.Ret0 <- nil
 			req, _ := http.NewRequest(
 				"GET",
 				"/apps/guid/recentlogs",
@@ -383,4 +298,16 @@ func buildContainerMetric(appID string, t time.Time) (*events.Envelope, []byte) 
 	data, err := proto.Marshal(envelope)
 	Expect(err).ToNot(HaveOccurred())
 	return envelope, data
+}
+
+type spyRecentLogsHandler struct {
+	numCalls int
+}
+
+func (rlh *spyRecentLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	rlh.numCalls += 1
+}
+
+func newSpyRecentLogsHandler() *spyRecentLogsHandler {
+	return &spyRecentLogsHandler{}
 }

@@ -20,6 +20,14 @@ type GRPC struct {
 	KeyFile  string `env:"ROUTER_KEY_FILE"`
 }
 
+// LogCacheTLSConfig stores TLS configuration for gRPC communcation to router and agent.
+type LogCacheTLSConfig struct {
+	CAFile     string `env:"LOG_CACHE_CA_FILE"`
+	CertFile   string `env:"LOG_CACHE_CERT_FILE"`
+	KeyFile    string `env:"LOG_CACHE_KEY_FILE"`
+	ServerName string `env:"LOG_CACHE_SERVER_NAME"`
+}
+
 // CCTLSClientConfig stores TLS cofiguration for communication with cloud
 // controller.
 type CCTLSClientConfig struct {
@@ -31,24 +39,27 @@ type CCTLSClientConfig struct {
 
 // Config stores all Configuration options for trafficcontroller.
 type Config struct {
-	IP                    string        `env:"TRAFFIC_CONTROLLER_IP"`
-	ApiHost               string        `env:"TRAFFIC_CONTROLLER_API_HOST"`
-	OutgoingDropsondePort uint32        `env:"TRAFFIC_CONTROLLER_OUTGOING_DROPSONDE_PORT"`
-	SystemDomain          string        `env:"TRAFFIC_CONTROLLER_SYSTEM_DOMAIN"`
-	SkipCertVerify        bool          `env:"TRAFFIC_CONTROLLER_SKIP_CERT_VERIFY"`
-	UaaHost               string        `env:"TRAFFIC_CONTROLLER_UAA_HOST"`
-	UaaClient             string        `env:"TRAFFIC_CONTROLLER_UAA_CLIENT"`
+	IP                    string        `env:"TRAFFIC_CONTROLLER_IP, report"`
+	ApiHost               string        `env:"TRAFFIC_CONTROLLER_API_HOST, report"`
+	OutgoingDropsondePort uint32        `env:"TRAFFIC_CONTROLLER_OUTGOING_DROPSONDE_PORT, report"`
+	SystemDomain          string        `env:"TRAFFIC_CONTROLLER_SYSTEM_DOMAIN, report"`
+	SkipCertVerify        bool          `env:"TRAFFIC_CONTROLLER_SKIP_CERT_VERIFY, report"`
+	UaaHost               string        `env:"TRAFFIC_CONTROLLER_UAA_HOST, report"`
+	UaaClient             string        `env:"TRAFFIC_CONTROLLER_UAA_CLIENT, report"`
 	UaaClientSecret       string        `env:"TRAFFIC_CONTROLLER_UAA_CLIENT_SECRET"`
-	UaaCACert             string        `env:"TRAFFIC_CONTROLLER_UAA_CA_CERT"`
-	SecurityEventLog      string        `env:"TRAFFIC_CONTROLLER_SECURITY_EVENT_LOG"`
-	PProfPort             uint32        `env:"TRAFFIC_CONTROLLER_PPROF_PORT"`
-	MetricEmitterInterval time.Duration `env:"TRAFFIC_CONTROLLER_METRIC_EMITTER_INTERVAL"`
-	HealthAddr            string        `env:"TRAFFIC_CONTROLLER_HEALTH_ADDR"`
-	DisableAccessControl  bool          `env:"TRAFFIC_CONTROLLER_DISABLE_ACCESS_CONTROL"`
-	RouterAddrs           []string      `env:"ROUTER_ADDRS"`
-	CCTLSClientConfig     CCTLSClientConfig
-	Agent                 Agent
-	GRPC                  GRPC
+	UaaCACert             string        `env:"TRAFFIC_CONTROLLER_UAA_CA_CERT, report"`
+	SecurityEventLog      string        `env:"TRAFFIC_CONTROLLER_SECURITY_EVENT_LOG, report"`
+	PProfPort             uint32        `env:"TRAFFIC_CONTROLLER_PPROF_PORT, report"`
+	MetricEmitterInterval time.Duration `env:"TRAFFIC_CONTROLLER_METRIC_EMITTER_INTERVAL, report"`
+	HealthAddr            string        `env:"TRAFFIC_CONTROLLER_HEALTH_ADDR, report"`
+	DisableAccessControl  bool          `env:"TRAFFIC_CONTROLLER_DISABLE_ACCESS_CONTROL, report"`
+	RouterAddrs           []string      `env:"ROUTER_ADDRS, report"`
+	LogCacheAddr          string        `env:"LOG_CACHE_ADDR, report"`
+
+	CCTLSClientConfig CCTLSClientConfig
+	Agent             Agent
+	GRPC              GRPC
+	LogCacheTLSConfig LogCacheTLSConfig
 }
 
 // LoadConfig reads from the environment to create a Config.
@@ -56,6 +67,9 @@ func LoadConfig() (*Config, error) {
 	config := Config{
 		MetricEmitterInterval: time.Minute,
 		HealthAddr:            "localhost:14825",
+		LogCacheTLSConfig: LogCacheTLSConfig{
+			ServerName: "log_cache",
+		},
 	}
 
 	err := envstruct.Load(&config)
@@ -67,6 +81,8 @@ func LoadConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	envstruct.WriteReport(&config)
 
 	return &config, nil
 }

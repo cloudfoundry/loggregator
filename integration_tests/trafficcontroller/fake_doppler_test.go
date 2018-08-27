@@ -26,7 +26,7 @@ type FakeDoppler struct {
 
 func NewFakeDoppler() *FakeDoppler {
 	return &FakeDoppler{
-		GrpcEndpoint:             "127.0.0.1:1236",
+		GrpcEndpoint:             "127.0.0.1:0",
 		grpcOut:                  make(chan []byte, 100),
 		SubscriptionRequests:     make(chan *plumbing.SubscriptionRequest, 100),
 		ContainerMetricsRequests: make(chan *plumbing.ContainerMetricsRequest, 100),
@@ -34,6 +34,10 @@ func NewFakeDoppler() *FakeDoppler {
 		SubscribeServers:         make(chan plumbing.Doppler_BatchSubscribeServer, 100),
 		done:                     make(chan struct{}),
 	}
+}
+
+func (fakeDoppler *FakeDoppler) Addr() string {
+	return fakeDoppler.grpcListener.Addr().String()
 }
 
 func (fakeDoppler *FakeDoppler) Start() error {

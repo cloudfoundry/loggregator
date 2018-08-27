@@ -13,11 +13,12 @@ import (
 	tcConf "code.cloudfoundry.org/loggregator/trafficcontroller/app"
 )
 
-func BuildTrafficControllerConf(dopplerGRPCPort, agentPort int) tcConf.Config {
+func BuildTrafficControllerConf(routerAddr string, agentPort int, logCacheAddr string) tcConf.Config {
 	return tcConf.Config{
 		IP:                    "127.0.0.1",
-		RouterAddrs:           []string{fmt.Sprintf("127.0.0.1:%d", dopplerGRPCPort)},
+		RouterAddrs:           []string{routerAddr},
 		HealthAddr:            "localhost:0",
+		LogCacheAddr:          logCacheAddr,
 		SystemDomain:          "vcap.me",
 		SkipCertVerify:        true,
 		ApiHost:               "http://127.0.0.1:65530",
@@ -27,6 +28,7 @@ func BuildTrafficControllerConf(dopplerGRPCPort, agentPort int) tcConf.Config {
 		UaaClientSecret:       "yourUncle",
 		DisableAccessControl:  true,
 		OutgoingDropsondePort: 0,
+
 		CCTLSClientConfig: tcConf.CCTLSClientConfig{
 			CertFile:   Cert("trafficcontroller.crt"),
 			KeyFile:    Cert("trafficcontroller.key"),
@@ -41,7 +43,19 @@ func BuildTrafficControllerConf(dopplerGRPCPort, agentPort int) tcConf.Config {
 			KeyFile:  Cert("trafficcontroller.key"),
 			CAFile:   Cert("loggregator-ca.crt"),
 		},
+		LogCacheTLSConfig: tcConf.LogCacheTLSConfig{
+			CertFile: Cert("log-cache-trafficcontroller.crt"),
+			KeyFile:  Cert("log-cache-trafficcontroller.key"),
+			CAFile:   Cert("log-cache.crt"),
+		},
 	}
+}
+
+func BuildTrafficControllerConfWithoutLogCache(routerAddr string, agentPort int) tcConf.Config {
+	conf := BuildTrafficControllerConf(routerAddr, agentPort, "")
+	conf.LogCacheAddr = ""
+	conf.LogCacheTLSConfig = tcConf.LogCacheTLSConfig{}
+	return conf
 }
 
 type TrafficControllerPorts struct {

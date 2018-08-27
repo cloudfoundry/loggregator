@@ -37,7 +37,6 @@ type DopplerProxy struct {
 type grpcConnector interface {
 	Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error)
 	ContainerMetrics(ctx context.Context, appID string) [][]byte
-	RecentLogs(ctx context.Context, appID string) [][]byte
 }
 
 type MetricClient interface {
@@ -55,6 +54,7 @@ func NewDopplerProxy(
 	slowConsumerTimeout time.Duration,
 	m MetricClient,
 	health Health,
+	recentLogsHandler http.Handler,
 	disableAccessControl bool,
 ) *DopplerProxy {
 	// metric-documentation-v2: (doppler_proxy.firehoses) Number of open firehose streams
@@ -91,7 +91,6 @@ func NewDopplerProxy(
 		),
 	)
 
-	recentLogsHandler := NewRecentLogsHandler(grpcConn, timeout, m)
 	r.Handle(
 		"/apps/{appID}/recentlogs",
 		corsMiddleware.Wrap(
