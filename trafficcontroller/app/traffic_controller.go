@@ -129,7 +129,7 @@ func (t *TrafficController) Start() {
 	pool := plumbing.NewPool(20, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(kp))
 	grpcConnector := plumbing.NewGRPCConnector(1000, pool, f, t.metricClient)
 
-	var logCacheClient *logcache.Client
+	var logCacheClient proxy.LogCacheClient
 	recentLogsEnabled := false
 
 	if t.conf.LogCacheAddr != "" {
@@ -163,6 +163,7 @@ func (t *TrafficController) Start() {
 			t.metricClient,
 			healthRegistry,
 			recentLogsHandler,
+			logCacheClient,
 		),
 	)
 

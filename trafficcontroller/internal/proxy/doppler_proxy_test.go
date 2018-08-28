@@ -30,6 +30,7 @@ var _ = Describe("DopplerProxy", func() {
 		mockSender *testhelper.SpyMetricClient
 
 		recentLogsHandler *spyRecentLogsHandler
+		logCacheClient    *fakeLogCacheClient
 	)
 
 	BeforeEach(func() {
@@ -45,6 +46,8 @@ var _ = Describe("DopplerProxy", func() {
 
 		recentLogsHandler = newSpyRecentLogsHandler()
 
+		logCacheClient = newFakeLogCacheClient()
+
 		dopplerProxy = proxy.NewDopplerProxy(
 			auth.Authorize,
 			adminAuth.Authorize,
@@ -55,6 +58,7 @@ var _ = Describe("DopplerProxy", func() {
 			mockSender,
 			mockHealth,
 			recentLogsHandler,
+			logCacheClient,
 		)
 
 		recorder = httptest.NewRecorder()

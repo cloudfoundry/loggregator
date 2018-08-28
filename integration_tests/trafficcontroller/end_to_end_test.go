@@ -68,8 +68,20 @@ var _ = Describe("TrafficController for v1 messages", func() {
 					Expect(string(logMessages[0].GetMessage())).To(Equal("recent log endpoint requires a log cache. please talk to you operator"))
 				})
 			})
+
+			Context("ContainerMetrics", func() {
+				It("returns an empty result", func() {
+					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
+
+					metrics, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
+
+					Expect(err).ToNot(HaveOccurred())
+					Expect(metrics).To(HaveLen(1))
+				})
+			})
 		})
 	})
+
 	Context("with a configured log cache", func() {
 		BeforeEach(func() {
 			fakeDoppler = NewFakeDoppler()
@@ -179,41 +191,6 @@ var _ = Describe("TrafficController for v1 messages", func() {
 				})
 			})
 
-			Context("ContainerMetrics", func() {
-				BeforeEach(func() {
-					for i := 0; i < 5; i++ {
-						message := makeContainerMetricMessage("appID", i, i, i, i, 100000)
-						fakeDoppler.SendLogMessage(message)
-					}
-
-					oldmessage := makeContainerMetricMessage("appID", 1, 6, 7, 8, 50000)
-					fakeDoppler.SendLogMessage(oldmessage)
-
-					fakeDoppler.CloseLogMessageStream()
-				})
-
-				It("returns a multi-part HTTP response with the most recent container metrics for all instances for a given app", func() {
-					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
-
-					Eventually(func() bool {
-						messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
-						Expect(err).NotTo(HaveOccurred())
-
-						select {
-						case request := <-fakeDoppler.ContainerMetricsRequests:
-							Expect(request.AppID).To(Equal("efe5c422-e8a7-42c2-a52b-98bffd8d6a07"))
-							Expect(messages).To(HaveLen(5))
-							for i, message := range messages {
-								Expect(message.GetInstanceIndex()).To(BeEquivalentTo(i))
-								Expect(message.GetCpuPercentage()).To(BeEquivalentTo(i))
-							}
-							return true
-						default:
-							return false
-						}
-					}, 5).Should(BeTrue())
-				})
-			})
 		})
 
 		Describe("LogCache API Paths", func() {
@@ -231,6 +208,19 @@ var _ = Describe("TrafficController for v1 messages", func() {
 
 						return len(messages)
 					}, 5).Should(Equal(2))
+				})
+			})
+
+			Context("ContainerMetrics", func() {
+				It("returns a multi-part HTTP response with the most recent container metrics for all instances for a given app", func() {
+					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
+
+					Eventually(func() bool {
+						messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
+						Expect(err).NotTo(HaveOccurred())
+
+						return len(messages) > 0
+					}, 5).Should(BeTrue())
 				})
 			})
 		})

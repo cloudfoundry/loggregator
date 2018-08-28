@@ -55,6 +55,7 @@ func NewDopplerProxy(
 	m MetricClient,
 	health Health,
 	recentLogsHandler http.Handler,
+	logCacheClient LogCacheClient,
 ) *DopplerProxy {
 	// metric-documentation-v2: (doppler_proxy.firehoses) Number of open firehose streams
 	firehoseConnMetric := m.NewGauge("doppler_proxy.firehoses", "connections",
@@ -81,7 +82,7 @@ func NewDopplerProxy(
 		),
 	)
 
-	containerMetricsHandler := NewContainerMetricsHandler(grpcConn, timeout, m)
+	containerMetricsHandler := NewContainerMetricsHandler(logCacheClient, timeout, m)
 	r.Handle(
 		"/apps/{appID}/containermetrics",
 		corsMiddleware.Wrap(
