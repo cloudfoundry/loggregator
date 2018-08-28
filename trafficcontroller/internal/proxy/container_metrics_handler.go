@@ -13,13 +13,13 @@ import (
 )
 
 type ContainerMetricsHandler struct {
-	grpcConn      grpcConnector
+	grpcConn      GrpcConnector
 	timeout       time.Duration
 	latencyMetric *metricemitter.Gauge
 }
 
 func NewContainerMetricsHandler(
-	grpcConn grpcConnector,
+	grpcConn GrpcConnector,
 	t time.Duration,
 	m MetricClient,
 ) *ContainerMetricsHandler {
@@ -46,6 +46,7 @@ func (h *ContainerMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	appID := mux.Vars(r)["appID"]
 
+	// TODO: Use context from request
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx, _ = context.WithDeadline(ctx, time.Now().Add(h.timeout))
 	defer cancel()

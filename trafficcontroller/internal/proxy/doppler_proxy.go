@@ -34,7 +34,7 @@ type DopplerProxy struct {
 	appStreamConnMetric *metricemitter.Gauge
 }
 
-type grpcConnector interface {
+type GrpcConnector interface {
 	Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error)
 	ContainerMetrics(ctx context.Context, appID string) [][]byte
 }
@@ -48,7 +48,7 @@ type MetricClient interface {
 func NewDopplerProxy(
 	logAuthorizer auth.LogAccessAuthorizer,
 	adminAuthorizer auth.AdminAccessAuthorizer,
-	grpcConn grpcConnector,
+	grpcConn GrpcConnector,
 	cookieDomain string,
 	timeout time.Duration,
 	slowConsumerTimeout time.Duration,

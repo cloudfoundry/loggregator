@@ -1,11 +1,8 @@
 package proxy_test
 
 import (
-	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"time"
 
@@ -142,35 +139,6 @@ var _ = Describe("DopplerProxy", func() {
 			dopplerProxy.ServeHTTP(recorder, req)
 			Eventually(mockHealth.SetInput.Name, 3).Should(Receive(Equal("appStreamCount")))
 		})
-	})
-
-	It("returns the requested container metrics", func(done Done) {
-		defer close(done)
-		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/containermetrics", nil)
-		req.Header.Add("Authorization", "token")
-		now := time.Now()
-		_, envBytes1 := buildContainerMetric("8de7d390-9044-41ff-ab76-432299923511", now)
-		_, envBytes2 := buildContainerMetric("8de7d390-9044-41ff-ab76-432299923511", now.Add(-5*time.Minute))
-		containerResp := [][]byte{
-			envBytes1,
-			envBytes2,
-		}
-		mockGrpcConnector.ContainerMetricsOutput.Ret0 <- containerResp
-
-		dopplerProxy.ServeHTTP(recorder, req)
-
-		boundaryRegexp := regexp.MustCompile("boundary=(.*)")
-		matches := boundaryRegexp.FindStringSubmatch(recorder.Header().Get("Content-Type"))
-		Expect(matches).To(HaveLen(2))
-		Expect(matches[1]).NotTo(BeEmpty())
-		reader := multipart.NewReader(recorder.Body, matches[1])
-
-		part, err := reader.NextPart()
-		Expect(err).ToNot(HaveOccurred())
-
-		partBytes, err := ioutil.ReadAll(part)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(partBytes).To(Equal(containerResp[0]))
 	})
 
 	It("calls the recent logs handler", func() {

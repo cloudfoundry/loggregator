@@ -14,12 +14,12 @@ import (
 
 type FirehoseHandler struct {
 	server               *WebSocketServer
-	grpcConn             grpcConnector
+	grpcConn             GrpcConnector
 	counter              int64
 	egressFirehoseMetric *metricemitter.Counter
 }
 
-func NewFirehoseHandler(grpcConn grpcConnector, w *WebSocketServer, m MetricClient) *FirehoseHandler {
+func NewFirehoseHandler(grpcConn GrpcConnector, w *WebSocketServer, m MetricClient) *FirehoseHandler {
 	// metric-documentation-v2: (egress) Number of envelopes egressed via the
 	// firehose.
 	egressFirehoseMetric := m.NewCounter("egress",

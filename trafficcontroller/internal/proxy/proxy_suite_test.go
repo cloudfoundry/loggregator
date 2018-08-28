@@ -17,6 +17,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
+	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -87,6 +89,11 @@ type recentLogsRequest struct {
 	appID string
 }
 
+type containerMetricsRequest struct {
+	ctx   context.Context
+	appID string
+}
+
 type subscribeRequest struct {
 	ctx     context.Context
 	request *plumbing.SubscriptionRequest
@@ -97,6 +104,7 @@ type SpyGRPCConnector struct {
 	subscriptions    *subscribeRequest
 	subscriptionsErr error
 	recentLogs       *recentLogsRequest
+	containerMetrics *containerMetricsRequest
 }
 
 func newSpyGRPCConnector(err error) *SpyGRPCConnector {
@@ -117,8 +125,41 @@ func (s *SpyGRPCConnector) Subscribe(ctx context.Context, req *plumbing.Subscrip
 }
 
 func (s *SpyGRPCConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	return nil
+	s.containerMetrics = &containerMetricsRequest{
+		ctx:   ctx,
+		appID: appID,
+	}
+	return [][]byte{
+		s.buildContainerMetric(appID, 10, 1, 1),
+		s.buildContainerMetric(appID, 11, 2, 1), // same index to ensure deduping
+		s.buildContainerMetric(appID, 12, 3, 2),
+	}
 }
+
+func (s *SpyGRPCConnector) buildContainerMetric(appID string, t int64, cpu float64, instanceIndex int32) []byte {
+	e := &events.Envelope{
+		Origin:    proto.String("some-origin"),
+		EventType: events.Envelope_ContainerMetric.Enum(),
+		Timestamp: proto.Int64(t),
+		ContainerMetric: &events.ContainerMetric{
+			InstanceIndex:    proto.Int32(instanceIndex),
+			ApplicationId:    proto.String(appID),
+			CpuPercentage:    proto.Float64(cpu),
+			MemoryBytes:      proto.Uint64(100),
+			MemoryBytesQuota: proto.Uint64(101),
+			DiskBytes:        proto.Uint64(102),
+			DiskBytesQuota:   proto.Uint64(103),
+		},
+	}
+
+	data, err := proto.Marshal(e)
+	if err != nil {
+		panic(err)
+	}
+
+	return data
+}
+
 func (s *SpyGRPCConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
 	s.recentLogs = &recentLogsRequest{
 		ctx:   ctx,
