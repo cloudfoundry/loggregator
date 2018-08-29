@@ -13,7 +13,13 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-func BuildRLPGatewayConfig(gatewayPort int, logProviderAddr string) app.Config {
+func BuildRLPGatewayConfig(
+	gatewayPort int,
+	logProviderAddr string,
+	logAccessAddr string,
+	logAccessExternalAddr string,
+	logAdminAddr string,
+) app.Config {
 	return app.Config{
 		LogsProviderAddr:           logProviderAddr,
 		LogsProviderCAPath:         Cert("loggregator-ca.crt"),
@@ -22,6 +28,22 @@ func BuildRLPGatewayConfig(gatewayPort int, logProviderAddr string) app.Config {
 		LogsProviderCommonName:     "reverselogproxy",
 
 		GatewayAddr: fmt.Sprintf("127.0.0.1:%d", gatewayPort),
+
+		LogAccessAuthorization: app.LogAccessAuthorization{
+			Addr:         logAccessAddr,
+			CertPath:     Cert("capi.crt"),
+			KeyPath:      Cert("capi.key"),
+			CAPath:       Cert("loggregator-ca.crt"),
+			CommonName:   "capi",
+			ExternalAddr: logAccessExternalAddr,
+		},
+
+		LogAdminAuthorization: app.LogAdminAuthorization{
+			Addr:         logAdminAddr,
+			ClientID:     "client",
+			ClientSecret: "secret",
+			CAPath:       Cert("loggregator-ca.crt"),
+		},
 	}
 }
 

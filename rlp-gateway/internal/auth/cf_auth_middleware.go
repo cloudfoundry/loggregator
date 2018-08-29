@@ -66,6 +66,11 @@ func (m CFAuthMiddlewareProvider) Middleware(h http.Handler) http.Handler {
 
 		sourceIDs := r.URL.Query()["source_id"]
 
+		if !c.IsAdmin && len(sourceIDs) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		for _, sourceID := range sourceIDs {
 			if !c.IsAdmin {
 				if !m.logAuthorizer.IsAuthorized(sourceID, authToken) {

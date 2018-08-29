@@ -4,8 +4,6 @@ import (
 	"log"
 	"sync"
 
-	"code.cloudfoundry.org/loggregator/rlp-gateway-cf-auth-proxy/internal/auth"
-
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -13,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/auth"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

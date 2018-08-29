@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"code.cloudfoundry.org/loggregator/rlp-gateway-cf-auth-proxy/internal/auth"
-
 	"errors"
 
+	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/auth"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -118,6 +117,24 @@ var _ = Describe("CfAuthMiddleware", func() {
 
 			spyOauth2ClientReader.result = false
 			spyLogAuthorizer.result = false
+
+			request.Header.Set("Authorization", "valid-token")
+			authHandler.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(baseHandlerCalled).To(BeFalse())
+		})
+
+		It("returns 404 if user is not admin and does not request a source ID", func() {
+			request = httptest.NewRequest(http.MethodGet, "/v2/read", nil)
+			var baseHandlerCalled bool
+			baseHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				baseHandlerCalled = true
+			})
+			authHandler := provider.Middleware(baseHandler)
+
+			spyOauth2ClientReader.result = false
+			spyLogAuthorizer.result = true
 
 			request.Header.Set("Authorization", "valid-token")
 			authHandler.ServeHTTP(recorder, request)

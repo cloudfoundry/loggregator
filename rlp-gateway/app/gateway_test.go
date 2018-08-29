@@ -4,15 +4,20 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
+	"expvar"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"sync"
 	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing" // TODO: Resolve duplicate proto error
 	"code.cloudfoundry.org/loggregator/rlp-gateway/app"
+	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/metrics"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"google.golang.org/grpc"
 
@@ -25,48 +30,186 @@ var _ = Describe("Gateway", func() {
 	var (
 		logsProvider *stubLogsProvider
 		cfg          app.Config
+
+		logger  = log.New(GinkgoWriter, "", log.LstdFlags)
+		metrics = metrics.New(expvar.NewMap("RLPGateway"))
 	)
 
 	BeforeEach(func() {
-		logsProvider = newStubLogsProvider()
-		logsProvider.toSend = 10
-
 		cfg = app.Config{
-			LogsProviderAddr: logsProvider.addr(),
-
 			LogsProviderCAPath:         testservers.Cert("loggregator-ca.crt"),
 			LogsProviderClientCertPath: testservers.Cert("rlpgateway.crt"),
 			LogsProviderClientKeyPath:  testservers.Cert("rlpgateway.key"),
 			LogsProviderCommonName:     "reverselogproxy",
 
 			GatewayAddr: ":0",
+
+			LogAccessAuthorization: app.LogAccessAuthorization{
+				CertPath:   testservers.Cert("capi.crt"),
+				KeyPath:    testservers.Cert("capi.key"),
+				CAPath:     testservers.Cert("loggregator-ca.crt"),
+				CommonName: "capi",
+			},
+
+			LogAdminAuthorization: app.LogAdminAuthorization{
+				ClientID:     "client",
+				ClientSecret: "secret",
+				CAPath:       testservers.Cert("loggregator-ca.crt"),
+			},
 		}
 	})
 
-	It("forwards HTTP requests to RLP", func() {
-		gateway := app.NewGateway(cfg)
-		gateway.Start(false)
-		defer gateway.Stop()
+	Context("with valid log access authorization", func() {
+		BeforeEach(func() {
+			internalLogAccess := newAuthorizationServer(
+				http.StatusOK,
+				"{}",
+				testservers.Cert("capi.crt"),
+				testservers.Cert("capi.key"),
+			)
+			logAdmin := newAuthorizationServer(
+				http.StatusBadRequest,
+				invalidTokenResponse,
+				testservers.Cert("uaa.crt"),
+				testservers.Cert("uaa.key"),
+			)
 
-		client := newTestClient()
-		go client.open("http://" + gateway.Addr() + "/v2/read?log")
+			logsProvider = newStubLogsProvider()
+			logsProvider.toSend = 10
 
-		Eventually(client.envelopes).Should(HaveLen(10))
+			cfg.LogsProviderAddr = logsProvider.addr()
+			cfg.LogAccessAuthorization.Addr = internalLogAccess.URL
+			cfg.LogAdminAuthorization.Addr = logAdmin.URL
+		})
+
+		It("forwards HTTP requests to RLP", func() {
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			go client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=my-source-id")
+
+			Eventually(client.envelopes).Should(HaveLen(10))
+		})
+
+		It("doesn't panic when the logs provider closes", func() {
+			logsProvider.toSend = 1
+
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			Expect(func() {
+				client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=my-source-id")
+			}).ToNot(Panic())
+		})
 	})
 
-	It("doesn't panic when the logs provider closes", func() {
-		logsProvider.toSend = 1
+	Context("when the user is an admin", func() {
+		BeforeEach(func() {
+			internalLogAccess := newAuthorizationServer(
+				http.StatusBadRequest,
+				"{}",
+				testservers.Cert("capi.crt"),
+				testservers.Cert("capi.key"),
+			)
+			logAdmin := newAuthorizationServer(
+				http.StatusOK,
+				validTokenResponse,
+				testservers.Cert("uaa.crt"),
+				testservers.Cert("uaa.key"),
+			)
 
-		gateway := app.NewGateway(cfg)
-		gateway.Start(false)
-		defer gateway.Stop()
+			logsProvider = newStubLogsProvider()
+			logsProvider.toSend = 10
 
-		client := newTestClient()
-		Expect(func() {
-			client.open("http://" + gateway.Addr() + "/v2/read?log")
-		}).ToNot(Panic())
+			cfg.LogsProviderAddr = logsProvider.addr()
+			cfg.LogAccessAuthorization.Addr = internalLogAccess.URL
+			cfg.LogAdminAuthorization.Addr = logAdmin.URL
+		})
+
+		It("forwards HTTP requests to RLP", func() {
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			go client.open("http://" + gateway.Addr() + "/v2/read?log")
+
+			Eventually(client.envelopes).Should(HaveLen(10))
+		})
+
+		It("doesn't panic when the logs provider closes", func() {
+			logsProvider.toSend = 1
+
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			Expect(func() {
+				client.open("http://" + gateway.Addr() + "/v2/read?log")
+			}).ToNot(Panic())
+		})
+	})
+
+	Context("when the user does not have log access", func() {
+		BeforeEach(func() {
+			internalLogAccess := newAuthorizationServer(
+				http.StatusBadRequest,
+				"{}",
+				testservers.Cert("capi.crt"),
+				testservers.Cert("capi.key"),
+			)
+			logAdmin := newAuthorizationServer(
+				http.StatusBadRequest,
+				invalidTokenResponse,
+				testservers.Cert("uaa.crt"),
+				testservers.Cert("uaa.key"),
+			)
+
+			logsProvider = newStubLogsProvider()
+
+			cfg.LogsProviderAddr = logsProvider.addr()
+			cfg.LogAccessAuthorization.Addr = internalLogAccess.URL
+			cfg.LogAdminAuthorization.Addr = logAdmin.URL
+		})
+
+		It("returns 404 if user is not authorized for log access for a source ID", func() {
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			resp, err := client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=some-id")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+		})
+
+		It("returns 404 if user is not authorized as admin", func() {
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			resp, err := client.open("http://" + gateway.Addr() + "/v2/read?log")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+		})
 	})
 })
+
+var (
+	invalidTokenResponse = `{
+		"invalidToken": "invalid_token",
+		"error_description": "Invalid token (could not decode): invalidToken"
+	}`
+	validTokenResponse = `{
+		"scope": ["logs.admin"]
+	}`
+)
 
 type stubLogsProvider struct {
 	listener net.Listener
@@ -136,14 +279,20 @@ func newTestClient() *testClient {
 	return &testClient{}
 }
 
-func (tc *testClient) open(url string) {
-	resp, err := http.Get(url)
+func (tc *testClient) open(url string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Authorization", "my-token")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
 
 	if resp.StatusCode != 200 {
-		panic(fmt.Sprintf("unhandled status code: %d", resp.StatusCode))
+		return resp, nil
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -151,7 +300,7 @@ func (tc *testClient) open(url string) {
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		switch {
@@ -185,4 +334,38 @@ func isDone(ctx context.Context) bool {
 	default:
 		return false
 	}
+}
+
+type authorizationServer struct {
+	statusCode   int
+	responseBody string
+}
+
+func newAuthorizationServer(code int, body, crtFile, keyFile string) *httptest.Server {
+	as := &authorizationServer{
+		statusCode:   code,
+		responseBody: body,
+	}
+
+	return as.startTLS(crtFile, keyFile)
+}
+
+func (as *authorizationServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(as.statusCode)
+	fmt.Fprintf(w, "%s", as.responseBody)
+}
+
+func (as *authorizationServer) startTLS(crt, key string) *httptest.Server {
+	s := httptest.NewUnstartedServer(as)
+	cert, err := tls.LoadX509KeyPair(crt, key)
+	if err != nil {
+		panic(fmt.Sprintf("httptest: NewTLSServer: %v", err))
+	}
+
+	s.TLS = new(tls.Config)
+	s.TLS.NextProtos = []string{"http/1.1"}
+	s.TLS.Certificates = []tls.Certificate{cert}
+	s.Start()
+
+	return s
 }

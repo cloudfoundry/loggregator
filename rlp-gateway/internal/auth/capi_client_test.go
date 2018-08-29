@@ -9,7 +9,7 @@ import (
 	"errors"
 	"net/http"
 
-	"code.cloudfoundry.org/loggregator/rlp-gateway-cf-auth-proxy/internal/auth"
+	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/auth"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
