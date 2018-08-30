@@ -6,6 +6,25 @@ import (
 	envstruct "code.cloudfoundry.org/go-envstruct"
 )
 
+// LogAccessAuthorization holds the configuration for verifying log access.
+type LogAccessAuthorization struct {
+	Addr       string `env:"LOG_ACCESS_ADDR,        required, report"`
+	CertPath   string `env:"LOG_ACCESS_CERT_PATH,   required, report"`
+	KeyPath    string `env:"LOG_ACCESS_KEY_PATH,    required, report"`
+	CAPath     string `env:"LOG_ACCESS_CA_PATH,     required, report"`
+	CommonName string `env:"LOG_ACCESS_COMMON_NAME, required, report"`
+
+	ExternalAddr string `env:"LOG_ACCESS_ADDR_EXTERNAL, required, report"`
+}
+
+// LogAdminAuthorization holds the configuration for verifing log admin access.
+type LogAdminAuthorization struct {
+	Addr         string `env:"LOG_ADMIN_ADDR,          required, report"`
+	ClientID     string `env:"LOG_ADMIN_CLIENT_ID,     required"`
+	ClientSecret string `env:"LOG_ADMIN_CLIENT_SECRET, required"`
+	CAPath       string `env:"LOG_ADMIN_CA_PATH,       required, report"`
+}
+
 // Config holds the configuration for the RLP Gateway
 type Config struct {
 	LogsProviderAddr           string `env:"LOGS_PROVIDER_ADDR,             required, report"`
@@ -13,9 +32,13 @@ type Config struct {
 	LogsProviderClientCertPath string `env:"LOGS_PROVIDER_CLIENT_CERT_PATH, required, report"`
 	LogsProviderClientKeyPath  string `env:"LOGS_PROVIDER_CLIENT_KEY_PATH,  required, report"`
 	LogsProviderCommonName     string `env:"LOGS_PROVIDER_COMMON_NAME, report"`
+	SkipCertVerify             bool   `env:"SKIP_CERT_VERIFY, report"`
 
 	GatewayAddr string `env:"GATEWAY_ADDR, report"`
 	PProfPort   uint32 `env:"PPROF_PORT"`
+
+	LogAccessAuthorization LogAccessAuthorization
+	LogAdminAuthorization  LogAdminAuthorization
 }
 
 // LoadConfig will load and return the config from the current environment. If

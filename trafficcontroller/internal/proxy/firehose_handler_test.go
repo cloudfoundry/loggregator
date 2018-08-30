@@ -22,16 +22,18 @@ import (
 
 var _ = Describe("FirehoseHandler", func() {
 	var (
-		auth       LogAuthorizer
-		adminAuth  AdminAuthorizer
-		recorder   *httptest.ResponseRecorder
-		connector  *SpyGRPCConnector
-		mockSender *testhelper.SpyMetricClient
-		mockHealth *mockHealth
+		auth           LogAuthorizer
+		adminAuth      AdminAuthorizer
+		recorder       *httptest.ResponseRecorder
+		connector      *SpyGRPCConnector
+		mockSender     *testhelper.SpyMetricClient
+		mockHealth     *mockHealth
+		logCacheClient *fakeLogCacheClient
 	)
 
 	BeforeEach(func() {
 		connector = newSpyGRPCConnector(nil)
+		logCacheClient = newFakeLogCacheClient()
 
 		adminAuth = AdminAuthorizer{Result: AuthorizerResult{Status: http.StatusOK}}
 		auth = LogAuthorizer{Result: AuthorizerResult{Status: http.StatusOK}}
@@ -53,6 +55,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 		req, _ := http.NewRequest("GET", "/firehose/abc-123", nil)
 		req.Header.Add("Authorization", "token")
@@ -78,6 +81,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=logs", nil)
@@ -109,6 +113,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=metrics", nil)
@@ -140,6 +145,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 
 		adminAuth.Result = AuthorizerResult{Status: http.StatusUnauthorized, ErrorMessage: "Error: Invalid authorization"}
@@ -168,6 +174,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 
 		req, _ := http.NewRequest("GET", "/firehose/", nil)
@@ -190,6 +197,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 		server := httptest.NewServer(handler)
 		defer server.CloseClientConnections()
@@ -220,6 +228,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockHealth,
 			newSpyRecentLogsHandler(),
 			false,
+			logCacheClient,
 		)
 		server := httptest.NewServer(handler)
 		defer server.CloseClientConnections()

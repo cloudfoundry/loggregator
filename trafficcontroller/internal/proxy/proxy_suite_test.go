@@ -87,16 +87,23 @@ type recentLogsRequest struct {
 	appID string
 }
 
+type containerMetricsRequest struct {
+	ctx   context.Context
+	appID string
+}
+
 type subscribeRequest struct {
 	ctx     context.Context
 	request *plumbing.SubscriptionRequest
 }
 
 type SpyGRPCConnector struct {
-	mu               sync.Mutex
-	subscriptions    *subscribeRequest
-	subscriptionsErr error
-	recentLogs       *recentLogsRequest
+	mu                    sync.Mutex
+	subscriptions         *subscribeRequest
+	subscriptionsErr      error
+	recentLogs            *recentLogsRequest
+	containerMetrics      containerMetricsRequest
+	containerMetricsBlock bool
 }
 
 func newSpyGRPCConnector(err error) *SpyGRPCConnector {
@@ -117,19 +124,11 @@ func (s *SpyGRPCConnector) Subscribe(ctx context.Context, req *plumbing.Subscrip
 }
 
 func (s *SpyGRPCConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	return nil
+	panic("should not be used")
 }
-func (s *SpyGRPCConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
-	s.recentLogs = &recentLogsRequest{
-		ctx:   ctx,
-		appID: appID,
-	}
 
-	return [][]byte{
-		[]byte("log1"),
-		[]byte("log2"),
-		[]byte("log3"),
-	}
+func (s *SpyGRPCConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
+	panic("should not be used")
 }
 
 type valueUnit struct {

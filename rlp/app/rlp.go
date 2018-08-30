@@ -41,11 +41,9 @@ type RLP struct {
 	ingressAddrs    []string
 	ingressDialOpts []grpc.DialOption
 
-	v1IngressPool *plumbing.Pool
-	v2IngressPool *ingress.Pool
-
-	querier     *ingress.Querier
-	v2Connector *ingress.GRPCConnector
+	ingressPool *ingress.Pool
+	connector   *ingress.GRPCConnector
+	finder      *plumbing.StaticFinder
 
 	egressAddr     net.Addr
 	egressListener net.Listener
@@ -55,9 +53,6 @@ type RLP struct {
 	health     *healthendpoint.Registrar
 
 	metricClient MetricClient
-
-	v1Finder *plumbing.StaticFinder
-	v2Finder *plumbing.StaticFinder
 }
 
 // NewRLP returns a new unstarted RLP.
@@ -167,28 +162,18 @@ func (r *RLP) Stop() {
 	}()
 
 	// Stop reconnects to ingress servers
-	r.v1Finder.Stop()
+	r.finder.Stop()
 
 	// Close current connections to ingress servers
 	for _, addr := range r.ingressAddrs {
-		r.v1IngressPool.Close(addr)
+		r.ingressPool.Close(addr)
 	}
 }
 
 func (r *RLP) setupIngress() {
-	r.v1Finder = plumbing.NewStaticFinder(r.ingressAddrs)
-	r.v2Finder = plumbing.NewStaticFinder(r.ingressAddrs)
-	r.v1IngressPool = plumbing.NewPool(2, r.ingressDialOpts...)
-	r.v2IngressPool = ingress.NewPool(20, r.ingressDialOpts...)
-
-	// V1
-	// TODO: Delete once all v1 concerns are removed from RLP
-	v1Connector := plumbing.NewGRPCConnector(1000, r.v1IngressPool, r.v1Finder, r.metricClient)
-	converter := ingress.NewConverter()
-	r.querier = ingress.NewQuerier(converter, v1Connector)
-
-	// V2
-	r.v2Connector = ingress.NewGRPCConnector(1000, r.v2IngressPool, r.v2Finder, r.metricClient)
+	r.finder = plumbing.NewStaticFinder(r.ingressAddrs)
+	r.ingressPool = ingress.NewPool(20, r.ingressDialOpts...)
+	r.connector = ingress.NewGRPCConnector(1000, r.ingressPool, r.finder, r.metricClient)
 }
 
 func (r *RLP) startEgressListener() {
@@ -206,7 +191,7 @@ func (r *RLP) setupEgress() {
 	loggregator_v2.RegisterEgressServer(
 		r.egressServer,
 		egress.NewServer(
-			r.v2Connector,
+			r.connector,
 			r.metricClient,
 			r.health,
 			r.ctx,

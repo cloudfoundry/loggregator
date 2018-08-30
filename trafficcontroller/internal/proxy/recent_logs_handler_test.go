@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"regexp"
+	"sync"
 	"time"
 
 	logcache "code.cloudfoundry.org/go-log-cache"
@@ -32,7 +33,7 @@ var _ = Describe("Recent Logs Handler", func() {
 	BeforeEach(func() {
 		logCacheClient = newFakeLogCacheClient()
 		logCacheClient.envelopes = []*loggregator_v2.Envelope{
-			buildV2Gauge(),
+			buildV2Gauge("8de7d390-9044-41ff-ab76-432299923511", "1", 2, 3),
 			buildV2Log("log1"),
 			buildV2Log("log2"),
 			buildV2Log("log3"),
@@ -174,7 +175,11 @@ var _ = Describe("Recent Logs Handler", func() {
 })
 
 type fakeLogCacheClient struct {
+	mu    sync.Mutex
+	block bool
+
 	// Inputs
+	ctx         context.Context
 	sourceID    string
 	start       time.Time
 	opts        []logcache.ReadOption
@@ -197,12 +202,20 @@ func (f *fakeLogCacheClient) Read(
 	start time.Time,
 	opts ...logcache.ReadOption,
 ) ([]*loggregator_v2.Envelope, error) {
+	f.mu.Lock()
+	f.ctx = ctx
 	f.sourceID = sourceID
 	f.start = start
 	f.opts = opts
 
 	for _, o := range opts {
 		o(nil, f.queryParams)
+	}
+	f.mu.Unlock()
+
+	if f.block {
+		var block chan int
+		<-block
 	}
 
 	return f.envelopes, f.err
@@ -218,12 +231,34 @@ func buildV2Log(msg string) *loggregator_v2.Envelope {
 	}
 }
 
-func buildV2Gauge() *loggregator_v2.Envelope {
+func buildV2Gauge(sid, instanceId string, cpu float64, t int64) *loggregator_v2.Envelope {
 	return &loggregator_v2.Envelope{
+		Timestamp:  t,
+		SourceId:   sid,
+		InstanceId: instanceId,
 		Message: &loggregator_v2.Envelope_Gauge{
 			Gauge: &loggregator_v2.Gauge{
 				Metrics: map[string]*loggregator_v2.GaugeValue{
-					"some-metric": &loggregator_v2.GaugeValue{Value: 99},
+					"cpu": {
+						Unit:  "percentage",
+						Value: cpu,
+					},
+					"memory": {
+						Unit:  "bytes",
+						Value: 13,
+					},
+					"disk": {
+						Unit:  "bytes",
+						Value: 15,
+					},
+					"memory_quota": {
+						Unit:  "bytes",
+						Value: 17,
+					},
+					"disk_quota": {
+						Unit:  "bytes",
+						Value: 19,
+					},
 				},
 			},
 		},

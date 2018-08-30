@@ -13,12 +13,12 @@ import (
 
 type StreamHandler struct {
 	server       *WebSocketServer
-	grpcConn     grpcConnector
+	grpcConn     GrpcConnector
 	counter      int64
 	egressMetric *metricemitter.Counter
 }
 
-func NewStreamHandler(grpcConn grpcConnector, w *WebSocketServer, m MetricClient) *StreamHandler {
+func NewStreamHandler(grpcConn GrpcConnector, w *WebSocketServer, m MetricClient) *StreamHandler {
 	// metric-documentation-v2: (egress) Number of envelopes egressed via
 	// an app stream.
 	egressMetric := m.NewCounter("egress",
