@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"github.com/golang/protobuf/jsonpb"
@@ -23,7 +24,7 @@ var marshaler = jsonpb.Marshaler{
 //     data: <JSON ENVELOPE BATCH>
 //
 //     data: <JSON ENVELOPE BATCH>
-func ReadHandler(lp LogsProvider) http.HandlerFunc {
+func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, errMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
@@ -41,16 +42,6 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 			return
 		}
 
-		recv := lp.Stream(
-			ctx,
-			&loggregator_v2.EgressBatchRequest{
-				ShardId:           query.Get("shard_id"),
-				DeterministicName: query.Get("deterministic_name"),
-				UsePreferredTags:  true,
-				Selectors:         s,
-			},
-		)
-
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, errStreamingUnsupported.Error(), http.StatusInternalServerError)
@@ -63,32 +54,68 @@ func ReadHandler(lp LogsProvider) http.HandlerFunc {
 
 		flusher.Flush()
 
+		recv := lp.Stream(
+			ctx,
+			&loggregator_v2.EgressBatchRequest{
+				ShardId:           query.Get("shard_id"),
+				DeterministicName: query.Get("deterministic_name"),
+				UsePreferredTags:  true,
+				Selectors:         s,
+			},
+		)
+
+		data := make(chan *loggregator_v2.EnvelopeBatch)
+		errs := make(chan error)
+
+		go func() {
+			for {
+				if isDone(ctx) {
+					return
+				}
+
+				batch, err := recv()
+				if err != nil {
+					errs <- err
+					return
+				}
+				data <- batch
+			}
+		}()
+
+		timer := time.NewTimer(heartbeat)
+
 		// TODO:
-		//   - ping events
 		//   - error events
 		for {
-			if isDone(ctx) {
+			select {
+			case <-ctx.Done():
 				return
-			}
-
-			batch, err := recv()
-			if err != nil {
+			case err := <-errs:
 				status, ok := status.FromError(err)
 				if ok && status.Code() != codes.Canceled {
 					log.Printf("error getting logs from provider: %s", err)
 				}
 
 				return
-			}
+			case batch := <-data:
+				d, err := marshaler.MarshalToString(batch)
+				if err != nil {
+					log.Printf("error marshaling envelope batch to string: %s", err)
+					return
+				}
 
-			data, err := marshaler.MarshalToString(batch)
-			if err != nil {
-				log.Printf("error marshaling envelope batch to string: %s", err)
-				return
-			}
+				fmt.Fprintf(w, "data: %s\n\n", d)
+				flusher.Flush()
 
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			flusher.Flush()
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(heartbeat)
+			case <-timer.C:
+				w.Write([]byte("heartbeat: keep-alive\n\n"))
+				flusher.Flush()
+				timer.Reset(heartbeat)
+			}
 		}
 	}
 }

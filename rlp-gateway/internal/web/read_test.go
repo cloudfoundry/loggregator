@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/web"
@@ -37,7 +38,7 @@ var _ = Describe("Read", func() {
 				},
 			},
 		}
-		server = httptest.NewServer(web.ReadHandler(lp))
+		server = httptest.NewServer(web.ReadHandler(lp, 100*time.Millisecond))
 		ctx, cancel = context.WithCancel(context.Background())
 	})
 
@@ -125,6 +126,24 @@ var _ = Describe("Read", func() {
 				}
 			]
 		}`))
+	})
+
+	It("emits hearbeats for an empty data stream", func() {
+		lp.block = true
+
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read?log", nil)
+		Expect(err).ToNot(HaveOccurred())
+
+		req = req.WithContext(ctx)
+
+		resp, err := server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+
+		buf := bufio.NewReader(resp.Body)
+
+		line, err := buf.ReadBytes('\n')
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(line)).To(HavePrefix("heartbeat: keep-alive"))
 	})
 
 	It("contains zero values for gauge metrics", func() {
@@ -313,7 +332,7 @@ var _ = Describe("Read", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		w := &nonFlusherWriter{httptest.NewRecorder()}
-		web.ReadHandler(lp)(w, req)
+		web.ReadHandler(lp, time.Minute)(w, req)
 
 		Expect(w.rw.Code).To(Equal(http.StatusInternalServerError))
 		Expect(w.rw.Body).To(MatchJSON(`{
@@ -328,6 +347,7 @@ type stubLogsProvider struct {
 	_requests      []*loggregator_v2.EgressBatchRequest
 	_batchResponse *loggregator_v2.EnvelopeBatch
 	_errorResponse error
+	block          bool
 }
 
 func newStubLogsProvider() *stubLogsProvider {
@@ -338,6 +358,11 @@ func (s *stubLogsProvider) Stream(ctx context.Context, req *loggregator_v2.Egres
 	s._requests = append(s._requests, req)
 
 	return func() (*loggregator_v2.EnvelopeBatch, error) {
+		if s.block {
+			var block chan int
+			<-block
+		}
+
 		return s._batchResponse, s._errorResponse
 	}
 }

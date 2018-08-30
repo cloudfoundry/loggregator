@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
@@ -25,7 +26,7 @@ type Handler struct {
 func NewHandler(lp LogsProvider) *Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("/v2/read", ReadHandler(lp))
+	mux.Handle("/v2/read", ReadHandler(lp, 15*time.Second))
 
 	return &Handler{mux: mux}
 }
