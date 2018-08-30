@@ -93,12 +93,13 @@ var _ = Describe("SelectorBuilder", func() {
 
 	It("includes a selector with given gauge names", func() {
 		s, err := web.BuildSelector(url.Values{
-			"gauge.name": {"cpu", "memory"},
+			"gauge.name": {"cpu,memory", "jvm.stuff"},
 		})
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(s).To(Equal([]*loggregator_v2.Selector{
 			buildGaugeSelector("", []string{"cpu", "memory"}),
+			buildGaugeSelector("", []string{"jvm.stuff"}),
 		}))
 	})
 

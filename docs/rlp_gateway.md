@@ -21,7 +21,7 @@ JSON format.
 - `timer`     - Request timer envelopes.
 - `event`     - Request event envelopes.
 - `counter.name` - Request counter envelopes and filter on counter name.
-- `gauge.name`   - Request gauge envelopes and filter on gauge name.
+- `gauge.name`   - Request gauge envelopes and filter on gauge name. For a gauge that has multiple metrics, use comma separated list (e.g., `gauge.name=x,y,z`).
 - `deterministic_name` - Enable deterministic routing.
 
 A 400 Bad Request is returned when no envelope types are passed into the query

@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/url"
+	"strings"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
@@ -110,14 +111,27 @@ func addGaugeSelector(
 	sourceID string,
 	names []string,
 ) []*loggregator_v2.Selector {
-	return append(selectors, &loggregator_v2.Selector{
-		SourceId: sourceID,
-		Message: &loggregator_v2.Selector_Gauge{
-			Gauge: &loggregator_v2.GaugeSelector{
-				Names: names,
+	if len(names) == 0 {
+		return append(selectors, &loggregator_v2.Selector{
+			SourceId: sourceID,
+			Message: &loggregator_v2.Selector_Gauge{
+				Gauge: &loggregator_v2.GaugeSelector{},
 			},
-		},
-	})
+		})
+	}
+
+	for _, name := range names {
+		selectors = append(selectors, &loggregator_v2.Selector{
+			SourceId: sourceID,
+			Message: &loggregator_v2.Selector_Gauge{
+				Gauge: &loggregator_v2.GaugeSelector{
+					Names: strings.Split(name, ","),
+				},
+			},
+		})
+	}
+
+	return selectors
 }
 
 func addTimerSelector(
