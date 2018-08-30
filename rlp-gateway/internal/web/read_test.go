@@ -355,6 +355,8 @@ func newStubLogsProvider() *stubLogsProvider {
 }
 
 func (s *stubLogsProvider) Stream(ctx context.Context, req *loggregator_v2.EgressBatchRequest) web.Receiver {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s._requests = append(s._requests, req)
 
 	return func() (*loggregator_v2.EnvelopeBatch, error) {
@@ -371,7 +373,10 @@ func (s *stubLogsProvider) requests() []*loggregator_v2.EgressBatchRequest {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s._requests
+	result := make([]*loggregator_v2.EgressBatchRequest, len(s._requests))
+	copy(result, s._requests)
+
+	return result
 }
 
 // nonFlusherWriter is a wrapper around the httptest.ResponseRecorder that
