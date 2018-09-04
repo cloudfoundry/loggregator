@@ -46,28 +46,28 @@ func (m CFAuthMiddlewareProvider) Middleware(h http.Handler) http.Handler {
 	router.HandleFunc("/v2/read", func(w http.ResponseWriter, r *http.Request) {
 		authToken := r.Header.Get("Authorization")
 		if authToken == "" {
-			http.Error(w, errNotFound.Error(), http.StatusNotFound)
+			errNotFound.Write(w)
 			return
 		}
 
 		c, err := m.oauth2Reader.Read(authToken)
 		if err != nil {
 			log.Printf("failed to read from Oauth2 server: %s", err)
-			http.Error(w, errNotFound.Error(), http.StatusNotFound)
+			errNotFound.Write(w)
 			return
 		}
 
 		sourceIDs := r.URL.Query()["source_id"]
 
 		if !c.IsAdmin && len(sourceIDs) == 0 {
-			http.Error(w, errNotFound.Error(), http.StatusNotFound)
+			errNotFound.Write(w)
 			return
 		}
 
 		for _, sourceID := range sourceIDs {
 			if !c.IsAdmin {
 				if !m.logAuthorizer.IsAuthorized(sourceID, authToken) {
-					http.Error(w, errNotFound.Error(), http.StatusNotFound)
+					errNotFound.Write(w)
 					return
 				}
 			}

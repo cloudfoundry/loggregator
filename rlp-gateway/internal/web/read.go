@@ -27,7 +27,7 @@ var marshaler = jsonpb.Marshaler{
 func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, errMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
+			errMethodNotAllowed.Write(w)
 			return
 		}
 
@@ -44,7 +44,7 @@ func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, errStreamingUnsupported.Error(), http.StatusInternalServerError)
+			errStreamingUnsupported.Write(w)
 			return
 		}
 
