@@ -12,6 +12,7 @@ var (
 	errCounterNamePresentButEmpty = newJSONError("missing_counter_name", "counter.name is invalid without value")
 	errGaugeNamePresentButEmpty   = newJSONError("missing_gauge_name", "gauge.name is invalid without value")
 	errStreamingUnsupported       = newJSONError("streaming_unsupported", "request does not support streaming")
+	errNotFound                   = newJSONError("not_found", "resource not found")
 )
 
 type jsonError struct {

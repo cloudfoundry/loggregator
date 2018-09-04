@@ -88,10 +88,10 @@ var _ = Describe("CfAuthMiddleware", func() {
 			authHandler.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
-			// Expect(recorder.Body).To(MatchJSON(`{
-			// 	"error": "not_found",
-			// 	"message:" "resource not found"
-			// }`))
+			Expect(recorder.Body).To(MatchJSON(`{
+				"error": "not_found",
+				"message": "resource not found"
+			}`))
 			Expect(baseHandlerCalled).To(BeFalse())
 		})
 
@@ -110,6 +110,10 @@ var _ = Describe("CfAuthMiddleware", func() {
 			authHandler.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(recorder.Body).To(MatchJSON(`{
+				"error": "not_found",
+				"message": "resource not found"
+			}`))
 			Expect(baseHandlerCalled).To(BeFalse())
 		})
 
@@ -127,6 +131,10 @@ var _ = Describe("CfAuthMiddleware", func() {
 			authHandler.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(recorder.Body).To(MatchJSON(`{
+				"error": "not_found",
+				"message": "resource not found"
+			}`))
 			Expect(baseHandlerCalled).To(BeFalse())
 		})
 
@@ -145,6 +153,10 @@ var _ = Describe("CfAuthMiddleware", func() {
 			authHandler.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(recorder.Body).To(MatchJSON(`{
+				"error": "not_found",
+				"message": "resource not found"
+			}`))
 			Expect(baseHandlerCalled).To(BeFalse())
 		})
 	})
