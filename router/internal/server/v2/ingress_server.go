@@ -6,8 +6,8 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // HealthRegistrar describes the health interface for keeping track of various
@@ -47,7 +47,7 @@ func (i IngressServer) Send(
 	_ context.Context,
 	_ *loggregator_v2.EnvelopeBatch,
 ) (*loggregator_v2.SendResponse, error) {
-	return nil, grpc.Errorf(codes.Unimplemented, "this endpoint is not yet implemented")
+	return nil, status.Errorf(codes.Unimplemented, "this endpoint is not yet implemented")
 }
 
 func (i IngressServer) BatchSender(s loggregator_v2.Ingress_BatchSenderServer) error {

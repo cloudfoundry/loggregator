@@ -16,6 +16,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -360,7 +361,7 @@ func newSpyDopplerV2() *spyDopplerV2 {
 }
 
 func (s *spyDopplerV2) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
-	return grpc.Errorf(codes.Unimplemented, "use BatchedReceiver")
+	return status.Errorf(codes.Unimplemented, "use BatchedReceiver")
 }
 
 func (s *spyDopplerV2) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, b loggregator_v2.Egress_BatchedReceiverServer) error {

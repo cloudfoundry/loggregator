@@ -10,8 +10,8 @@ import (
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
 )
@@ -116,7 +116,7 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 
 	if subCount > s.maxStreams {
 		s.rejectedMetric.Increment(1)
-		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
+		return status.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
 	}
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -128,11 +128,11 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 	r.LegacySelector = nil
 
 	if len(r.Selectors) == 0 {
-		return grpc.Errorf(codes.InvalidArgument, "Selectors cannot be empty")
+		return status.Errorf(codes.InvalidArgument, "Selectors cannot be empty")
 	}
 	for _, s := range r.Selectors {
 		if s.Message == nil {
-			return grpc.Errorf(codes.InvalidArgument, "Selectors must have a Message")
+			return status.Errorf(codes.InvalidArgument, "Selectors must have a Message")
 		}
 	}
 
@@ -185,18 +185,18 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 
 	if subCount > s.maxStreams {
 		s.rejectedMetric.Increment(1)
-		return grpc.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
+		return status.Errorf(codes.ResourceExhausted, "unable to create stream, max egress streams reached: %d", s.maxStreams)
 	}
 
 	r.Selectors = s.convergeSelectors(r.GetLegacySelector(), r.GetSelectors())
 	r.LegacySelector = nil
 
 	if len(r.Selectors) == 0 {
-		return grpc.Errorf(codes.InvalidArgument, "Selectors cannot be empty")
+		return status.Errorf(codes.InvalidArgument, "Selectors cannot be empty")
 	}
 	for _, s := range r.Selectors {
 		if s.Message == nil {
-			return grpc.Errorf(codes.InvalidArgument, "Selectors must have a Message")
+			return status.Errorf(codes.InvalidArgument, "Selectors must have a Message")
 		}
 	}
 

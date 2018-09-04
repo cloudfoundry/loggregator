@@ -9,8 +9,8 @@ import (
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/batching"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Subscriber registers stream DataSetters to accept reads.
@@ -69,7 +69,7 @@ func (s *EgressServer) Receiver(
 	req *loggregator_v2.EgressRequest,
 	sender loggregator_v2.Egress_ReceiverServer,
 ) error {
-	return grpc.Errorf(codes.Unimplemented, "use BatchedReceiver instead")
+	return status.Errorf(codes.Unimplemented, "use BatchedReceiver instead")
 }
 
 // BatchedReceiver implements loggregator_v2.EgressServer.

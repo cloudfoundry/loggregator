@@ -12,6 +12,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
@@ -203,7 +204,7 @@ func startMockDopplerServer() *spyRouter {
 }
 
 func (m *spyRouter) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
-	return grpc.Errorf(codes.Unimplemented, "Use batched receiver")
+	return status.Errorf(codes.Unimplemented, "Use batched receiver")
 }
 
 func (m *spyRouter) BatchedReceiver(req *loggregator_v2.EgressBatchRequest, s loggregator_v2.Egress_BatchedReceiverServer) error {

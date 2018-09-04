@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/rlp/internal/egress"
@@ -45,7 +46,7 @@ var _ = Describe("Server", func() {
 			}, receiverServer)
 
 			Expect(err).To(MatchError(
-				grpc.Errorf(
+				status.Errorf(
 					codes.ResourceExhausted,
 					"unable to create stream, max egress streams reached: 0",
 				),
@@ -594,7 +595,7 @@ var _ = Describe("Server", func() {
 			}, receiverServer)
 
 			Expect(err).To(MatchError(
-				grpc.Errorf(
+				status.Errorf(
 					codes.ResourceExhausted,
 					"unable to create stream, max egress streams reached: 0",
 				),
