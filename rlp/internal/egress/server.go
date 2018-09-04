@@ -247,9 +247,8 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 		case <-senderErrorStream:
 			return io.ErrUnexpectedEOF
 		case <-receiveErrorStream:
-			for len(buffer) > 0 {
-				data := <-buffer
-				batcher.Write(data)
+			for d := range buffer {
+				batcher.Write(d)
 			}
 			batcher.ForcedFlush()
 
