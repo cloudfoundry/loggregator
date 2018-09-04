@@ -163,6 +163,7 @@ func (t *TrafficController) Start() {
 			t.metricClient,
 			healthRegistry,
 			recentLogsHandler,
+			t.disableAccessControl,
 			logCacheClient,
 		),
 	)

@@ -55,6 +55,7 @@ func NewDopplerProxy(
 	m MetricClient,
 	health Health,
 	recentLogsHandler http.Handler,
+	disableAccessControl bool,
 	logCacheClient LogCacheClient,
 ) *DopplerProxy {
 	// metric-documentation-v2: (doppler_proxy.firehoses) Number of open firehose streams
@@ -70,7 +71,7 @@ func NewDopplerProxy(
 	r := mux.NewRouter()
 
 	adminAccessMiddleware := NewAdminAccessMiddleware(adminAuthorizer)
-	logAccessMiddleware := NewLogAccessMiddleware(logAuthorizer)
+	logAccessMiddleware := NewLogAccessMiddleware(logAuthorizer, disableAccessControl)
 	corsMiddleware := NewCORSMiddleware()
 
 	r.Handle(

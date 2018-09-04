@@ -46,6 +46,7 @@ var _ = Describe("StreamHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 

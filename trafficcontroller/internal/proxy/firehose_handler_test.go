@@ -54,9 +54,9 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
-
 		req, _ := http.NewRequest("GET", "/firehose/abc-123", nil)
 		req.Header.Add("Authorization", "token")
 
@@ -80,6 +80,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 
@@ -111,6 +112,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 
@@ -142,6 +144,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 
@@ -170,6 +173,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 
@@ -192,6 +196,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 		server := httptest.NewServer(handler)
@@ -222,6 +227,7 @@ var _ = Describe("FirehoseHandler", func() {
 			mockSender,
 			mockHealth,
 			newSpyRecentLogsHandler(),
+			false,
 			logCacheClient,
 		)
 		server := httptest.NewServer(handler)
