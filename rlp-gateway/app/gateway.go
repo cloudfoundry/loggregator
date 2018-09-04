@@ -72,7 +72,7 @@ func (g *Gateway) Start(blocking bool) {
 		g.log,
 	)
 
-	middlewareProvider := auth.NewCFAuthMiddlewareProvider(
+	middlewareProvider := web.NewCFAuthMiddlewareProvider(
 		uaaClient,
 		capiClient,
 	)

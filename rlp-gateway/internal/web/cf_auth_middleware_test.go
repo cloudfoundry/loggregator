@@ -1,12 +1,13 @@
-package auth_test
+package web_test
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 
-	"errors"
-
 	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/auth"
+	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/web"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -18,14 +19,14 @@ var _ = Describe("CfAuthMiddleware", func() {
 
 		recorder *httptest.ResponseRecorder
 		request  *http.Request
-		provider auth.CFAuthMiddlewareProvider
+		provider web.CFAuthMiddlewareProvider
 	)
 
 	BeforeEach(func() {
 		spyOauth2ClientReader = newAdminChecker()
 		spyLogAuthorizer = newSpyLogAuthorizer()
 
-		provider = auth.NewCFAuthMiddlewareProvider(
+		provider = web.NewCFAuthMiddlewareProvider(
 			spyOauth2ClientReader,
 			spyLogAuthorizer,
 		)
@@ -87,6 +88,10 @@ var _ = Describe("CfAuthMiddleware", func() {
 			authHandler.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			// Expect(recorder.Body).To(MatchJSON(`{
+			// 	"error": "not_found",
+			// 	"message:" "resource not found"
+			// }`))
 			Expect(baseHandlerCalled).To(BeFalse())
 		})
 

@@ -1,10 +1,10 @@
-package auth
+package web
 
 import (
+	"log"
 	"net/http"
 
-	"log"
-
+	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/auth"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
 )
@@ -16,16 +16,9 @@ type CFAuthMiddlewareProvider struct {
 	marshaller    jsonpb.Marshaler
 }
 
-// Oauth2Client defines an OAuth2 client
-type Oauth2Client struct {
-	IsAdmin  bool
-	ClientID string
-	UserID   string
-}
-
 // Oauth2ClientReader defines the interface for retrieving an OAuth2 client
 type Oauth2ClientReader interface {
-	Read(token string) (Oauth2Client, error)
+	Read(token string) (auth.Oauth2Client, error)
 }
 
 // LogAuthorizer defines the interface for validating and providing access to

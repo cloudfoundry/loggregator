@@ -22,6 +22,13 @@ type HTTPClient interface {
 	Do(r *http.Request) (*http.Response, error)
 }
 
+// Oauth2Client defines an OAuth2 client
+type Oauth2Client struct {
+	IsAdmin  bool
+	ClientID string
+	UserID   string
+}
+
 // UAAClient defines an http client for UAA
 type UAAClient struct {
 	httpClient   HTTPClient
