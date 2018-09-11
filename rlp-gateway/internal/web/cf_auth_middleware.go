@@ -3,6 +3,7 @@ package web
 import (
 	"log"
 	"net/http"
+	"regexp"
 
 	"code.cloudfoundry.org/loggregator/rlp-gateway/internal/auth"
 	"github.com/golang/protobuf/jsonpb"
@@ -41,6 +42,7 @@ func NewCFAuthMiddlewareProvider(
 
 // Middleware provides an http.Handler for checking access to to logs
 func (m CFAuthMiddlewareProvider) Middleware(h http.Handler) http.Handler {
+	guid := regexp.MustCompile("^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/v2/read", func(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +68,7 @@ func (m CFAuthMiddlewareProvider) Middleware(h http.Handler) http.Handler {
 
 		for _, sourceID := range sourceIDs {
 			if !c.IsAdmin {
-				if !m.logAuthorizer.IsAuthorized(sourceID, authToken) {
+				if !m.logAuthorizer.IsAuthorized(sourceID, authToken) || !guid.MatchString(sourceID) {
 					errNotFound.Write(w)
 					return
 				}

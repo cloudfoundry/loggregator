@@ -88,7 +88,7 @@ var _ = Describe("Gateway", func() {
 			defer gateway.Stop()
 
 			client := newTestClient()
-			go client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=my-source-id")
+			go client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef-dead-dead-dead-deaddeafbeef")
 
 			Eventually(client.envelopes).Should(HaveLen(10))
 		})
@@ -102,7 +102,7 @@ var _ = Describe("Gateway", func() {
 
 			client := newTestClient()
 			Expect(func() {
-				client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=my-source-id")
+				client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef-dead-dead-dead-deaddeafbeef")
 			}).ToNot(Panic())
 		})
 	})

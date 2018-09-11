@@ -36,7 +36,11 @@ var _ = Describe("CfAuthMiddleware", func() {
 
 	Describe("/v2/read", func() {
 		BeforeEach(func() {
-			request = httptest.NewRequest(http.MethodGet, "/v2/read?source_id=123", nil)
+			request = httptest.NewRequest(
+				http.MethodGet,
+				"/v2/read?source_id=deadbeef-dead-dead-dead-deaddeafbeef",
+				nil,
+			)
 		})
 
 		It("forwards the /v2/read request to the handler if user is an admin", func() {
@@ -75,7 +79,29 @@ var _ = Describe("CfAuthMiddleware", func() {
 
 			//verify CAPI called with correct info
 			Expect(spyLogAuthorizer.token).To(Equal("valid-token"))
-			Expect(spyLogAuthorizer.sourceID).To(Equal("123"))
+			Expect(spyLogAuthorizer.sourceID).To(Equal("deadbeef-dead-dead-dead-deaddeafbeef"))
+		})
+
+		It("return 404 if non-admin user requests non-uuid", func() {
+			request = httptest.NewRequest(http.MethodGet, "/v2/read?source_id=123", nil)
+			spyLogAuthorizer.result = true
+			var baseHandlerCalled bool
+			baseHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				baseHandlerCalled = true
+			})
+			authHandler := provider.Middleware(baseHandler)
+
+			request.Header.Set("Authorization", "valid-token")
+
+			// Call result
+			authHandler.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(recorder.Body).To(MatchJSON(`{
+				"error": "not_found",
+				"message": "resource not found"
+			}`))
+
+			Expect(baseHandlerCalled).To(BeFalse())
 		})
 
 		It("returns 404 if there's no authorization header present", func() {
