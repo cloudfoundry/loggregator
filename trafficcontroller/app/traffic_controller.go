@@ -170,7 +170,7 @@ func (t *TrafficController) Start() {
 
 	var accessMiddleware func(http.Handler) *auth.AccessHandler
 	if t.conf.SecurityEventLog != "" {
-		accessLog, err := os.OpenFile(t.conf.SecurityEventLog, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		accessLog, err := os.OpenFile(t.conf.SecurityEventLog, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 		if err != nil {
 			log.Panicf("Unable to open access log: %s", err)
 		}
