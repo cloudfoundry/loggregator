@@ -10,7 +10,6 @@ import (
 )
 
 type BuildPaths struct {
-	Agent             string `json:"agent"`
 	Router            string `json:"router"`
 	TrafficController string `json:"traffic_controller"`
 	RLP               string `json:"rlp"`
@@ -26,7 +25,6 @@ func (bp *BuildPaths) Unmarshal(text []byte) error {
 }
 
 func (bp BuildPaths) SetEnv() {
-	os.Setenv("AGENT_BUILD_PATH", bp.Agent)
 	os.Setenv("ROUTER_BUILD_PATH", bp.Router)
 	os.Setenv("TRAFFIC_CONTROLLER_BUILD_PATH", bp.TrafficController)
 	os.Setenv("RLP_BUILD_PATH", bp.RLP)
@@ -40,7 +38,6 @@ func Build() (BuildPaths, chan error) {
 
 	if os.Getenv("SKIP_BUILD") != "" {
 		fmt.Println("Skipping building of binaries")
-		bp.Agent = os.Getenv("AGENT_BUILD_PATH")
 		bp.Router = os.Getenv("ROUTER_BUILD_PATH")
 		bp.TrafficController = os.Getenv("TRAFFIC_CONTROLLER_BUILD_PATH")
 		bp.RLP = os.Getenv("RLP_BUILD_PATH")
@@ -52,19 +49,7 @@ func Build() (BuildPaths, chan error) {
 		mu sync.Mutex
 		wg sync.WaitGroup
 	)
-	wg.Add(5)
-
-	go func() {
-		defer wg.Done()
-		path, err := gexec.Build("code.cloudfoundry.org/loggregator-agent/cmd/agent", "-race")
-		if err != nil {
-			errors <- err
-			return
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		bp.Agent = path
-	}()
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()

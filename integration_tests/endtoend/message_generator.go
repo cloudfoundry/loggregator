@@ -3,6 +3,7 @@ package endtoend
 import (
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
@@ -70,6 +71,19 @@ func BasicLogMessageEnvelope(origin string, appID string) *events.Envelope {
 			MessageType: events.LogMessage_OUT.Enum(),
 			Timestamp:   proto.Int64(time.Now().UnixNano()),
 			AppId:       proto.String(appID),
+		},
+	}
+}
+
+func BasicLogMessageEnvelopeV2(appID string) *loggregator_v2.Envelope {
+	return &loggregator_v2.Envelope{
+		Timestamp:  time.Now().UnixNano(),
+		SourceId:   appID,
+		InstanceId: "0",
+		Message: &loggregator_v2.Envelope_Log{
+			Log: &loggregator_v2.Log{
+				Payload: []byte("log message"),
+			},
 		},
 	}
 }

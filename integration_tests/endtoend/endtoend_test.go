@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/integration_tests/endtoend"
+	"code.cloudfoundry.org/loggregator/integration_tests/fakes"
 	"code.cloudfoundry.org/loggregator/testservers"
 
 	. "github.com/onsi/ginkgo"
@@ -17,14 +18,16 @@ var _ = Describe("End to end tests", func() {
 			testservers.BuildRouterConfig(0, 0),
 		)
 		defer dopplerCleanup()
-		agentCleanup, agentPorts := testservers.StartAgent(
-			testservers.BuildAgentConfig("127.0.0.1", dopplerPorts.GRPC),
+
+		ingressCleanup, ingressClient := fakes.DopplerIngressV2Client(
+			fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 		)
-		defer agentCleanup()
+		defer ingressCleanup()
+
 		trafficcontrollerCleanup, tcPorts := testservers.StartTrafficController(
 			testservers.BuildTrafficControllerConf(
 				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
-				agentPorts.UDP,
+				0,
 				fmt.Sprintf("127.0.0.1:%d", 0),
 			),
 		)
@@ -33,10 +36,8 @@ var _ = Describe("End to end tests", func() {
 		firehoseReader := endtoend.NewFirehoseReader(tcPorts.WS)
 
 		go func() {
-			agentStreamWriter := endtoend.NewAgentStreamWriter(agentPorts.UDP)
-			generator := endtoend.NewLogMessageGenerator("custom-app-id")
 			for range time.Tick(time.Millisecond) {
-				agentStreamWriter.Write(generator.Generate())
+				ingressClient.Send(endtoend.BasicLogMessageEnvelopeV2("custom-app-id"))
 			}
 		}()
 

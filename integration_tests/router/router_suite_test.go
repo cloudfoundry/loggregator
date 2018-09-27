@@ -2,7 +2,6 @@ package router_test
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"errors"
 	"log"
@@ -18,7 +17,6 @@ import (
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
 	. "github.com/onsi/ginkgo"
@@ -65,114 +63,6 @@ func buildLogMessage() []byte {
 	b, err := proto.Marshal(e)
 	Expect(err).ToNot(HaveOccurred())
 	return b
-}
-
-func dopplerEgressV1Client(addr string) (func(), plumbing.DopplerClient) {
-	creds, err := plumbing.NewClientCredentials(
-		testservers.Cert("doppler.crt"),
-		testservers.Cert("doppler.key"),
-		testservers.Cert("loggregator-ca.crt"),
-		"doppler",
-	)
-	Expect(err).ToNot(HaveOccurred())
-
-	out, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	Expect(err).ToNot(HaveOccurred())
-	return func() {
-		_ = out.Close()
-	}, plumbing.NewDopplerClient(out)
-}
-
-func dopplerEgressV2Client(addr string) (func(), loggregator_v2.EgressClient) {
-	creds, err := plumbing.NewClientCredentials(
-		testservers.Cert("doppler.crt"),
-		testservers.Cert("doppler.key"),
-		testservers.Cert("loggregator-ca.crt"),
-		"doppler",
-	)
-	Expect(err).ToNot(HaveOccurred())
-
-	out, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	Expect(err).ToNot(HaveOccurred())
-	return func() {
-		_ = out.Close()
-	}, loggregator_v2.NewEgressClient(out)
-}
-
-func dopplerIngressV1Client(addr string) (func(), plumbing.DopplerIngestor_PusherClient) {
-	creds, err := plumbing.NewClientCredentials(
-		testservers.Cert("doppler.crt"),
-		testservers.Cert("doppler.key"),
-		testservers.Cert("loggregator-ca.crt"),
-		"doppler",
-	)
-	Expect(err).ToNot(HaveOccurred())
-
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	Expect(err).ToNot(HaveOccurred())
-	client := plumbing.NewDopplerIngestorClient(conn)
-
-	var (
-		pusherClient plumbing.DopplerIngestor_PusherClient
-		cancel       func()
-	)
-	f := func() func() {
-		var (
-			err error
-			ctx context.Context
-		)
-		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-		pusherClient, err = client.Pusher(ctx)
-		if err != nil {
-			cancel()
-			return nil
-		}
-		return cancel // when the cancel func escapes the linter is happy
-	}
-	Eventually(f).ShouldNot(BeNil())
-
-	return func() {
-		cancel()
-		conn.Close()
-	}, pusherClient
-}
-
-func dopplerIngressV2Client(addr string) (func(), plumbingv2.DopplerIngress_SenderClient) {
-	creds, err := plumbing.NewClientCredentials(
-		testservers.Cert("doppler.crt"),
-		testservers.Cert("doppler.key"),
-		testservers.Cert("loggregator-ca.crt"),
-		"doppler",
-	)
-	Expect(err).ToNot(HaveOccurred())
-
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	Expect(err).ToNot(HaveOccurred())
-	client := plumbingv2.NewDopplerIngressClient(conn)
-
-	var (
-		senderClient plumbingv2.DopplerIngress_SenderClient
-		cancel       func()
-	)
-	f := func() func() {
-		var (
-			err error
-			ctx context.Context
-		)
-		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-		senderClient, err = client.Sender(ctx)
-		if err != nil {
-			cancel()
-			return nil
-		}
-		return cancel // when the cancel func escapes the linter is happy
-	}
-	Eventually(f).ShouldNot(BeNil())
-
-	return func() {
-		cancel()
-		conn.Close()
-	}, senderClient
 }
 
 func sendAppLog(appID string, message string, client plumbing.DopplerIngestor_PusherClient) error {

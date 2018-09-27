@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	"code.cloudfoundry.org/loggregator/integration_tests/fakes"
 	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"golang.org/x/net/context"
@@ -20,11 +21,11 @@ var _ = Describe("V2 Egress", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(
 				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV2Client(
+			egressCleanup, egressClient := fakes.DopplerEgressV2Client(
 				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 			defer egressCleanup()
@@ -85,10 +86,10 @@ var _ = Describe("V2 Egress", func() {
 			dopplerCleanup, dopplerPorts = testservers.StartRouter(
 				testservers.BuildRouterConfig(0, 0),
 			)
-			ingressCleanup, ingressClient = dopplerIngressV2Client(
+			ingressCleanup, ingressClient = fakes.DopplerIngressV2Client(
 				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
-			egressCleanup, egressClient = dopplerEgressV2Client(
+			egressCleanup, egressClient = fakes.DopplerEgressV2Client(
 				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
 			)
 		})

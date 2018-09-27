@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"code.cloudfoundry.org/loggregator/integration_tests/fakes"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -21,9 +22,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			containerMetric := NewContainerMetric("some-test-app-id", 0, 1, 2, 3)
@@ -43,9 +44,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			containerMetric := NewContainerMetric("some-test-app-id", 0, 100, 2, 3)
@@ -71,9 +72,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			containerMetric := NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
@@ -97,9 +98,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			logMessage := NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
@@ -118,9 +119,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			logMessage0 := NewLogMessage(events.LogMessage_OUT, "msg 1", "some-test-app-id", "APP")
@@ -143,9 +144,9 @@ var _ = Describe("Persistence", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			for i := 0; i < 15; i++ {

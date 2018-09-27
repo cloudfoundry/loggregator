@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"code.cloudfoundry.org/loggregator/integration_tests/fakes"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
 
@@ -20,9 +21,9 @@ var _ = Describe("GRPC Streaming Logs", func() {
 				testservers.BuildRouterConfig(0, 0),
 			)
 			defer dopplerCleanup()
-			ingressCleanup, ingressClient := dopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer ingressCleanup()
-			egressCleanup, egressClient := dopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
+			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
 			defer egressCleanup()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
