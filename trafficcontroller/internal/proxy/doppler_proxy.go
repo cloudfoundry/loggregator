@@ -36,7 +36,6 @@ type DopplerProxy struct {
 
 type GrpcConnector interface {
 	Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error)
-	ContainerMetrics(ctx context.Context, appID string) [][]byte
 }
 
 type MetricClient interface {

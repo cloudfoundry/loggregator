@@ -16,15 +16,6 @@ type mockDopplerServer struct {
 	SubscribeOutput struct {
 		Err chan error
 	}
-	ContainerMetricsCalled chan bool
-	ContainerMetricsInput  struct {
-		Ctx chan context.Context
-		Req chan *plumbing.ContainerMetricsRequest
-	}
-	ContainerMetricsOutput struct {
-		Resp chan *plumbing.ContainerMetricsResponse
-		Err  chan error
-	}
 	RecentLogsCalled chan bool
 	RecentLogsInput  struct {
 		Ctx chan context.Context
@@ -42,11 +33,6 @@ func newMockDopplerServer() *mockDopplerServer {
 	m.SubscribeInput.Req = make(chan *plumbing.SubscriptionRequest, 100)
 	m.SubscribeInput.Stream = make(chan plumbing.Doppler_SubscribeServer, 100)
 	m.SubscribeOutput.Err = make(chan error, 100)
-	m.ContainerMetricsCalled = make(chan bool, 100)
-	m.ContainerMetricsInput.Ctx = make(chan context.Context, 100)
-	m.ContainerMetricsInput.Req = make(chan *plumbing.ContainerMetricsRequest, 100)
-	m.ContainerMetricsOutput.Resp = make(chan *plumbing.ContainerMetricsResponse, 100)
-	m.ContainerMetricsOutput.Err = make(chan error, 100)
 	m.RecentLogsCalled = make(chan bool, 100)
 	m.RecentLogsInput.Ctx = make(chan context.Context, 100)
 	m.RecentLogsInput.Req = make(chan *plumbing.RecentLogsRequest, 100)
@@ -59,12 +45,6 @@ func (m *mockDopplerServer) Subscribe(req *plumbing.SubscriptionRequest, stream 
 	m.SubscribeInput.Req <- req
 	m.SubscribeInput.Stream <- stream
 	return <-m.SubscribeOutput.Err
-}
-func (m *mockDopplerServer) ContainerMetrics(ctx context.Context, req *plumbing.ContainerMetricsRequest) (resp *plumbing.ContainerMetricsResponse, err error) {
-	m.ContainerMetricsCalled <- true
-	m.ContainerMetricsInput.Ctx <- ctx
-	m.ContainerMetricsInput.Req <- req
-	return <-m.ContainerMetricsOutput.Resp, <-m.ContainerMetricsOutput.Err
 }
 func (m *mockDopplerServer) RecentLogs(ctx context.Context, req *plumbing.RecentLogsRequest) (resp *plumbing.RecentLogsResponse, err error) {
 	m.RecentLogsCalled <- true

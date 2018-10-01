@@ -62,14 +62,6 @@ type mockGrpcConnector struct {
 		Ret0 chan func() ([]byte, error)
 		Ret1 chan error
 	}
-	ContainerMetricsCalled chan bool
-	ContainerMetricsInput  struct {
-		Ctx   chan context.Context
-		AppID chan string
-	}
-	ContainerMetricsOutput struct {
-		Ret0 chan [][]byte
-	}
 }
 
 func newMockGrpcConnector() *mockGrpcConnector {
@@ -79,10 +71,6 @@ func newMockGrpcConnector() *mockGrpcConnector {
 	m.SubscribeInput.Req = make(chan *plumbing.SubscriptionRequest, 100)
 	m.SubscribeOutput.Ret0 = make(chan func() ([]byte, error), 100)
 	m.SubscribeOutput.Ret1 = make(chan error, 100)
-	m.ContainerMetricsCalled = make(chan bool, 100)
-	m.ContainerMetricsInput.Ctx = make(chan context.Context, 100)
-	m.ContainerMetricsInput.AppID = make(chan string, 100)
-	m.ContainerMetricsOutput.Ret0 = make(chan [][]byte, 100)
 	return m
 }
 func (m *mockGrpcConnector) Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error) {
@@ -90,12 +78,6 @@ func (m *mockGrpcConnector) Subscribe(ctx context.Context, req *plumbing.Subscri
 	m.SubscribeInput.Ctx <- ctx
 	m.SubscribeInput.Req <- req
 	return <-m.SubscribeOutput.Ret0, <-m.SubscribeOutput.Ret1
-}
-func (m *mockGrpcConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	m.ContainerMetricsCalled <- true
-	m.ContainerMetricsInput.Ctx <- ctx
-	m.ContainerMetricsInput.AppID <- appID
-	return <-m.ContainerMetricsOutput.Ret0
 }
 
 type mockContext struct {

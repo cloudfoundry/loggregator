@@ -8,8 +8,6 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
-	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -88,8 +86,6 @@ var _ = Describe("DopplerProxy", func() {
 		})
 
 		It("emits latency value metric for containermetrics request", func() {
-			mockGrpcConnector.ContainerMetricsOutput.Ret0 <- nil
-
 			req, _ := http.NewRequest("GET", "/apps/12bdb5e8-ba61-48e3-9dda-30ecd1446663/containermetrics", nil)
 			metricName := "dopplerProxy.containermetricsLatency"
 			requestStart := time.Now()
@@ -238,7 +234,6 @@ var _ = Describe("DopplerProxy", func() {
 		})
 
 		It("configures CORS for container metrics", func() {
-			mockGrpcConnector.ContainerMetricsOutput.Ret0 <- nil
 			req, _ := http.NewRequest(
 				"GET",
 				"/apps/guid/containermetrics",
@@ -254,24 +249,6 @@ var _ = Describe("DopplerProxy", func() {
 		})
 	})
 })
-
-func buildContainerMetric(appID string, t time.Time) (*events.Envelope, []byte) {
-	envelope := &events.Envelope{
-		Origin:    proto.String("doppler"),
-		EventType: events.Envelope_ContainerMetric.Enum(),
-		Timestamp: proto.Int64(t.UnixNano()),
-		ContainerMetric: &events.ContainerMetric{
-			ApplicationId: proto.String(appID),
-			InstanceIndex: proto.Int32(int32(1)),
-			CpuPercentage: proto.Float64(float64(1)),
-			MemoryBytes:   proto.Uint64(uint64(1)),
-			DiskBytes:     proto.Uint64(uint64(1)),
-		},
-	}
-	data, err := proto.Marshal(envelope)
-	Expect(err).ToNot(HaveOccurred())
-	return envelope, data
-}
 
 type spyRecentLogsHandler struct {
 	numCalls int
