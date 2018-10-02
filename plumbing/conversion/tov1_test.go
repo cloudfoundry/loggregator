@@ -29,4 +29,27 @@ var _ = Describe("Tov1", func() {
 		conversion.ToV1(v2e)
 		Expect(v2e.Tags["foo"]).To(Equal("bar"))
 	})
+
+	It("converts a slice of V2 envelopes to a slice of V1 envelopes", func() {
+		v2Envs := []*loggregator_v2.Envelope{
+			{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
+						Payload: []byte("hello-1"),
+					},
+				},
+			},
+			{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
+						Payload: []byte("hello-2"),
+					},
+				},
+			},
+		}
+
+		results := conversion.ManyToV1(v2Envs)
+
+		Expect(results).To(HaveLen(2))
+	})
 })

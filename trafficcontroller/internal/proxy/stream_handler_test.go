@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
-	"code.cloudfoundry.org/loggregator/plumbing"
 
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
 
@@ -138,13 +138,31 @@ var _ = Describe("StreamHandler", func() {
 
 		dopplerProxy.ServeHTTP(recorder, req)
 
-		Expect(connector.subscriptions.request).To(Equal(
-			&plumbing.SubscriptionRequest{
-				Filter: &plumbing.Filter{
-					AppID: "8de7d390-9044-41ff-ab76-432299923511",
+		Expect(connector.subscriptions.request).To(Equal(&loggregator_v2.EgressBatchRequest{
+			Selectors: []*loggregator_v2.Selector{
+				{
+					SourceId: "8de7d390-9044-41ff-ab76-432299923511",
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+				{
+					SourceId: "8de7d390-9044-41ff-ab76-432299923511",
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{
+							Names: []string{
+								"cpuPercentage",
+								"memoryBytes",
+								"diskBytes",
+								"memoryBytesQuota",
+								"diskBytesQuota",
+							},
+						},
+					},
 				},
 			},
-		))
+			UsePreferredTags: true,
+		}))
 	})
 
 	It("closes the context when the client closes its connection", func() {

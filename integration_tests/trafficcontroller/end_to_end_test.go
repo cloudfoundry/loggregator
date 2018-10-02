@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
-	"code.cloudfoundry.org/loggregator/plumbing"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 
 	. "github.com/onsi/ginkgo"
@@ -129,14 +128,19 @@ var _ = Describe("TrafficController for v1 messages", func() {
 				})
 
 				It("passes messages through", func() {
-					var grpcRequest *plumbing.SubscriptionRequest
-					Eventually(fakeDoppler.SubscriptionRequests, 10).Should(Receive(&grpcRequest))
-					Expect(grpcRequest.Filter).ToNot(BeNil())
-					Expect(grpcRequest.Filter.AppID).To(Equal(APP_ID))
+					var grpcRequest *loggregator_v2.EgressBatchRequest
+					Eventually(fakeDoppler.EgressBatchRequests, 10).Should(Receive(&grpcRequest))
+					Expect(grpcRequest.Selectors).To(HaveLen(2))
 
-					currentTime := time.Now().UnixNano()
-					dropsondeMessage := makeDropsondeMessage("Hello through NOAA", APP_ID, currentTime)
-					fakeDoppler.SendLogMessage(dropsondeMessage)
+					selector := grpcRequest.Selectors[0]
+					Expect(selector.SourceId).To(Equal(APP_ID))
+					Expect(selector.GetLog()).ToNot(BeNil())
+
+					selector = grpcRequest.Selectors[1]
+					Expect(selector.SourceId).To(Equal(APP_ID))
+					Expect(selector.GetGauge()).ToNot(BeNil())
+
+					fakeDoppler.SendV2LogMessage(APP_ID, "Hello through NOAA")
 
 					var receivedEnvelope *events.Envelope
 					Eventually(messages).Should(Receive(&receivedEnvelope))
@@ -145,14 +149,13 @@ var _ = Describe("TrafficController for v1 messages", func() {
 					receivedMessage := receivedEnvelope.GetLogMessage()
 					Expect(receivedMessage.GetMessage()).To(BeEquivalentTo("Hello through NOAA"))
 					Expect(receivedMessage.GetAppId()).To(Equal(APP_ID))
-					Expect(receivedMessage.GetTimestamp()).To(Equal(currentTime))
 
 					client.Close()
 				})
 
 				It("closes the upstream websocket connection when done", func() {
-					var server plumbing.Doppler_BatchSubscribeServer
-					Eventually(fakeDoppler.SubscribeServers, 10).Should(Receive(&server))
+					var server loggregator_v2.Egress_BatchedReceiverServer
+					Eventually(fakeDoppler.EgressBatchStreams, 10).Should(Receive(&server))
 
 					client.Close()
 
@@ -171,13 +174,11 @@ var _ = Describe("TrafficController for v1 messages", func() {
 					defer client.Close()
 					messages, errors = client.FirehoseWithoutReconnect(SUBSCRIPTION_ID, AUTH_TOKEN)
 
-					var grpcRequest *plumbing.SubscriptionRequest
-					Eventually(fakeDoppler.SubscriptionRequests, 10).Should(Receive(&grpcRequest))
-					Expect(grpcRequest.ShardID).To(Equal(SUBSCRIPTION_ID))
+					var grpcRequest *loggregator_v2.EgressBatchRequest
+					Eventually(fakeDoppler.EgressBatchRequests, 10).Should(Receive(&grpcRequest))
+					Expect(grpcRequest.ShardId).To(Equal(SUBSCRIPTION_ID))
 
-					currentTime := time.Now().UnixNano()
-					dropsondeMessage := makeDropsondeMessage("Hello through NOAA", APP_ID, currentTime)
-					fakeDoppler.SendLogMessage(dropsondeMessage)
+					fakeDoppler.SendV2LogMessage(APP_ID, "Hello through NOAA")
 
 					var receivedEnvelope *events.Envelope
 					Eventually(messages).Should(Receive(&receivedEnvelope))
@@ -187,10 +188,8 @@ var _ = Describe("TrafficController for v1 messages", func() {
 					receivedMessage := receivedEnvelope.GetLogMessage()
 					Expect(receivedMessage.GetMessage()).To(BeEquivalentTo("Hello through NOAA"))
 					Expect(receivedMessage.GetAppId()).To(Equal(APP_ID))
-					Expect(receivedMessage.GetTimestamp()).To(Equal(currentTime))
 				})
 			})
-
 		})
 
 		Describe("LogCache API Paths", func() {

@@ -53,8 +53,8 @@ type Config struct {
 	MetricEmitterInterval time.Duration `env:"TRAFFIC_CONTROLLER_METRIC_EMITTER_INTERVAL, report"`
 	HealthAddr            string        `env:"TRAFFIC_CONTROLLER_HEALTH_ADDR, report"`
 	DisableAccessControl  bool          `env:"TRAFFIC_CONTROLLER_DISABLE_ACCESS_CONTROL, report"`
-	RouterAddrs           []string      `env:"ROUTER_ADDRS, report"`
 	LogCacheAddr          string        `env:"LOG_CACHE_ADDR, report"`
+	LogAPIAddr            string        `env:"LOG_API_ADDR, report"`
 
 	CCTLSClientConfig CCTLSClientConfig
 	Agent             Agent

@@ -3,36 +3,31 @@ package trafficcontroller_test
 import (
 	"net"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/testservers"
-
-	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 type FakeDoppler struct {
-	GrpcEndpoint             string
-	grpcListener             net.Listener
-	grpcOut                  chan []byte
-	grpcServer               *grpc.Server
-	SubscriptionRequests     chan *plumbing.SubscriptionRequest
-	ContainerMetricsRequests chan *plumbing.ContainerMetricsRequest
-	RecentLogsRequests       chan *plumbing.RecentLogsRequest
-	SubscribeServers         chan plumbing.Doppler_BatchSubscribeServer
-	done                     chan struct{}
+	GrpcEndpoint        string
+	grpcListener        net.Listener
+	v2GRPCOut           chan *loggregator_v2.Envelope
+	grpcServer          *grpc.Server
+	EgressBatchRequests chan *loggregator_v2.EgressBatchRequest
+	EgressBatchStreams  chan loggregator_v2.Egress_BatchedReceiverServer
+	done                chan struct{}
 }
 
 func NewFakeDoppler() *FakeDoppler {
 	return &FakeDoppler{
-		GrpcEndpoint:             "127.0.0.1:0",
-		grpcOut:                  make(chan []byte, 100),
-		SubscriptionRequests:     make(chan *plumbing.SubscriptionRequest, 100),
-		ContainerMetricsRequests: make(chan *plumbing.ContainerMetricsRequest, 100),
-		RecentLogsRequests:       make(chan *plumbing.RecentLogsRequest, 100),
-		SubscribeServers:         make(chan plumbing.Doppler_BatchSubscribeServer, 100),
-		done:                     make(chan struct{}),
+		GrpcEndpoint:        "127.0.0.1:0",
+		v2GRPCOut:           make(chan *loggregator_v2.Envelope, 100),
+		EgressBatchRequests: make(chan *loggregator_v2.EgressBatchRequest, 100),
+		EgressBatchStreams:  make(chan loggregator_v2.Egress_BatchedReceiverServer, 100),
+		done:                make(chan struct{}),
 	}
 }
 
@@ -47,8 +42,8 @@ func (fakeDoppler *FakeDoppler) Start() error {
 		return err
 	}
 	tlsConfig, err := plumbing.NewServerMutualTLSConfig(
-		testservers.Cert("doppler.crt"),
-		testservers.Cert("doppler.key"),
+		testservers.Cert("reverselogproxy.crt"),
+		testservers.Cert("reverselogproxy.key"),
 		testservers.Cert("loggregator-ca.crt"),
 	)
 	if err != nil {
@@ -57,7 +52,7 @@ func (fakeDoppler *FakeDoppler) Start() error {
 	transportCreds := credentials.NewTLS(tlsConfig)
 
 	fakeDoppler.grpcServer = grpc.NewServer(grpc.Creds(transportCreds))
-	plumbing.RegisterDopplerServer(fakeDoppler.grpcServer, fakeDoppler)
+	loggregator_v2.RegisterEgressServer(fakeDoppler.grpcServer, fakeDoppler)
 
 	go func() {
 		defer close(fakeDoppler.done)
@@ -73,48 +68,37 @@ func (fakeDoppler *FakeDoppler) Stop() {
 	<-fakeDoppler.done
 }
 
-func (fakeDoppler *FakeDoppler) SendLogMessage(messageBody []byte) {
-	fakeDoppler.grpcOut <- messageBody
+func (fakeDoppler *FakeDoppler) SendV2LogMessage(sourceID, payload string) {
+	fakeDoppler.v2GRPCOut <- &loggregator_v2.Envelope{
+		SourceId: sourceID,
+		Message: &loggregator_v2.Envelope_Log{
+			Log: &loggregator_v2.Log{
+				Payload: []byte(payload),
+			},
+		},
+	}
 }
 
 func (fakeDoppler *FakeDoppler) CloseLogMessageStream() {
-	close(fakeDoppler.grpcOut)
+	close(fakeDoppler.v2GRPCOut)
 }
 
-func (fakeDoppler *FakeDoppler) Subscribe(request *plumbing.SubscriptionRequest, server plumbing.Doppler_SubscribeServer) error {
+func (fakeDoppler *FakeDoppler) Receiver(*loggregator_v2.EgressRequest, loggregator_v2.Egress_ReceiverServer) error {
 	panic("not implemented")
 }
 
-func (fakeDoppler *FakeDoppler) BatchSubscribe(request *plumbing.SubscriptionRequest, server plumbing.Doppler_BatchSubscribeServer) error {
-	fakeDoppler.SubscriptionRequests <- request
-	fakeDoppler.SubscribeServers <- server
-	for msg := range fakeDoppler.grpcOut {
-		err := server.Send(&plumbing.BatchResponse{
-			Payload: [][]byte{msg},
+func (fakeDoppler *FakeDoppler) BatchedReceiver(
+	req *loggregator_v2.EgressBatchRequest,
+	stream loggregator_v2.Egress_BatchedReceiverServer,
+) error {
+	fakeDoppler.EgressBatchRequests <- req
+	fakeDoppler.EgressBatchStreams <- stream
+
+	for env := range fakeDoppler.v2GRPCOut {
+		stream.Send(&loggregator_v2.EnvelopeBatch{
+			Batch: []*loggregator_v2.Envelope{env},
 		})
-		if err != nil {
-			return err
-		}
 	}
+
 	return nil
-}
-
-func (fakeDoppler *FakeDoppler) ContainerMetrics(ctx context.Context, request *plumbing.ContainerMetricsRequest) (*plumbing.ContainerMetricsResponse, error) {
-	fakeDoppler.ContainerMetricsRequests <- request
-	resp := new(plumbing.ContainerMetricsResponse)
-	for msg := range fakeDoppler.grpcOut {
-		resp.Payload = append(resp.Payload, msg)
-	}
-
-	return resp, nil
-}
-
-func (fakeDoppler *FakeDoppler) RecentLogs(ctx context.Context, request *plumbing.RecentLogsRequest) (*plumbing.RecentLogsResponse, error) {
-	fakeDoppler.RecentLogsRequests <- request
-	resp := new(plumbing.RecentLogsResponse)
-	for msg := range fakeDoppler.grpcOut {
-		resp.Payload = append(resp.Payload, msg)
-	}
-
-	return resp, nil
 }

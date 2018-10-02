@@ -10,6 +10,7 @@ import (
 	"time"
 
 	logcache "code.cloudfoundry.org/go-log-cache"
+	loggregator "code.cloudfoundry.org/go-loggregator"
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
@@ -108,26 +109,28 @@ func (t *TrafficController) Start() {
 		),
 	})
 
-	creds, err := plumbing.NewClientCredentials(
+	creds, err := loggregator.NewEgressTLSConfig(
+		t.conf.GRPC.CAFile,
 		t.conf.GRPC.CertFile,
 		t.conf.GRPC.KeyFile,
-		t.conf.GRPC.CAFile,
-		"doppler",
 	)
 	if err != nil {
 		log.Fatalf("Could not use GRPC creds for server: %s", err)
 	}
 
-	f := plumbing.NewStaticFinder(t.conf.RouterAddrs)
-	f.Start()
-
-	kp := keepalive.ClientParameters{
-		Time:                15 * time.Second,
-		Timeout:             20 * time.Second,
-		PermitWithoutStream: true,
-	}
-	pool := plumbing.NewPool(20, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(kp))
-	grpcConnector := plumbing.NewGRPCConnector(1000, pool, f, t.metricClient)
+	v2Client := loggregator.NewEnvelopeStreamConnector(
+		t.conf.LogAPIAddr,
+		creds,
+		loggregator.WithEnvelopeStreamConnectorDialOptions(
+			grpc.WithKeepaliveParams(
+				keepalive.ClientParameters{
+					Time:                15 * time.Second,
+					Timeout:             20 * time.Second,
+					PermitWithoutStream: true,
+				},
+			),
+		),
+	)
 
 	var logCacheClient proxy.LogCacheClient
 	recentLogsEnabled := false
@@ -156,7 +159,7 @@ func (t *TrafficController) Start() {
 		proxy.NewDopplerProxy(
 			logAuthorizer,
 			adminAuthorizer,
-			grpcConnector,
+			v2Client,
 			"doppler."+t.conf.SystemDomain,
 			5*time.Second,
 			5*time.Second,

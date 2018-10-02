@@ -16,7 +16,7 @@ import (
 func BuildTrafficControllerConf(routerAddr string, agentPort int, logCacheAddr string) tcConf.Config {
 	return tcConf.Config{
 		IP:                    "127.0.0.1",
-		RouterAddrs:           []string{routerAddr},
+		LogAPIAddr:            routerAddr,
 		HealthAddr:            "localhost:0",
 		LogCacheAddr:          logCacheAddr,
 		SystemDomain:          "vcap.me",

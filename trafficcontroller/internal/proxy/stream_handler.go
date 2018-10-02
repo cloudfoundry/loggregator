@@ -5,11 +5,19 @@ import (
 	"net/http"
 	"sync/atomic"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	"code.cloudfoundry.org/loggregator/plumbing"
 
 	"github.com/gorilla/mux"
 )
+
+var includedGuageNames = []string{
+	"cpuPercentage",
+	"memoryBytes",
+	"diskBytes",
+	"memoryBytesQuota",
+	"diskBytesQuota",
+}
 
 type StreamHandler struct {
 	server       *WebSocketServer
@@ -44,17 +52,27 @@ func (h *StreamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	client, err := h.grpcConn.Subscribe(ctx, &plumbing.SubscriptionRequest{
-		Filter: &plumbing.Filter{
-			AppID: appID,
+	stream := h.grpcConn.Stream(ctx, &loggregator_v2.EgressBatchRequest{
+		Selectors: []*loggregator_v2.Selector{
+			{
+				SourceId: appID,
+				Message: &loggregator_v2.Selector_Log{
+					Log: &loggregator_v2.LogSelector{},
+				},
+			},
+			{
+				SourceId: appID,
+				Message: &loggregator_v2.Selector_Gauge{
+					Gauge: &loggregator_v2.GaugeSelector{
+						Names: includedGuageNames,
+					},
+				},
+			},
 		},
+		UsePreferredTags: true,
 	})
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
 
-	h.server.ServeWS(w, r, client, h.egressMetric)
+	h.server.ServeWS(ctx, w, r, stream, h.egressMetric)
 }
 
 func (h *StreamHandler) Count() int64 {

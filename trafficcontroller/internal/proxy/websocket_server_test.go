@@ -1,14 +1,16 @@
 package proxy_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"time"
 
+	loggregator "code.cloudfoundry.org/go-loggregator"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	. "code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -30,9 +32,24 @@ var _ = Describe("WebsocketServer", func() {
 			req.RemoteAddr = "some-address"
 			req.Header["X-Forwarded-For"] = []string{"192.0.0.1", "192.0.0.2"}
 
-			s.ServeWS(httptest.NewRecorder(), req, func() ([]byte, error) {
-				return []byte("hello"), nil
-			}, em)
+			s.ServeWS(
+				context.Background(),
+				httptest.NewRecorder(),
+				req,
+				loggregator.EnvelopeStream(func() []*loggregator_v2.Envelope {
+					return []*loggregator_v2.Envelope{
+						{
+							SourceId: "abc-123",
+							Message: &loggregator_v2.Envelope_Log{
+								Log: &loggregator_v2.Log{
+									Payload: []byte("hello"),
+								},
+							},
+						},
+					}
+				}),
+				em,
+			)
 		})
 
 		It("increments a counter", func() {

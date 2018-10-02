@@ -21,9 +21,8 @@ var _ = Describe("DopplerProxy", func() {
 		dopplerProxy *proxy.DopplerProxy
 		recorder     *httptest.ResponseRecorder
 
-		mockGrpcConnector       *mockGrpcConnector
-		mockDopplerStreamClient *mockReceiver
-		mockHealth              *mockHealth
+		connector  *SpyGRPCConnector
+		mockHealth *mockHealth
 
 		mockSender *testhelper.SpyMetricClient
 
@@ -35,12 +34,9 @@ var _ = Describe("DopplerProxy", func() {
 		auth = LogAuthorizer{Result: AuthorizerResult{Status: http.StatusOK}}
 		adminAuth = AdminAuthorizer{Result: AuthorizerResult{Status: http.StatusOK}}
 
-		mockGrpcConnector = newMockGrpcConnector()
-		mockDopplerStreamClient = newMockReceiver()
+		connector = newSpyGRPCConnector(nil)
 		mockSender = testhelper.NewMetricClient()
 		mockHealth = newMockHealth()
-
-		mockGrpcConnector.SubscribeOutput.Ret0 <- mockDopplerStreamClient.Recv
 
 		recentLogsHandler = newSpyRecentLogsHandler()
 
@@ -49,7 +45,7 @@ var _ = Describe("DopplerProxy", func() {
 		dopplerProxy = proxy.NewDopplerProxy(
 			auth.Authorize,
 			adminAuth.Authorize,
-			mockGrpcConnector,
+			connector,
 			"cookieDomain",
 			50*time.Millisecond,
 			time.Hour,
@@ -61,15 +57,6 @@ var _ = Describe("DopplerProxy", func() {
 		)
 
 		recorder = httptest.NewRecorder()
-	})
-
-	JustBeforeEach(func() {
-		close(mockGrpcConnector.SubscribeOutput.Ret0)
-		close(mockGrpcConnector.SubscribeOutput.Ret1)
-
-		mockDopplerStreamClient.RecvOutput.Ret0 <- []byte("test-message")
-		close(mockDopplerStreamClient.RecvOutput.Ret0)
-		close(mockDopplerStreamClient.RecvOutput.Ret1)
 	})
 
 	Describe("metrics", func() {
@@ -123,7 +110,7 @@ var _ = Describe("DopplerProxy", func() {
 
 				return 0
 			}
-			Eventually(f).Should(Equal(uint64(1)))
+			Eventually(f, 2).Should(BeNumerically(">=", 1))
 		},
 			Entry("stream requests", "/apps/12bdb5e8-ba61-48e3-9dda-30ecd1446663/stream", "stream"),
 			Entry("firehose requests", "/firehose/streamID", "firehose"),
@@ -166,7 +153,7 @@ var _ = Describe("DopplerProxy", func() {
 		dopplerProxy = proxy.NewDopplerProxy(
 			auth.Authorize,
 			adminAuth.Authorize,
-			mockGrpcConnector,
+			connector,
 			"cookieDomain",
 			50*time.Millisecond,
 			time.Hour,

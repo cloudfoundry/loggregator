@@ -2,14 +2,64 @@ package proxy
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"sync/atomic"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	"code.cloudfoundry.org/loggregator/plumbing"
 
 	"github.com/gorilla/mux"
+)
+
+var (
+	logSelectors = []*loggregator_v2.Selector{
+		{
+			Message: &loggregator_v2.Selector_Log{
+				Log: &loggregator_v2.LogSelector{},
+			},
+		},
+	}
+
+	metricSelectors = []*loggregator_v2.Selector{
+		{
+			Message: &loggregator_v2.Selector_Counter{
+				Counter: &loggregator_v2.CounterSelector{},
+			},
+		},
+		{
+			Message: &loggregator_v2.Selector_Gauge{
+				Gauge: &loggregator_v2.GaugeSelector{},
+			},
+		},
+		{
+			Message: &loggregator_v2.Selector_Timer{
+				Timer: &loggregator_v2.TimerSelector{},
+			},
+		},
+	}
+
+	allSelectors = []*loggregator_v2.Selector{
+		{
+			Message: &loggregator_v2.Selector_Counter{
+				Counter: &loggregator_v2.CounterSelector{},
+			},
+		},
+		{
+			Message: &loggregator_v2.Selector_Gauge{
+				Gauge: &loggregator_v2.GaugeSelector{},
+			},
+		},
+		{
+			Message: &loggregator_v2.Selector_Log{
+				Log: &loggregator_v2.LogSelector{},
+			},
+		},
+		{
+			Message: &loggregator_v2.Selector_Timer{
+				Timer: &loggregator_v2.TimerSelector{},
+			},
+		},
+	}
 )
 
 type FirehoseHandler struct {
@@ -45,35 +95,23 @@ func (h *FirehoseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var filter *plumbing.Filter
+	var selectors []*loggregator_v2.Selector
 	switch r.URL.Query().Get("filter-type") {
 	case "logs":
-		filter = &plumbing.Filter{
-			Message: &plumbing.Filter_Log{
-				Log: &plumbing.LogFilter{},
-			},
-		}
+		selectors = logSelectors
 	case "metrics":
-		filter = &plumbing.Filter{
-			Message: &plumbing.Filter_Metric{
-				Metric: &plumbing.MetricFilter{},
-			},
-		}
+		selectors = metricSelectors
 	default:
-		filter = nil
+		selectors = allSelectors
 	}
 
-	client, err := h.grpcConn.Subscribe(ctx, &plumbing.SubscriptionRequest{
-		ShardID: subID,
-		Filter:  filter,
+	stream := h.grpcConn.Stream(ctx, &loggregator_v2.EgressBatchRequest{
+		ShardId:          subID,
+		Selectors:        selectors,
+		UsePreferredTags: true,
 	})
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		log.Printf("error occurred when subscribing to doppler: %s", err)
-		return
-	}
 
-	h.server.ServeWS(w, r, client, h.egressFirehoseMetric)
+	h.server.ServeWS(ctx, w, r, stream, h.egressFirehoseMetric)
 }
 
 func (h *FirehoseHandler) Count() int64 {

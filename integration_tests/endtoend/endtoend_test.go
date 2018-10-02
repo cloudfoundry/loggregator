@@ -24,9 +24,18 @@ var _ = Describe("End to end tests", func() {
 		)
 		defer ingressCleanup()
 
+		rlpCleanup, rlpPorts := testservers.StartRLP(
+			testservers.BuildRLPConfig(
+				0,
+				0,
+				[]string{fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC)},
+			),
+		)
+		defer rlpCleanup()
+
 		trafficcontrollerCleanup, tcPorts := testservers.StartTrafficController(
 			testservers.BuildTrafficControllerConf(
-				fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC),
+				fmt.Sprintf("127.0.0.1:%d", rlpPorts.GRPC),
 				0,
 				fmt.Sprintf("127.0.0.1:%d", 0),
 			),

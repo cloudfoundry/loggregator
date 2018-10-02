@@ -42,6 +42,15 @@ func ToV1(e *loggregator_v2.Envelope) []*events.Envelope {
 	return envelopes
 }
 
+func ManyToV1(es []*loggregator_v2.Envelope) []*events.Envelope {
+	var envs []*events.Envelope
+	for _, e := range es {
+		envs = append(envs, ToV1(e)...)
+	}
+
+	return envs
+}
+
 func createBaseV1(e *loggregator_v2.Envelope) *events.Envelope {
 	v1e := &events.Envelope{
 		Origin:     proto.String(getV2Tag(e, "origin")),

@@ -8,13 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
-	"code.cloudfoundry.org/loggregator/plumbing"
-
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
-
-	"golang.org/x/net/context"
-
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -60,17 +56,38 @@ var _ = Describe("FirehoseHandler", func() {
 		req, _ := http.NewRequest("GET", "/firehose/abc-123", nil)
 		req.Header.Add("Authorization", "token")
 
-		handler.ServeHTTP(recorder, req.WithContext(
-			context.WithValue(req.Context(), "subID", "abc-123")),
-		)
+		handler.ServeHTTP(recorder, req)
 
-		Expect(connector.subscriptions.request).To(Equal(&plumbing.SubscriptionRequest{
-			ShardID: "abc-123",
+		Expect(connector.subscriptions.request).To(Equal(&loggregator_v2.EgressBatchRequest{
+			ShardId: "abc-123",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Counter{
+						Counter: &loggregator_v2.CounterSelector{},
+					},
+				},
+				{
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{},
+					},
+				},
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
+				{
+					Message: &loggregator_v2.Selector_Timer{
+						Timer: &loggregator_v2.TimerSelector{},
+					},
+				},
+			},
+			UsePreferredTags: true,
 		}))
 	})
 
 	It("accepts a query param for filtering logs", func() {
-		_ = proxy.NewDopplerProxy(
+		handler := proxy.NewDopplerProxy(
 			auth.Authorize,
 			adminAuth.Authorize,
 			connector,
@@ -87,22 +104,23 @@ var _ = Describe("FirehoseHandler", func() {
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=logs", nil)
 		Expect(err).NotTo(HaveOccurred())
 
-		h := proxy.NewFirehoseHandler(connector, proxy.NewWebSocketServer(
-			time.Hour,
-			testhelper.NewMetricClient(),
-			mockHealth,
-		), mockSender)
-		h.ServeHTTP(recorder, req)
+		handler.ServeHTTP(recorder, req)
 
-		Expect(connector.subscriptions.request.Filter).To(Equal(&plumbing.Filter{
-			Message: &plumbing.Filter_Log{
-				Log: &plumbing.LogFilter{},
+		Expect(connector.subscriptions.request).To(Equal(&loggregator_v2.EgressBatchRequest{
+			ShardId: "123",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Log{
+						Log: &loggregator_v2.LogSelector{},
+					},
+				},
 			},
+			UsePreferredTags: true,
 		}))
 	})
 
 	It("accepts a query param for filtering metrics", func() {
-		_ = proxy.NewDopplerProxy(
+		handler := proxy.NewDopplerProxy(
 			auth.Authorize,
 			adminAuth.Authorize,
 			connector,
@@ -119,17 +137,28 @@ var _ = Describe("FirehoseHandler", func() {
 		req, err := http.NewRequest("GET", "/firehose/123?filter-type=metrics", nil)
 		Expect(err).NotTo(HaveOccurred())
 
-		h := proxy.NewFirehoseHandler(connector, proxy.NewWebSocketServer(
-			time.Hour,
-			testhelper.NewMetricClient(),
-			mockHealth,
-		), mockSender)
-		h.ServeHTTP(recorder, req)
+		handler.ServeHTTP(recorder, req)
 
-		Expect(connector.subscriptions.request.Filter).To(Equal(&plumbing.Filter{
-			Message: &plumbing.Filter_Metric{
-				Metric: &plumbing.MetricFilter{},
+		Expect(connector.subscriptions.request).To(Equal(&loggregator_v2.EgressBatchRequest{
+			ShardId: "123",
+			Selectors: []*loggregator_v2.Selector{
+				{
+					Message: &loggregator_v2.Selector_Counter{
+						Counter: &loggregator_v2.CounterSelector{},
+					},
+				},
+				{
+					Message: &loggregator_v2.Selector_Gauge{
+						Gauge: &loggregator_v2.GaugeSelector{},
+					},
+				},
+				{
+					Message: &loggregator_v2.Selector_Timer{
+						Timer: &loggregator_v2.TimerSelector{},
+					},
+				},
 			},
+			UsePreferredTags: true,
 		}))
 	})
 

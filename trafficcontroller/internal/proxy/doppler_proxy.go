@@ -1,18 +1,19 @@
 package proxy
 
 import (
+	"context"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"time"
 
+	loggregator "code.cloudfoundry.org/go-loggregator"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/metricemitter"
-	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/auth"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
 )
 
 var MetricsInterval = 15 * time.Second
@@ -35,7 +36,10 @@ type DopplerProxy struct {
 }
 
 type GrpcConnector interface {
-	Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error)
+	Stream(
+		ctx context.Context,
+		req *loggregator_v2.EgressBatchRequest,
+	) loggregator.EnvelopeStream
 }
 
 type MetricClient interface {

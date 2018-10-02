@@ -1,6 +1,7 @@
 package proxy_test
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net"
@@ -10,10 +11,11 @@ import (
 
 	"testing"
 
+	loggregator "code.cloudfoundry.org/go-loggregator"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 
@@ -82,28 +84,15 @@ func startGRPCServer(ds plumbing.DopplerServer, addr string) (net.Listener, *grp
 	return lis, s
 }
 
-type recentLogsRequest struct {
-	ctx   context.Context
-	appID string
-}
-
-type containerMetricsRequest struct {
-	ctx   context.Context
-	appID string
-}
-
 type subscribeRequest struct {
 	ctx     context.Context
-	request *plumbing.SubscriptionRequest
+	request *loggregator_v2.EgressBatchRequest
 }
 
 type SpyGRPCConnector struct {
-	mu                    sync.Mutex
-	subscriptions         *subscribeRequest
-	subscriptionsErr      error
-	recentLogs            *recentLogsRequest
-	containerMetrics      containerMetricsRequest
-	containerMetricsBlock bool
+	mu               sync.Mutex
+	subscriptions    *subscribeRequest
+	subscriptionsErr error
 }
 
 func newSpyGRPCConnector(err error) *SpyGRPCConnector {
@@ -112,7 +101,10 @@ func newSpyGRPCConnector(err error) *SpyGRPCConnector {
 	}
 }
 
-func (s *SpyGRPCConnector) Subscribe(ctx context.Context, req *plumbing.SubscriptionRequest) (func() ([]byte, error), error) {
+func (s *SpyGRPCConnector) Stream(
+	ctx context.Context,
+	req *loggregator_v2.EgressBatchRequest,
+) loggregator.EnvelopeStream {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.subscriptions = &subscribeRequest{
@@ -120,94 +112,20 @@ func (s *SpyGRPCConnector) Subscribe(ctx context.Context, req *plumbing.Subscrip
 		request: req,
 	}
 
-	return func() ([]byte, error) { return []byte("a-slice"), s.subscriptionsErr }, nil
-}
-
-func (s *SpyGRPCConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	panic("should not be used")
-}
-
-func (s *SpyGRPCConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
-	panic("should not be used")
-}
-
-type valueUnit struct {
-	Value float64
-	Unit  string
-}
-
-type counter struct {
-	total int
-	tags  map[string]string
-}
-
-type mockMetricSender struct {
-	mu           sync.Mutex
-	valueMetrics map[string]valueUnit
-	counters     map[string]counter
-}
-
-func newMockMetricSender() *mockMetricSender {
-	return &mockMetricSender{
-		valueMetrics: make(map[string]valueUnit),
-		counters:     make(map[string]counter),
-	}
-}
-
-func (m *mockMetricSender) SendValue(name string, value float64, unit string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.valueMetrics[name] = valueUnit{Value: value, Unit: unit}
-
-	return nil
-}
-
-func (m *mockMetricSender) getValue(name string) valueUnit {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	v, ok := m.valueMetrics[name]
-	if !ok {
-		return valueUnit{Value: 0.0, Unit: ""}
-	}
-
-	return v
-}
-
-func (m *mockMetricSender) SendCounterIncrement(name string, tags map[string]string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	c, ok := m.counters[name]
-	if !ok {
-		c = counter{
-			total: 1,
-			tags:  tags,
+	return loggregator.EnvelopeStream(func() []*loggregator_v2.Envelope {
+		if s.subscriptionsErr != nil {
+			return nil
 		}
-	} else {
-		c.total++
-	}
 
-	m.counters[name] = c
-	return nil
-}
-
-func (m *mockMetricSender) IncrementEgressFirehose() {
-	m.SendCounterIncrement("egress", map[string]string{
-		"endpoint": "firehose",
+		return []*loggregator_v2.Envelope{
+			{
+				SourceId: "abc-123",
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
+						Payload: []byte("hello"),
+					},
+				},
+			},
+		}
 	})
-}
-
-func (m *mockMetricSender) IncrementEgressStream() {
-	m.SendCounterIncrement("egress", map[string]string{
-		"endpoint": "stream",
-	})
-}
-
-func (m *mockMetricSender) getCounter(name string) (int, map[string]string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	c := m.counters[name]
-	return c.total, c.tags
 }

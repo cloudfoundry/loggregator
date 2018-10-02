@@ -1,13 +1,17 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	loggregator "code.cloudfoundry.org/go-loggregator"
 	"code.cloudfoundry.org/loggregator/metricemitter"
+	"code.cloudfoundry.org/loggregator/plumbing/conversion"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -43,9 +47,10 @@ func NewWebSocketServer(slowConsumerTimeout time.Duration, m MetricClient, h Hea
 }
 
 func (s *WebSocketServer) ServeWS(
+	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
-	recv func() ([]byte, error),
+	recv loggregator.EnvelopeStream,
 	egressMetric *metricemitter.Counter,
 ) {
 	data := make(chan []byte)
@@ -61,38 +66,40 @@ func (s *WebSocketServer) ServeWS(
 		timer := time.NewTimer(s.slowConsumerTimeout)
 		timer.Stop()
 		for {
-			resp, err := recv()
-			if err != nil {
-				log.Printf("error receiving from doppler via gRPC %s", err)
-				return
-			}
-
+			resp := recv()
 			if resp == nil {
-				continue
+				return
 			}
 
-			timer.Reset(s.slowConsumerTimeout)
-			select {
-			case data <- resp:
-				if !timer.Stop() {
-					<-timer.C
+			for _, rv1 := range conversion.ManyToV1(resp) {
+				envBytes, err := proto.Marshal(rv1)
+				if err != nil {
+					continue
 				}
-			case <-timer.C:
-				s.slowConsumerMetric.Increment(1)
 
-				eventBody := fmt.Sprintf(slowConsumerEventBody,
-					r.RemoteAddr,
-					strings.Join(r.Header["X-Forwarded-For"], ", "),
-					r.URL)
+				timer.Reset(s.slowConsumerTimeout)
+				select {
+				case data <- envBytes:
+					if !timer.Stop() {
+						<-timer.C
+					}
+				case <-timer.C:
+					s.slowConsumerMetric.Increment(1)
 
-				s.metricClient.EmitEvent(
-					slowConsumerEventTitle,
-					eventBody,
-				)
-				s.health.Inc("slowConsumerCount")
+					eventBody := fmt.Sprintf(slowConsumerEventBody,
+						r.RemoteAddr,
+						strings.Join(r.Header["X-Forwarded-For"], ", "),
+						r.URL)
 
-				log.Printf("Doppler Proxy: Slow Consumer from %s using %s", r.RemoteAddr, r.URL)
-				return
+					s.metricClient.EmitEvent(
+						slowConsumerEventTitle,
+						eventBody,
+					)
+					s.health.Inc("slowConsumerCount")
+
+					log.Printf("Doppler Proxy: Slow Consumer from %s using %s", r.RemoteAddr, r.URL)
+					return
+				}
 			}
 		}
 	}()
