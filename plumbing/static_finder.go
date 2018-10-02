@@ -1,5 +1,9 @@
 package plumbing
 
+type Event struct {
+	GRPCDopplers []string
+}
+
 type StaticFinder struct {
 	event chan Event
 }
