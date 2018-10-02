@@ -40,7 +40,11 @@ var _ = Describe("WebsocketHandler", func() {
 			egressMetric,
 		)
 		handlerDone = make(chan struct{})
+
+		// Avoid closure issues
+		handlerDone := handlerDone
 		testServer = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
 			handler.ServeHTTP(rw, r)
 			close(handlerDone)
 		}))
