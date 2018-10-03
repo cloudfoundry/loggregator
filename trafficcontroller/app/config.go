@@ -15,9 +15,9 @@ type Agent struct {
 
 // GRPC stores TLS configuration for gRPC communcation to router and agent.
 type GRPC struct {
-	CAFile   string `env:"ROUTER_CA_FILE"`
-	CertFile string `env:"ROUTER_CERT_FILE"`
-	KeyFile  string `env:"ROUTER_KEY_FILE"`
+	CAFile   string `env:"LOG_API_CA_FILE"`
+	CertFile string `env:"LOG_API_CERT_FILE"`
+	KeyFile  string `env:"LOG_API_KEY_FILE"`
 }
 
 // LogCacheTLSConfig stores TLS configuration for gRPC communcation to router and agent.
