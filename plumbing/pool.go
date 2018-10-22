@@ -51,30 +51,6 @@ func (p *Pool) Subscribe(dopplerAddr string, ctx context.Context, req *Subscript
 	return ci.client.BatchSubscribe(ctx, req)
 }
 
-func (p *Pool) ContainerMetrics(dopplerAddr string, ctx context.Context, req *ContainerMetricsRequest) (*ContainerMetricsResponse, error) {
-	p.mu.RLock()
-	ci, ok := p.dopplers[dopplerAddr]
-	p.mu.RUnlock()
-
-	if !ok {
-		return nil, fmt.Errorf("no connections available for container metrics")
-	}
-
-	return ci.client.ContainerMetrics(ctx, req)
-}
-
-func (p *Pool) RecentLogs(dopplerAddr string, ctx context.Context, req *RecentLogsRequest) (*RecentLogsResponse, error) {
-	p.mu.RLock()
-	ci, ok := p.dopplers[dopplerAddr]
-	p.mu.RUnlock()
-
-	if !ok {
-		return nil, fmt.Errorf("no connections available for recent logs")
-	}
-
-	return ci.client.RecentLogs(ctx, req)
-}
-
 func (p *Pool) Close(dopplerAddr string) {
 	p.mu.Lock()
 	ci, ok := p.dopplers[dopplerAddr]
