@@ -21,8 +21,6 @@ const (
 type DopplerPool interface {
 	RegisterDoppler(addr string)
 	Subscribe(dopplerAddr string, ctx context.Context, req *SubscriptionRequest) (Doppler_BatchSubscribeClient, error)
-	ContainerMetrics(dopplerAddr string, ctx context.Context, req *ContainerMetricsRequest) (*ContainerMetricsResponse, error)
-	RecentLogs(dopplerAddr string, ctx context.Context, req *RecentLogsRequest) (*RecentLogsResponse, error)
 
 	Close(dopplerAddr string)
 }
@@ -94,72 +92,6 @@ func NewGRPCConnector(
 	}
 	go c.readFinder()
 	return c
-}
-
-// ContainerMetrics returns the current container metrics for an app ID.
-func (c *GRPCConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	results := make(chan [][]byte, len(c.clients))
-
-	for _, client := range c.clients {
-		go func(client *dopplerClientInfo) {
-			req := &ContainerMetricsRequest{
-				AppID: appID,
-			}
-
-			resp, err := c.pool.ContainerMetrics(client.uri, ctx, req)
-			if err != nil {
-				c.containerMetricsError.Increment(1)
-
-				log.Printf("error from doppler (%s) while fetching container metrics: %s", client.uri, err)
-				results <- nil
-				return
-			}
-
-			results <- resp.Payload
-		}(client)
-	}
-
-	var resp [][]byte
-	for i := 0; i < len(c.clients); i++ {
-		resp = append(resp, <-results...)
-	}
-	return resp
-}
-
-// RecentLogs returns the current recent logs for an app ID.
-func (c *GRPCConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	results := make(chan [][]byte, len(c.clients))
-
-	for _, client := range c.clients {
-		go func(client *dopplerClientInfo) {
-			req := &RecentLogsRequest{
-				AppID: appID,
-			}
-
-			resp, err := c.pool.RecentLogs(client.uri, ctx, req)
-			if err != nil {
-				c.recentLogsError.Increment(1)
-
-				log.Printf("error from doppler (%s) while fetching recent logs: %s", client.uri, err)
-				results <- nil
-				return
-			}
-
-			results <- resp.Payload
-		}(client)
-	}
-
-	var resp [][]byte
-	for i := 0; i < len(c.clients); i++ {
-		resp = append(resp, <-results...)
-	}
-	return resp
 }
 
 // Subscribe returns a Receiver that yields all corresponding messages from Doppler
