@@ -123,14 +123,6 @@ func (s *SpyGRPCConnector) Subscribe(ctx context.Context, req *plumbing.Subscrip
 	return func() ([]byte, error) { return []byte("a-slice"), s.subscriptionsErr }, nil
 }
 
-func (s *SpyGRPCConnector) ContainerMetrics(ctx context.Context, appID string) [][]byte {
-	panic("should not be used")
-}
-
-func (s *SpyGRPCConnector) RecentLogs(ctx context.Context, appID string) [][]byte {
-	panic("should not be used")
-}
-
 type valueUnit struct {
 	Value float64
 	Unit  string
