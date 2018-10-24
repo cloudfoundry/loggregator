@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"time"
 
-	logcache "code.cloudfoundry.org/go-log-cache"
+	logcache "code.cloudfoundry.org/log-cache/pkg/client"
 	"code.cloudfoundry.org/loggregator/healthendpoint"
 
 	"code.cloudfoundry.org/loggregator/metricemitter"

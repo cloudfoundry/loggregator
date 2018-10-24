@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	logcache "code.cloudfoundry.org/go-log-cache"
-	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
+	logcache "code.cloudfoundry.org/log-cache/pkg/client"
+	"code.cloudfoundry.org/log-cache/pkg/rpc/logcache_v1"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
 
