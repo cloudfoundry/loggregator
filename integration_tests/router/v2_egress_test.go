@@ -6,7 +6,6 @@ import (
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/integration_tests/fakes"
-	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"golang.org/x/net/context"
 
@@ -76,7 +75,7 @@ var _ = Describe("V2 Egress", func() {
 			ingressCleanup func()
 			egressCleanup  func()
 
-			ingressClient plumbingv2.DopplerIngress_SenderClient
+			ingressClient loggregator_v2.Ingress_SenderClient
 			egressClient  loggregator_v2.EgressClient
 		)
 
@@ -196,7 +195,7 @@ var _ = Describe("V2 Egress", func() {
 	})
 })
 
-func sendV2AppLog(appID, msg string, ingressClient plumbingv2.DopplerIngress_SenderClient) error {
+func sendV2AppLog(appID, msg string, ingressClient loggregator_v2.Ingress_SenderClient) error {
 	return ingressClient.Send(&loggregator_v2.Envelope{
 		SourceId:  appID,
 		Timestamp: time.Now().UnixNano(),
@@ -208,7 +207,7 @@ func sendV2AppLog(appID, msg string, ingressClient plumbingv2.DopplerIngress_Sen
 	})
 }
 
-func sendV2Counter(appID string, ingressClient plumbingv2.DopplerIngress_SenderClient) error {
+func sendV2Counter(appID string, ingressClient loggregator_v2.Ingress_SenderClient) error {
 	return ingressClient.Send(&loggregator_v2.Envelope{
 		SourceId:  appID,
 		Timestamp: time.Now().UnixNano(),

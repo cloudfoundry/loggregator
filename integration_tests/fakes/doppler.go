@@ -6,7 +6,6 @@ import (
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"google.golang.org/grpc"
 
@@ -83,7 +82,7 @@ func DopplerIngressV1Client(addr string) (func(), plumbing.DopplerIngestor_Pushe
 	}, pusherClient
 }
 
-func DopplerIngressV2Client(addr string) (func(), plumbingv2.DopplerIngress_SenderClient) {
+func DopplerIngressV2Client(addr string) (func(), loggregator_v2.Ingress_SenderClient) {
 	creds, err := plumbing.NewClientCredentials(
 		testservers.Cert("doppler.crt"),
 		testservers.Cert("doppler.key"),
@@ -94,10 +93,10 @@ func DopplerIngressV2Client(addr string) (func(), plumbingv2.DopplerIngress_Send
 
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	Expect(err).ToNot(HaveOccurred())
-	client := plumbingv2.NewDopplerIngressClient(conn)
+	client := loggregator_v2.NewIngressClient(conn)
 
 	var (
-		senderClient plumbingv2.DopplerIngress_SenderClient
+		senderClient loggregator_v2.Ingress_SenderClient
 		cancel       func()
 	)
 	f := func() func() {

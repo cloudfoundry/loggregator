@@ -7,7 +7,6 @@ import (
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/router/app"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"google.golang.org/grpc"
@@ -183,7 +182,7 @@ var _ = Describe("Router", func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
 
-				ingressClient := createRouterIngressClient(addrs.GRPC, grpcConfig)
+				ingressClient := createRouterV2IngressClient(addrs.GRPC, grpcConfig)
 				sender, err := ingressClient.BatchSender(ctx)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -237,10 +236,6 @@ func genericLogEnvelope() *loggregator_v2.Envelope {
 			},
 		},
 	}
-}
-
-func createRouterIngressClient(addr string, g app.GRPC) plumbingv2.DopplerIngressClient {
-	return plumbingv2.NewDopplerIngressClient(grpcDial(addr, g))
 }
 
 func createRouterV2IngressClient(addr string, g app.GRPC) loggregator_v2.IngressClient {

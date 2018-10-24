@@ -13,7 +13,6 @@ import (
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator/integration_tests/binaries"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"code.cloudfoundry.org/loggregator/testservers"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -244,7 +243,7 @@ func primePumpV1(ingressClient plumbing.DopplerIngestor_PusherClient, subscribeC
 	Expect(err).ToNot(HaveOccurred())
 }
 
-func primePumpV2(ingressClient plumbingv2.DopplerIngress_SenderClient, subscribeClient plumbing.Doppler_SubscribeClient) {
+func primePumpV2(ingressClient loggregator_v2.Ingress_SenderClient, subscribeClient plumbing.Doppler_SubscribeClient) {
 	message := buildV2PrimerLogMessage()
 
 	// emit a bunch of primer messages

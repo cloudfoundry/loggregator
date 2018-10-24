@@ -8,7 +8,6 @@ import (
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	plumbingv1 "code.cloudfoundry.org/loggregator/plumbing"
-	plumbingv2 "code.cloudfoundry.org/loggregator/plumbing/v2"
 	"google.golang.org/grpc"
 )
 
@@ -29,7 +28,6 @@ func NewServer(
 	port uint16,
 	v1Ingress plumbingv1.DopplerIngestorServer,
 	v1Egress plumbingv1.DopplerServer,
-	v2DeprecatedIngress plumbingv2.DopplerIngressServer,
 	v2Ingress loggregator_v2.IngressServer,
 	v2Egress loggregator_v2.EgressServer,
 	srvOpts ...grpc.ServerOption,
@@ -44,7 +42,6 @@ func NewServer(
 	grpcServer := grpc.NewServer(srvOpts...)
 	plumbingv1.RegisterDopplerIngestorServer(grpcServer, v1Ingress)
 	plumbingv1.RegisterDopplerServer(grpcServer, v1Egress)
-	plumbingv2.RegisterDopplerIngressServer(grpcServer, v2DeprecatedIngress)
 	loggregator_v2.RegisterIngressServer(grpcServer, v2Ingress)
 	loggregator_v2.RegisterEgressServer(grpcServer, v2Egress)
 

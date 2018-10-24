@@ -62,51 +62,6 @@ var _ = Describe("Firehose test", func() {
 			}).Should(Equal(events.Envelope_LogMessage))
 		})
 
-		It("receives container metrics", func() {
-			dopplerCleanup, dopplerPorts := testservers.StartRouter(
-				testservers.BuildRouterConfig(0, 0),
-			)
-			defer dopplerCleanup()
-			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer ingressCleanup()
-			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer egressCleanup()
-
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			subscribeClient, err := egressClient.Subscribe(
-				ctx,
-				&plumbing.SubscriptionRequest{
-					ShardID: "shard-id",
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-			defer subscribeClient.CloseSend()
-			primePumpV1(ingressClient, subscribeClient)
-
-			done := make(chan struct{})
-			defer close(done)
-			containerMetric := NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
-			go func() {
-				for {
-					_ = sendEvent(containerMetric, ingressClient)
-					select {
-					case <-time.After(500 * time.Millisecond):
-					case <-done:
-						return
-					}
-				}
-			}()
-
-			Eventually(func() events.Envelope_EventType {
-				resp, err := subscribeClient.Recv()
-				if err != nil {
-					return 0
-				}
-				return decodeProtoBufEnvelope(resp.GetPayload()).GetEventType()
-			}).Should(Equal(events.Envelope_ContainerMetric))
-		})
-
 		It("two separate firehose subscriptions receive the same message", func() {
 			dopplerCleanup, dopplerPorts := testservers.StartRouter(
 				testservers.BuildRouterConfig(0, 0),
