@@ -169,13 +169,13 @@ var _ = Describe("HTTP", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				for k, v := range expectedV2Envelope.DeprecatedTags {
-					Expect(converted.DeprecatedTags).To(HaveKeyWithValue(k, v))
+					Expect(goproto.Equal(converted.DeprecatedTags[k], v)).To(BeTrue())
 				}
 
-				Expect(*converted).To(MatchFields(IgnoreExtras, Fields{
-					"SourceId": Equal(expectedV2Envelope.SourceId),
-					"Message":  Equal(expectedV2Envelope.Message),
-				}))
+				Expect(converted.GetSourceId()).To(Equal(expectedV2Envelope.SourceId))
+				Expect(converted.GetTimer().GetName()).To(Equal(expectedV2Envelope.GetTimer().GetName()))
+				Expect(converted.GetTimer().GetStart()).To(Equal(expectedV2Envelope.GetTimer().GetStart()))
+				Expect(converted.GetTimer().GetStop()).To(Equal(expectedV2Envelope.GetTimer().GetStop()))
 			})
 
 			It("sets the source ID to deployment/job when App ID is missing", func() {
@@ -268,10 +268,10 @@ var _ = Describe("HTTP", func() {
 					Expect(converted.DeprecatedTags).To(HaveKeyWithValue(k, v))
 				}
 
-				Expect(*converted).To(MatchFields(IgnoreExtras, Fields{
-					"SourceId": Equal(expectedV2Envelope.SourceId),
-					"Message":  Equal(expectedV2Envelope.Message),
-				}))
+				Expect(converted.GetSourceId()).To(Equal(expectedV2Envelope.SourceId))
+				Expect(converted.GetTimer().GetName()).To(Equal(expectedV2Envelope.GetTimer().GetName()))
+				Expect(converted.GetTimer().GetStart()).To(Equal(expectedV2Envelope.GetTimer().GetStart()))
+				Expect(converted.GetTimer().GetStop()).To(Equal(expectedV2Envelope.GetTimer().GetStop()))
 			})
 		})
 	})

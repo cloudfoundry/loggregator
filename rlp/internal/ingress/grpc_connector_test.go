@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	. "github.com/apoydence/eachers"
+	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -81,9 +81,9 @@ var _ = Describe("GRPCConnector", func() {
 			})
 
 			It("connects to the doppler with the correct request", func() {
-				Eventually(mockDopplerServerA.requests).Should(
-					Receive(Equal(req)),
-				)
+				var r *loggregator_v2.EgressBatchRequest
+				Eventually(mockDopplerServerA.requests).Should(Receive(&r))
+				Expect(proto.Equal(r, req)).To(BeTrue())
 			})
 
 			It("returns data from both dopplers", func() {
@@ -139,9 +139,9 @@ var _ = Describe("GRPCConnector", func() {
 			})
 
 			It("connects to the doppler with the correct request", func() {
-				Eventually(mockDopplerServerA.requests).Should(
-					BeCalled(With(req, Not(BeNil()))),
-				)
+				var r *loggregator_v2.EgressBatchRequest
+				Eventually(mockDopplerServerA.requests).Should(Receive(&r))
+				Expect(proto.Equal(r, req)).To(BeTrue())
 			})
 
 			It("increments a counter for total doppler connections", func() {

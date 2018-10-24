@@ -20,7 +20,7 @@ var _ = Describe("LogMessage", func() {
 				SourceId:   "uuid",
 				InstanceId: "test-source-instance",
 				DeprecatedTags: map[string]*loggregator_v2.Value{
-					"source_type": {&loggregator_v2.Value_Text{"test-source-type"}},
+					"source_type": {Data: &loggregator_v2.Value_Text{"test-source-type"}},
 				},
 				Message: &loggregator_v2.Envelope_Log{
 					Log: &loggregator_v2.Log{
@@ -71,13 +71,13 @@ var _ = Describe("LogMessage", func() {
 				SourceId:   "uuid",
 				InstanceId: "test-source-instance",
 				DeprecatedTags: map[string]*loggregator_v2.Value{
-					"__v1_type":   {&loggregator_v2.Value_Text{"LogMessage"}},
-					"source_type": {&loggregator_v2.Value_Text{"test-source-type"}},
-					"origin":      {&loggregator_v2.Value_Text{"some-origin"}},
-					"deployment":  {&loggregator_v2.Value_Text{"some-deployment"}},
-					"job":         {&loggregator_v2.Value_Text{"some-job"}},
-					"index":       {&loggregator_v2.Value_Text{"some-index"}},
-					"ip":          {&loggregator_v2.Value_Text{"some-ip"}},
+					"__v1_type":   {Data: &loggregator_v2.Value_Text{"LogMessage"}},
+					"source_type": {Data: &loggregator_v2.Value_Text{"test-source-type"}},
+					"origin":      {Data: &loggregator_v2.Value_Text{"some-origin"}},
+					"deployment":  {Data: &loggregator_v2.Value_Text{"some-deployment"}},
+					"job":         {Data: &loggregator_v2.Value_Text{"some-job"}},
+					"index":       {Data: &loggregator_v2.Value_Text{"some-index"}},
+					"ip":          {Data: &loggregator_v2.Value_Text{"some-ip"}},
 				},
 				Message: &loggregator_v2.Envelope_Log{
 					Log: &loggregator_v2.Log{

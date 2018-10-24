@@ -220,7 +220,7 @@ func convertContainerMetric(v2e *loggregator_v2.Envelope, e *events.Envelope) {
 }
 
 func valueText(s string) *loggregator_v2.Value {
-	return &loggregator_v2.Value{&loggregator_v2.Value_Text{Text: s}}
+	return &loggregator_v2.Value{Data: &loggregator_v2.Value_Text{Text: s}}
 }
 
 func uuidToString(uuid *events.UUID) string {

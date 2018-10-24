@@ -176,7 +176,7 @@ var _ = Describe("ContainerMetric", func() {
 
 		Context("using deprecated tags", func() {
 			It("converts to a v2 envelope using DeprecatedTags", func() {
-				Expect(*conversion.ToV2(v1Envelope, false)).To(MatchFields(0, Fields{
+				Expect(*conversion.ToV2(v1Envelope, false)).To(MatchFields(IgnoreExtras, Fields{
 					"Timestamp":  Equal(int64(1234)),
 					"SourceId":   Equal("some-id"),
 					"Message":    Equal(expectedMessage),
@@ -216,7 +216,7 @@ var _ = Describe("ContainerMetric", func() {
 
 		Context("using preferred tags", func() {
 			It("converts to a v2 envelope using Tags", func() {
-				Expect(*conversion.ToV2(v1Envelope, true)).To(MatchFields(0, Fields{
+				Expect(*conversion.ToV2(v1Envelope, true)).To(MatchFields(IgnoreExtras, Fields{
 					"Timestamp":      Equal(int64(1234)),
 					"SourceId":       Equal("some-id"),
 					"Message":        Equal(expectedMessage),

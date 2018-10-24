@@ -19,14 +19,14 @@ var _ = Describe("Envelope", func() {
 			envelope := &loggregator_v2.Envelope{
 				Timestamp: 99,
 				DeprecatedTags: map[string]*loggregator_v2.Value{
-					"origin":         {&loggregator_v2.Value_Text{"origin"}},
-					"deployment":     {&loggregator_v2.Value_Text{"deployment"}},
-					"job":            {&loggregator_v2.Value_Text{"job"}},
-					"index":          {&loggregator_v2.Value_Text{"index"}},
-					"ip":             {&loggregator_v2.Value_Text{"ip"}},
-					"random_text":    {&loggregator_v2.Value_Text{"random_text"}},
-					"random_int":     {&loggregator_v2.Value_Integer{123}},
-					"random_decimal": {&loggregator_v2.Value_Decimal{123}},
+					"origin":         {Data: &loggregator_v2.Value_Text{"origin"}},
+					"deployment":     {Data: &loggregator_v2.Value_Text{"deployment"}},
+					"job":            {Data: &loggregator_v2.Value_Text{"job"}},
+					"index":          {Data: &loggregator_v2.Value_Text{"index"}},
+					"ip":             {Data: &loggregator_v2.Value_Text{"ip"}},
+					"random_text":    {Data: &loggregator_v2.Value_Text{"random_text"}},
+					"random_int":     {Data: &loggregator_v2.Value_Integer{123}},
+					"random_decimal": {Data: &loggregator_v2.Value_Decimal{123}},
 				},
 				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
 			}
@@ -51,7 +51,7 @@ var _ = Describe("Envelope", func() {
 		It("rejects empty tags", func() {
 			envelope := &loggregator_v2.Envelope{
 				DeprecatedTags: map[string]*loggregator_v2.Value{
-					"foo": {&loggregator_v2.Value_Text{"bar"}},
+					"foo": {Data: &loggregator_v2.Value_Text{"bar"}},
 					"baz": nil,
 				},
 				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
@@ -68,7 +68,7 @@ var _ = Describe("Envelope", func() {
 		It("reads non-text v2 tags", func() {
 			envelope := &loggregator_v2.Envelope{
 				DeprecatedTags: map[string]*loggregator_v2.Value{
-					"foo": {&loggregator_v2.Value_Integer{99}},
+					"foo": {Data: &loggregator_v2.Value_Integer{99}},
 				},
 				Message: &loggregator_v2.Envelope_Log{Log: &loggregator_v2.Log{}},
 			}

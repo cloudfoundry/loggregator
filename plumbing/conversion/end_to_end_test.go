@@ -432,9 +432,9 @@ var _ = Describe("Envelope conversion", func() {
 })
 
 func ValueText(s string) *loggregator_v2.Value {
-	return &loggregator_v2.Value{&loggregator_v2.Value_Text{Text: s}}
+	return &loggregator_v2.Value{Data: &loggregator_v2.Value_Text{Text: s}}
 }
 
 func ValueInteger(i int64) *loggregator_v2.Value {
-	return &loggregator_v2.Value{&loggregator_v2.Value_Integer{Integer: i}}
+	return &loggregator_v2.Value{Data: &loggregator_v2.Value_Integer{Integer: i}}
 }

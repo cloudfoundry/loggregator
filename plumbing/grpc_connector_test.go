@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	. "github.com/apoydence/eachers"
+	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -96,9 +96,9 @@ var _ = Describe("GRPCConnector", func() {
 				})
 
 				It("connects to the doppler with the correct request", func() {
-					Eventually(mockDopplerServerA.BatchSubscribeInput).Should(
-						BeCalled(With(req, Not(BeNil()))),
-					)
+					var r *plumbing.SubscriptionRequest
+					Eventually(mockDopplerServerA.BatchSubscribeInput.Req).Should(Receive(&r))
+					Expect(proto.Equal(r, req)).To(BeTrue())
 				})
 
 				It("returns data from both dopplers", func() {
@@ -303,9 +303,9 @@ var _ = Describe("GRPCConnector", func() {
 				})
 
 				It("connects to the doppler with the correct request", func() {
-					Eventually(mockDopplerServerA.BatchSubscribeInput).Should(
-						BeCalled(With(req, Not(BeNil()))),
-					)
+					var r *plumbing.SubscriptionRequest
+					Eventually(mockDopplerServerA.BatchSubscribeInput.Req).Should(Receive(&r))
+					Expect(proto.Equal(r, req)).To(BeTrue())
 				})
 			})
 
