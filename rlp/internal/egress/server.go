@@ -181,7 +181,7 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
 	subCount := atomic.AddInt64(&s.subscriptions, 1)
-	defer atomic.AddInt64(&s.subscriptions, -1)
+	defer func() { atomic.AddInt64(&s.subscriptions, -1) }()
 
 	if subCount > s.maxStreams {
 		s.rejectedMetric.Increment(1)
