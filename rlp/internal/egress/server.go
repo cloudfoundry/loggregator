@@ -238,7 +238,10 @@ func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggr
 	timer := time.NewTimer(resetDuration)
 	for {
 		select {
-		case data := <-buffer:
+		case data, ok := <-buffer:
+			if !ok {
+				continue
+			}
 			batcher.Write(data)
 			if !timer.Stop() {
 				<-timer.C
