@@ -20,7 +20,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/resolver"
 )
 
 // MetricClient can be used to emit metrics and events.
@@ -143,9 +145,14 @@ func (t *TrafficController) Start() {
 			log.Fatalf("Could not use LogCache creds for server: %s", err)
 		}
 
+		resolver.SetDefaultScheme("dns")
+
 		logCacheClient = logcache.NewClient(
 			t.conf.LogCacheAddr,
-			logcache.WithViaGRPC(grpc.WithTransportCredentials(logCacheCreds)),
+			logcache.WithViaGRPC(
+				grpc.WithTransportCredentials(logCacheCreds),
+				grpc.WithBalancerName(roundrobin.Name),
+			),
 		)
 		recentLogsEnabled = true
 	}
