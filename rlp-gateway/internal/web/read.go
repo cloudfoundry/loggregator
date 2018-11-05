@@ -111,8 +111,8 @@ func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
 					<-timer.C
 				}
 				timer.Reset(heartbeat)
-			case <-timer.C:
-				w.Write([]byte("heartbeat: keep-alive\n\n"))
+			case t := <-timer.C:
+				fmt.Fprintf(w, "event: heartbeat\ndata: %d\n\n", t.Unix())
 				flusher.Flush()
 				timer.Reset(heartbeat)
 			}

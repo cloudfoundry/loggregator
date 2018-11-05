@@ -143,7 +143,11 @@ var _ = Describe("Read", func() {
 
 		line, err := buf.ReadBytes('\n')
 		Expect(err).ToNot(HaveOccurred())
-		Expect(string(line)).To(HavePrefix("heartbeat: keep-alive"))
+		Expect(string(line)).To(Equal("event: heartbeat\n"))
+
+		line, err = buf.ReadBytes('\n')
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(line)).To(MatchRegexp(`data: \d+`))
 	})
 
 	It("contains zero values for gauge metrics", func() {
