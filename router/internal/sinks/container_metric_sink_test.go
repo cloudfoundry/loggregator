@@ -164,7 +164,7 @@ var _ = Describe("Containermetric", func() {
 
 		Eventually(func() float64 {
 			return health.Get("containerMetricCacheCount")
-		}).Should(Equal(1.0))
+		}, 2).Should(Equal(1.0))
 
 		close(inputChan)
 

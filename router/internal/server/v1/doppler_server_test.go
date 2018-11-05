@@ -287,7 +287,7 @@ var _ = Describe("v1 doppler server", func() {
 
 					c := readBatchFromReceiver(rx)
 					var data [][]byte
-					Eventually(c).Should(Receive(&data))
+					Eventually(c, 2).Should(Receive(&data))
 					Expect(data).To(HaveLen(int(1)))
 					Expect(data[0]).To(Equal([]byte("some-data-0")))
 					Consistently(c, 500*time.Millisecond).ShouldNot(Receive())
