@@ -964,6 +964,7 @@ var _ = Describe("Server", func() {
 			It("emits 'dropped' metric for each envelope", func() {
 				metricClient := testhelper.NewMetricClient()
 				receiverServer := newSpyBatchedReceiverServer(nil)
+				receiverServer.delay = 100 * time.Millisecond
 				receiver := newSpyReceiver(1000000)
 
 				server := egress.NewServer(
@@ -1103,6 +1104,7 @@ func (s *spyReceiverServer) stopWait() {
 type spyBatchedReceiverServer struct {
 	err       error
 	envelopes chan *loggregator_v2.Envelope
+	delay     time.Duration
 
 	grpc.ServerStream
 }
@@ -1122,6 +1124,7 @@ func (s *spyBatchedReceiverServer) Send(b *loggregator_v2.EnvelopeBatch) error {
 	for _, e := range b.GetBatch() {
 		select {
 		case s.envelopes <- e:
+			time.Sleep(s.delay)
 		default:
 		}
 	}
