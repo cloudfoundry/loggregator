@@ -27,10 +27,11 @@ type LogCacheClient interface {
 }
 
 type RecentLogsHandler struct {
-	recentLogProvider LogCacheClient
-	timeout           time.Duration
-	latencyMetric     *metricemitter.Gauge
-	logCacheEnabled   bool
+	recentLogProvider   LogCacheClient
+	timeout             time.Duration
+	latencyMetric       *metricemitter.Gauge
+	logCacheFailsMetric *metricemitter.Counter
+	logCacheEnabled     bool
 }
 
 func NewRecentLogsHandler(
@@ -45,11 +46,16 @@ func NewRecentLogsHandler(
 		metricemitter.WithVersion(2, 0),
 	)
 
+	logCacheFailsMetric := m.NewCounter("doppler_proxy.log_cache_failure",
+		metricemitter.WithVersion(2, 0),
+	)
+
 	return &RecentLogsHandler{
-		recentLogProvider: recentLogProvider,
-		timeout:           t,
-		latencyMetric:     latencyMetric,
-		logCacheEnabled:   logCacheEnabled,
+		recentLogProvider:   recentLogProvider,
+		timeout:             t,
+		latencyMetric:       latencyMetric,
+		logCacheFailsMetric: logCacheFailsMetric,
+		logCacheEnabled:     logCacheEnabled,
 	}
 }
 
@@ -101,6 +107,7 @@ func (h *RecentLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		h.logCacheFailsMetric.Increment(1)
 		log.Printf("error communicating with log cache: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))

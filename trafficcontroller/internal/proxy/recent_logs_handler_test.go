@@ -140,10 +140,12 @@ var _ = Describe("Recent Logs Handler", func() {
 	})
 
 	It("returns a helpful log message when LogCache is disabled", func() {
+		spyMetricClient := testhelper.NewMetricClient()
+
 		recentLogsHandler = proxy.NewRecentLogsHandler(
 			logCacheClient,
 			200*time.Millisecond,
-			testhelper.NewMetricClient(),
+			spyMetricClient,
 			false,
 		)
 
@@ -171,6 +173,25 @@ var _ = Describe("Recent Logs Handler", func() {
 		Expect(string(logEnvelope.GetLogMessage().GetMessage())).To(Equal("recent log endpoint requires a log cache. please talk to you operator"))
 		Expect(logEnvelope.GetLogMessage().GetMessageType()).To(Equal(events.LogMessage_ERR))
 		Expect(logEnvelope.GetLogMessage().GetSourceType()).To(Equal("Loggregator"))
+	})
+
+	It("increments a metric when calls to log cache fail", func() {
+		spyMetricClient := testhelper.NewMetricClient()
+		logCacheClient.err = errors.New("Failed to read from Log Cache")
+
+		recentLogsHandler = proxy.NewRecentLogsHandler(
+			logCacheClient,
+			200*time.Millisecond,
+			spyMetricClient,
+			true,
+		)
+
+		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
+		req.Header.Add("Authorization", "token")
+
+		recentLogsHandler.ServeHTTP(recorder, req)
+
+		Expect(spyMetricClient.GetDelta("doppler_proxy.log_cache_failure")).To(Equal(uint64(1)))
 	})
 })
 
