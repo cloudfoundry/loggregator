@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -63,7 +65,10 @@ func (s *WebSocketServer) ServeWS(
 		for {
 			resp, err := recv()
 			if err != nil {
-				log.Printf("error receiving from doppler via gRPC %s", err)
+				status, ok := status.FromError(err)
+				if ok && status.Code() != codes.Canceled {
+					log.Printf("error receiving from doppler via gRPC %s", err)
+				}
 				return
 			}
 
