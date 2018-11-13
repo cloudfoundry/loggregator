@@ -9,6 +9,8 @@ import (
 	"unsafe"
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
 )
@@ -314,7 +316,10 @@ func (c *GRPCConnector) consumeSubscription(cs *consumerState, dopplerClient *do
 		delay = time.Millisecond
 
 		if err := c.readStream(dopplerStream, cs); err != nil {
-			log.Printf("Error while reading from stream (%s): %s", dopplerClient.uri, err)
+			status, ok := status.FromError(err)
+			if ok && status.Code() != codes.Canceled {
+				log.Printf("error getting logs from provider: %s", err)
+			}
 			continue
 		}
 	}
