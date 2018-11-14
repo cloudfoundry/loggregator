@@ -152,6 +152,7 @@ func (t *TrafficController) Start() {
 			logcache.WithViaGRPC(
 				grpc.WithTransportCredentials(logCacheCreds),
 				grpc.WithBalancerName(roundrobin.Name),
+				grpc.WithTimeout(time.Second*5),
 			),
 		)
 		recentLogsEnabled = true
