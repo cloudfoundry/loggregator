@@ -31,22 +31,22 @@ string.
 
 Request log envelopes
 ```
-curl http://localhost:8088/v2/read?log
+curl -H "Authorization: $(cf oauth-token)" https://localhost:8088/v2/read?log
 ```
 
 Request log envelopes with sharding:
 ```
-curl http://localhost:8088/v2/read?log&shard_id=shard-id-for-all-clients
+curl -H "Authorization: $(cf oauth-token)" https://localhost:8088/v2/read?log&shard_id=shard-id-for-all-clients
 ```
 
 Request all envelopes for a given source:
 ```
-curl http://localhost:8088/v2/read?log&counter&gauge&timer&event&source_id=SOURCE-ID
+curl -H "Authorization: $(cf oauth-token)" https://localhost:8088/v2/read?log&counter&gauge&timer&event&source_id=SOURCE-ID
 ```
 
 Request counter metrics with a given name:
 ```
-curl http://localhost:8088/v2/read?counter.name=request_count
+curl -H "Authorization: $(cf oauth-token)" https://localhost:8088/v2/read?counter.name=request_count
 ```
 
 #### Example SSE Response
