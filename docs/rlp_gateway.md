@@ -1,7 +1,7 @@
 # Reverse Log Proxy (RLP) Gateway
 
 The Reverse Log Proxy Gateway provides an HTTP API to access the Reverse Log
-Proxy. The HTTP endpoint is by default only available on the local machine (configurable through `GATEWAY_ADDR` environment variable). The RLP Gateway endpoint is unauthenticated. 
+Proxy. The HTTP endpoint is by default available to traffic outside the deployment (configurable through `GATEWAY_ADDR` environment variable). The RLP Gateway endpoint is authenticated and verifies provided access tokens against a UAA (configurable through the `LOG_ACCESS*` and `LOG_ADMIN*` environment variables. 
 
 ## HTTP API
 
