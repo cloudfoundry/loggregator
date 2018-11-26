@@ -14,6 +14,7 @@ import (
 
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
+	_ "code.cloudfoundry.org/loggregator/plumbing/dns"
 	"code.cloudfoundry.org/loggregator/profiler"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/auth"
 	"code.cloudfoundry.org/loggregator/trafficcontroller/internal/proxy"
@@ -22,7 +23,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/resolver"
 )
 
 // MetricClient can be used to emit metrics and events.
@@ -145,10 +145,10 @@ func (t *TrafficController) Start() {
 			log.Fatalf("Could not use LogCache creds for server: %s", err)
 		}
 
-		resolver.SetDefaultScheme("dns")
-
+		// fast-dns is the same DNS resolver provided by gRPC but with a
+		// faster refresh frequency.
 		logCacheClient = logcache.NewClient(
-			t.conf.LogCacheAddr,
+			"fast-dns:///"+t.conf.LogCacheAddr,
 			logcache.WithViaGRPC(
 				grpc.WithTransportCredentials(logCacheCreds),
 				grpc.WithBalancerName(roundrobin.Name),
