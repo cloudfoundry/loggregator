@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc/resolver"
-	"google.golang.org/grpc/test/leakcheck"
 )
 
 func TestMain(m *testing.M) {
@@ -623,7 +622,6 @@ func TestResolve(t *testing.T) {
 }
 
 func testDNSResolver(t *testing.T) {
-	defer leakcheck.Check(t)
 	tests := []struct {
 		target   string
 		addrWant []resolver.Address
@@ -729,7 +727,6 @@ func mutateTbl(target string) func() {
 }
 
 func testDNSResolveNow(t *testing.T) {
-	defer leakcheck.Check(t)
 	tests := []struct {
 		target   string
 		addrWant []resolver.Address
@@ -806,7 +803,6 @@ func testDNSResolveNow(t *testing.T) {
 const colonDefaultPort = ":" + defaultPort
 
 func testIPResolver(t *testing.T) {
-	defer leakcheck.Check(t)
 	tests := []struct {
 		target string
 		want   []resolver.Address
@@ -858,7 +854,6 @@ func testIPResolver(t *testing.T) {
 }
 
 func TestResolveFunc(t *testing.T) {
-	defer leakcheck.Check(t)
 	tests := []struct {
 		addr string
 		want error
