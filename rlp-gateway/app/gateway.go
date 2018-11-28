@@ -81,7 +81,11 @@ func (g *Gateway) Start(blocking bool) {
 	stack := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(
 		handlers.LoggingHandler(
 			g.httpLogOutput,
-			middlewareProvider.Middleware(web.NewHandler(lc))),
+			middlewareProvider.Middleware(web.NewHandler(
+				lc,
+				g.cfg.StreamTimeout,
+			)),
+		),
 	)
 
 	l, err := net.Listen("tcp", g.cfg.GatewayAddr)

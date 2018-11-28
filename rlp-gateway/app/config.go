@@ -2,6 +2,7 @@ package app
 
 import (
 	"log"
+	"time"
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 )
@@ -39,6 +40,8 @@ type Config struct {
 
 	LogAccessAuthorization LogAccessAuthorization
 	LogAdminAuthorization  LogAdminAuthorization
+
+	StreamTimeout time.Duration `env:"STREAM_TIMEOUT, report"`
 }
 
 // LoadConfig will load and return the config from the current environment. If
@@ -47,6 +50,7 @@ func LoadConfig() Config {
 	cfg := Config{
 		GatewayAddr:            "localhost:8088",
 		LogsProviderCommonName: "reverselogproxy",
+		StreamTimeout:          14 * time.Minute,
 	}
 
 	if err := envstruct.Load(&cfg); err != nil {

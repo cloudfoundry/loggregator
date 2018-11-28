@@ -23,10 +23,10 @@ type Handler struct {
 }
 
 // NewHandler returns a configured HTTP Handler
-func NewHandler(lp LogsProvider) *Handler {
+func NewHandler(lp LogsProvider, streamTimeout time.Duration) *Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("/v2/read", ReadHandler(lp, 15*time.Second))
+	mux.Handle("/v2/read", ReadHandler(lp, 15*time.Second, streamTimeout))
 
 	return &Handler{mux: mux}
 }

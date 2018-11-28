@@ -38,7 +38,7 @@ var _ = Describe("Read", func() {
 				},
 			},
 		}
-		server = httptest.NewServer(web.ReadHandler(lp, 100*time.Millisecond))
+		server = httptest.NewServer(web.ReadHandler(lp, 100*time.Millisecond, time.Minute))
 		ctx, cancel = context.WithCancel(context.Background())
 	})
 
@@ -278,6 +278,39 @@ var _ = Describe("Read", func() {
 		}))
 	})
 
+	It("should warn the client when it's about to close the connection", func() {
+		lp := newStubLogsProvider()
+
+		server := httptest.NewServer(web.ReadHandler(lp, 5*time.Minute, 5*time.Millisecond))
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/v2/read?log", nil)
+		Expect(err).ToNot(HaveOccurred())
+
+		req = req.WithContext(ctx)
+
+		resp, err := server.Client().Do(req)
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(lp.requests).Should(HaveLen(1))
+
+		buf := bufio.NewReader(resp.Body)
+
+		line, err := buf.ReadBytes('\n')
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(line)).To(Equal("event: closing\n"))
+
+		line, err = buf.ReadBytes('\n')
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(line)).To(Equal("data: closing due to stream timeout\n"))
+
+		Eventually(func() error {
+			_, err := buf.ReadBytes('\n')
+			return err
+		}).Should(Equal(io.EOF))
+	})
+
 	It("closes the SSE stream if the envelope stream returns any error", func() {
 		lp._batchResponse = nil
 		lp._errorResponse = errors.New("an error")
@@ -336,7 +369,7 @@ var _ = Describe("Read", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		w := &nonFlusherWriter{httptest.NewRecorder()}
-		web.ReadHandler(lp, time.Minute)(w, req)
+		web.ReadHandler(lp, time.Minute, time.Minute)(w, req)
 
 		Expect(w.rw.Code).To(Equal(http.StatusInternalServerError))
 		Expect(w.rw.Body).To(MatchJSON(`{

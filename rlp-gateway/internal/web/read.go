@@ -24,7 +24,11 @@ var marshaler = jsonpb.Marshaler{
 //     data: <JSON ENVELOPE BATCH>
 //
 //     data: <JSON ENVELOPE BATCH>
-func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
+func ReadHandler(
+	lp LogsProvider,
+	heartbeat time.Duration,
+	streamTimeout time.Duration,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			errMethodNotAllowed.Write(w)
@@ -78,11 +82,17 @@ func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
 					errs <- err
 					return
 				}
+
+				if batch == nil {
+					continue
+				}
+
 				data <- batch
 			}
 		}()
 
-		timer := time.NewTimer(heartbeat)
+		heartbeatTimer := time.NewTimer(heartbeat)
+		streamTimeoutTimer := time.NewTimer(streamTimeout)
 
 		// TODO:
 		//   - error events
@@ -107,14 +117,18 @@ func ReadHandler(lp LogsProvider, heartbeat time.Duration) http.HandlerFunc {
 				fmt.Fprintf(w, "data: %s\n\n", d)
 				flusher.Flush()
 
-				if !timer.Stop() {
-					<-timer.C
+				if !heartbeatTimer.Stop() {
+					<-heartbeatTimer.C
 				}
-				timer.Reset(heartbeat)
-			case t := <-timer.C:
+				heartbeatTimer.Reset(heartbeat)
+			case <-streamTimeoutTimer.C:
+				fmt.Fprint(w, "event: closing\ndata: closing due to stream timeout\n\n")
+				flusher.Flush()
+				return
+			case t := <-heartbeatTimer.C:
 				fmt.Fprintf(w, "event: heartbeat\ndata: %d\n\n", t.Unix())
 				flusher.Flush()
-				timer.Reset(heartbeat)
+				heartbeatTimer.Reset(heartbeat)
 			}
 		}
 	}
