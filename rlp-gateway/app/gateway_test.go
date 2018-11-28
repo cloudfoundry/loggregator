@@ -42,6 +42,8 @@ var _ = Describe("Gateway", func() {
 			LogsProviderClientKeyPath:  testservers.Cert("rlpgateway.key"),
 			LogsProviderCommonName:     "reverselogproxy",
 
+			StreamTimeout: 10 * time.Minute,
+
 			GatewayAddr: ":0",
 
 			LogAccessAuthorization: app.LogAccessAuthorization{
