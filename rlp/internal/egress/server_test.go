@@ -532,6 +532,40 @@ var _ = Describe("Server", func() {
 					return metricClient.GetDelta("rejected_streams")
 				}).Should(Equal(uint64(1)))
 			})
+
+			It("emits 'subscriptions' metric for each stream", func() {
+				metricClient := testhelper.NewMetricClient()
+				receiverServer := newSpyReceiverServer(nil)
+				receiver := newSpyReceiver(1000000000)
+				server := egress.NewServer(
+					receiver,
+					metricClient,
+					newSpyHealthRegistrar(),
+					context.TODO(),
+					1,
+					time.Nanosecond,
+				)
+
+				go server.Receiver(&loggregator_v2.EgressRequest{
+					Selectors: []*loggregator_v2.Selector{
+						{
+							Message: &loggregator_v2.Selector_Log{
+								Log: &loggregator_v2.LogSelector{},
+							},
+						},
+					},
+				}, receiverServer)
+
+				Eventually(func() float64 {
+					return metricClient.GetValue("subscriptions")
+				}).Should(Equal(1.0))
+
+				receiver.stop()
+
+				Eventually(func() float64 {
+					return metricClient.GetValue("subscriptions")
+				}).Should(Equal(0.0))
+			})
 		})
 
 		Describe("health monitoring", func() {

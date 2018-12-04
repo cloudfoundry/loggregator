@@ -34,21 +34,23 @@ type Receiver interface {
 // MetricClient creates new CounterMetrics to be emitted periodically.
 type MetricClient interface {
 	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
+	NewGauge(name, unit string, opts ...metricemitter.MetricOption) *metricemitter.Gauge
 }
 
 // Server represents a bridge between inbound data from the Receiver and
 // outbound data on a gRPC stream.
 type Server struct {
-	receiver       Receiver
-	egressMetric   *metricemitter.Counter
-	droppedMetric  *metricemitter.Counter
-	rejectedMetric *metricemitter.Counter
-	health         HealthRegistrar
-	ctx            context.Context
-	batchSize      int
-	batchInterval  time.Duration
-	maxStreams     int64
-	subscriptions  int64
+	receiver            Receiver
+	egressMetric        *metricemitter.Counter
+	droppedMetric       *metricemitter.Counter
+	rejectedMetric      *metricemitter.Counter
+	subscriptionsMetric *metricemitter.Gauge
+	health              HealthRegistrar
+	ctx                 context.Context
+	batchSize           int
+	batchInterval       time.Duration
+	maxStreams          int64
+	subscriptions       int64
 }
 
 // NewServer is the preferred way to create a new Server.
@@ -76,16 +78,21 @@ func NewServer(
 		metricemitter.WithVersion(2, 0),
 	)
 
+	subscriptionsMetric := m.NewGauge("subscriptions", "total",
+		metricemitter.WithVersion(2, 0),
+	)
+
 	s := &Server{
-		receiver:       r,
-		egressMetric:   egressMetric,
-		droppedMetric:  droppedMetric,
-		rejectedMetric: rejectedMetric,
-		health:         h,
-		ctx:            c,
-		batchSize:      batchSize,
-		batchInterval:  batchInterval,
-		maxStreams:     500,
+		receiver:            r,
+		egressMetric:        egressMetric,
+		droppedMetric:       droppedMetric,
+		rejectedMetric:      rejectedMetric,
+		subscriptionsMetric: subscriptionsMetric,
+		health:              h,
+		ctx:                 c,
+		batchSize:           batchSize,
+		batchInterval:       batchInterval,
+		maxStreams:          500,
 	}
 
 	for _, o := range opts {
@@ -111,6 +118,10 @@ func WithMaxStreams(conn int64) ServerOption {
 func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Egress_ReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
+
+	s.subscriptionsMetric.Increment(1)
+	defer s.subscriptionsMetric.Decrement(1)
+
 	subCount := atomic.AddInt64(&s.subscriptions, 1)
 	defer atomic.AddInt64(&s.subscriptions, -1)
 
