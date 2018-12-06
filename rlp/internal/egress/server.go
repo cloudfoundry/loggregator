@@ -191,6 +191,10 @@ func (s *Server) Receiver(r *loggregator_v2.EgressRequest, srv loggregator_v2.Eg
 func (s *Server) BatchedReceiver(r *loggregator_v2.EgressBatchRequest, srv loggregator_v2.Egress_BatchedReceiverServer) error {
 	s.health.Inc("subscriptionCount")
 	defer s.health.Dec("subscriptionCount")
+
+	s.subscriptionsMetric.Increment(1)
+	defer s.subscriptionsMetric.Decrement(1)
+
 	subCount := atomic.AddInt64(&s.subscriptions, 1)
 	defer func() { atomic.AddInt64(&s.subscriptions, -1) }()
 
