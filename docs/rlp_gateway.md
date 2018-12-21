@@ -13,7 +13,7 @@ JSON format.
 #### Parameters
 
 - `shard_id`  - Set the shard ID. Envelopes will be split between clients
-  using the same source ID.
+  using the same shard ID.
 - `source_id` - One or more source IDs.
 - `log`       - Request log envelopes.
 - `counter`   - Request counter envelopes.
