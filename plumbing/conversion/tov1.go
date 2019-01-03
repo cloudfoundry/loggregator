@@ -215,7 +215,7 @@ func convertGauge(v2e *loggregator_v2.Envelope) []*events.Envelope {
 }
 
 func extractGaugeValues(metric *loggregator_v2.GaugeValue) (string, float64, bool) {
-	if metric == nil || (metric.Unit == "" && metric.Value == 0) {
+	if metric == nil {
 		return "", 0, false
 	}
 

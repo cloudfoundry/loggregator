@@ -91,7 +91,7 @@ var _ = Describe("ValueMetric", func() {
 				envelopes[1].GetValueMetric().GetName()))
 		})
 
-		It("is resilient to parial envelopes", func() {
+		It("is resilient to partial envelopes", func() {
 			envelope := &loggregator_v2.Envelope{
 				Message: &loggregator_v2.Envelope_Gauge{
 					Gauge: &loggregator_v2.Gauge{
@@ -102,6 +102,34 @@ var _ = Describe("ValueMetric", func() {
 				},
 			}
 			Expect(conversion.ToV1(envelope)).To(BeNil())
+		})
+
+		It("converts gauge with 0 value to value metric", func() {
+			envelope := &loggregator_v2.Envelope{
+				Message: &loggregator_v2.Envelope_Gauge{
+					Gauge: &loggregator_v2.Gauge{
+						Metrics: map[string]*loggregator_v2.GaugeValue{
+							"name": {
+								Unit:  "",
+								Value: 0.0,
+							},
+						},
+					},
+				},
+			}
+
+			envelopes := conversion.ToV1(envelope)
+			Expect(len(envelopes)).To(Equal(1))
+
+			converted := envelopes[0]
+			Expect(*converted).To(MatchFields(IgnoreExtras, Fields{
+				"EventType": Equal(events.Envelope_ValueMetric.Enum()),
+				"ValueMetric": Equal(&events.ValueMetric{
+					Name:  proto.String("name"),
+					Unit:  proto.String(""),
+					Value: proto.Float64(0.0),
+				}),
+			}))
 		})
 	})
 
