@@ -108,6 +108,20 @@ var _ = Describe("Recent Logs Handler", func() {
 		Expect(logCacheClient.queryParams.Get("limit")).To(Equal("1000"))
 	})
 
+	It("tries to retrieve logs and backs off until successful", func() {
+		logCacheClient.err <- errors.New("received message larger than max")
+		logCacheClient.err <- nil
+
+		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
+		req.Header.Add("Authorization", "token")
+
+		recentLogsHandler.ServeHTTP(recorder, req)
+
+		Eventually(func() string {
+			return logCacheClient.queryParams.Get("limit")
+		}, 5).Should(Equal("750"))
+	})
+
 	It("requests envelopes in descending order", func() {
 		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
 		req.Header.Add("Authorization", "token")
@@ -127,7 +141,7 @@ var _ = Describe("Recent Logs Handler", func() {
 	})
 
 	It("returns a helpful error message", func() {
-		logCacheClient.err = errors.New("It failed")
+		logCacheClient.err <- errors.New("It failed")
 		req, _ := http.NewRequest("GET", "/apps/8de7d390-9044-41ff-ab76-432299923511/recentlogs", nil)
 		req.Header.Add("Authorization", "token")
 
@@ -177,7 +191,7 @@ var _ = Describe("Recent Logs Handler", func() {
 
 	It("increments a metric when calls to log cache fail", func() {
 		spyMetricClient := testhelper.NewMetricClient()
-		logCacheClient.err = errors.New("Failed to read from Log Cache")
+		logCacheClient.err <- errors.New("Failed to read from Log Cache")
 
 		recentLogsHandler = proxy.NewRecentLogsHandler(
 			logCacheClient,
@@ -208,12 +222,13 @@ type fakeLogCacheClient struct {
 
 	// Outputs
 	envelopes []*loggregator_v2.Envelope
-	err       error
+	err       chan error
 }
 
 func newFakeLogCacheClient() *fakeLogCacheClient {
 	return &fakeLogCacheClient{
 		queryParams: make(map[string][]string),
+		err:         make(chan error, 100),
 	}
 }
 
@@ -239,7 +254,12 @@ func (f *fakeLogCacheClient) Read(
 		<-block
 	}
 
-	return f.envelopes, f.err
+	var err error
+	if len(f.err) > 0 {
+		err = <-f.err
+	}
+
+	return f.envelopes, err
 }
 
 func buildV2Log(msg string) *loggregator_v2.Envelope {

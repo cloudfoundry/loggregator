@@ -78,7 +78,7 @@ var _ = Describe("ContainerMetricsHandler", func() {
 	})
 
 	It("gives a 500 when LogCache returns an error", func() {
-		logCacheClient.err = errors.New("some-error")
+		logCacheClient.err <- errors.New("some-error")
 		resp, err := http.Get(server.URL + "/apps/some-id/containermetrics")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))

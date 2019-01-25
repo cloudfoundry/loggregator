@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
@@ -16,6 +17,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 )
+
+const backoffRate = 0.75
 
 type LogCacheClient interface {
 	Read(
@@ -97,14 +100,7 @@ func (h *RecentLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		limit = 1000
 	}
 
-	envelopes, err := h.recentLogProvider.Read(
-		ctx,
-		appID,
-		time.Unix(0, 0),
-		logcache.WithLimit(limit),
-		logcache.WithDescending(),
-		logcache.WithEnvelopeTypes(logcache_v1.EnvelopeType_LOG),
-	)
+	envelopes, err := backoffSearchForLogs(limit, ctx, appID, h.recentLogProvider)
 
 	if err != nil {
 		h.logCacheFailsMetric.Increment(1)
@@ -131,6 +127,26 @@ func (h *RecentLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	serveMultiPartResponse(w, resp)
+}
+
+func backoffSearchForLogs(limit int, ctx context.Context, appID string, logProvider LogCacheClient) ([]*loggregator_v2.Envelope, error) {
+	envelopes, err := logProvider.Read(
+		ctx,
+		appID,
+		time.Unix(0, 0),
+		logcache.WithLimit(limit),
+		logcache.WithDescending(),
+		logcache.WithEnvelopeTypes(logcache_v1.EnvelopeType_LOG),
+	)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "received message larger than max") {
+			return backoffSearchForLogs(int(float64(limit)*backoffRate), ctx, appID, logProvider)
+		}
+		return nil, err
+	}
+
+	return envelopes, nil
 }
 
 func limitFrom(r *http.Request) (int, bool) {
