@@ -76,7 +76,6 @@ func (s *stubGrpcLogCache) Read(c context.Context, r *logcache_v1.ReadRequest) (
 						},
 					},
 				},
-				containerMetric(r.GetSourceId()),
 				{
 					Timestamp: 1,
 					SourceId:  r.GetSourceId(),
@@ -107,38 +106,5 @@ func (s *stubGrpcLogCache) requests() []*logcache_v1.ReadRequest {
 func (s *stubGrpcLogCache) stop() {
 	if s.grpcServer != nil {
 		s.grpcServer.Stop()
-	}
-}
-
-func containerMetric(sourceID string) *loggregator_v2.Envelope {
-	return &loggregator_v2.Envelope{
-		SourceId:   sourceID,
-		InstanceId: "123",
-		Message: &loggregator_v2.Envelope_Gauge{
-			Gauge: &loggregator_v2.Gauge{
-				Metrics: map[string]*loggregator_v2.GaugeValue{
-					"cpu": {
-						Unit:  "percentage",
-						Value: 11,
-					},
-					"memory": {
-						Unit:  "bytes",
-						Value: 13,
-					},
-					"disk": {
-						Unit:  "bytes",
-						Value: 15,
-					},
-					"memory_quota": {
-						Unit:  "bytes",
-						Value: 17,
-					},
-					"disk_quota": {
-						Unit:  "bytes",
-						Value: 19,
-					},
-				},
-			},
-		},
 	}
 }

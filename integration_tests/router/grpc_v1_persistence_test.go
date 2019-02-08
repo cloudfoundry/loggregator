@@ -16,82 +16,6 @@ import (
 )
 
 var _ = Describe("Persistence", func() {
-	Describe("Container Metrics", func() {
-		It("returns container metrics for an app", func() {
-			dopplerCleanup, dopplerPorts := testservers.StartRouter(
-				testservers.BuildRouterConfig(0, 0),
-			)
-			defer dopplerCleanup()
-			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer ingressCleanup()
-			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer egressCleanup()
-
-			containerMetric := NewContainerMetric("some-test-app-id", 0, 1, 2, 3)
-			marshalledContainerMetric := marshalContainerMetric(containerMetric)
-
-			err := ingressClient.Send(marshalledContainerMetric)
-			Expect(err).ToNot(HaveOccurred())
-
-			receivedEnvelope := pollForContainerMetric("some-test-app-id", egressClient)
-			Expect(receivedEnvelope.GetEventType()).To(Equal(events.Envelope_ContainerMetric))
-			receivedMetric := receivedEnvelope.GetContainerMetric()
-			Expect(receivedMetric).To(Equal(containerMetric))
-		})
-
-		It("does not receive metrics for different appIds", func() {
-			dopplerCleanup, dopplerPorts := testservers.StartRouter(
-				testservers.BuildRouterConfig(0, 0),
-			)
-			defer dopplerCleanup()
-			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer ingressCleanup()
-			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer egressCleanup()
-
-			containerMetric := NewContainerMetric("some-test-app-id", 0, 100, 2, 3)
-			marshalledContainerMetric := marshalContainerMetric(containerMetric)
-			otherContainerMetric0 := NewContainerMetric("some-other-test-app-id", 0, 1, 2, 3)
-			marshalledOtherContainerMetric0 := marshalContainerMetric(otherContainerMetric0)
-			otherContainerMetric1 := NewContainerMetric("some-other-test-app-id", 1, 1, 2, 3)
-			marshalledOtherContainerMetric1 := marshalContainerMetric(otherContainerMetric1)
-
-			err := ingressClient.Send(marshalledOtherContainerMetric0)
-			Expect(err).ToNot(HaveOccurred())
-			err = ingressClient.Send(marshalledOtherContainerMetric1)
-			Expect(err).ToNot(HaveOccurred())
-			err = ingressClient.Send(marshalledContainerMetric)
-			Expect(err).ToNot(HaveOccurred())
-
-			receivedEnvelope := pollForContainerMetric("some-test-app-id", egressClient)
-			Expect(receivedEnvelope.GetContainerMetric()).To(Equal(containerMetric))
-		})
-
-		It("returns only the latest container metric", func() {
-			dopplerCleanup, dopplerPorts := testservers.StartRouter(
-				testservers.BuildRouterConfig(0, 0),
-			)
-			defer dopplerCleanup()
-			ingressCleanup, ingressClient := fakes.DopplerIngressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer ingressCleanup()
-			egressCleanup, egressClient := fakes.DopplerEgressV1Client(fmt.Sprintf("127.0.0.1:%d", dopplerPorts.GRPC))
-			defer egressCleanup()
-
-			containerMetric := NewContainerMetric("some-test-app-id", 0, 10, 2, 3)
-			marshalledContainerMetric := marshalContainerMetric(containerMetric)
-			secondContainerMetric := NewContainerMetric("some-test-app-id", 0, 20, 2, 3)
-			marshalledSecondContainerMetric := marshalContainerMetric(secondContainerMetric)
-
-			err := ingressClient.Send(marshalledContainerMetric)
-			Expect(err).ToNot(HaveOccurred())
-			err = ingressClient.Send(marshalledSecondContainerMetric)
-			Expect(err).ToNot(HaveOccurred())
-
-			receivedEnvelope := pollForContainerMetric("some-test-app-id", egressClient)
-			Expect(receivedEnvelope.GetContainerMetric()).To(Equal(secondContainerMetric))
-		})
-	})
-
 	Describe("Recent Logs", func() {
 		It("receives recent log messages", func() {
 			dopplerCleanup, dopplerPorts := testservers.StartRouter(
@@ -199,43 +123,6 @@ func pollForRecentLogs(appID string, client plumbing.DopplerClient) *events.Enve
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		resp, err := client.RecentLogs(ctx, &plumbing.RecentLogsRequest{
-			AppID: appID,
-		})
-		if err != nil {
-			return 0
-		}
-
-		payload = resp.Payload
-
-		return len(payload)
-	}
-	Eventually(f).Should(Equal(1))
-	env := unmarshalMessage(payload[0])
-	return &env
-}
-
-func marshalContainerMetric(metric *events.ContainerMetric) *plumbing.EnvelopeData {
-	env := &events.Envelope{
-		Origin:          proto.String("origin"),
-		Timestamp:       proto.Int64(time.Now().UnixNano()),
-		EventType:       events.Envelope_ContainerMetric.Enum(),
-		ContainerMetric: metric,
-	}
-
-	data, err := proto.Marshal(env)
-	Expect(err).ToNot(HaveOccurred())
-
-	return &plumbing.EnvelopeData{
-		Payload: data,
-	}
-}
-
-func pollForContainerMetric(appID string, client plumbing.DopplerClient) *events.Envelope {
-	var payload [][]byte
-	f := func() int {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		resp, err := client.ContainerMetrics(ctx, &plumbing.ContainerMetricsRequest{
 			AppID: appID,
 		})
 		if err != nil {

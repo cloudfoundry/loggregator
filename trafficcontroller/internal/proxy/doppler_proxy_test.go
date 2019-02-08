@@ -85,18 +85,6 @@ var _ = Describe("DopplerProxy", func() {
 			Expect(metricValue).To(BeNumerically("<", elapsed))
 		})
 
-		It("emits latency value metric for containermetrics request", func() {
-			req, _ := http.NewRequest("GET", "/apps/12bdb5e8-ba61-48e3-9dda-30ecd1446663/containermetrics", nil)
-			metricName := "dopplerProxy.containermetricsLatency"
-			requestStart := time.Now()
-
-			dopplerProxy.ServeHTTP(recorder, req)
-
-			metricValue := mockSender.GetValue(metricName)
-			elapsed := float64(time.Since(requestStart)) / float64(time.Millisecond)
-			Expect(metricValue).To(BeNumerically("<", elapsed))
-		})
-
 		DescribeTable("increments a counter for every envelope that is written", func(url, endpoint string) {
 			server := httptest.NewServer(dopplerProxy)
 			defer server.CloseClientConnections()
@@ -222,21 +210,6 @@ var _ = Describe("DopplerProxy", func() {
 			req, _ := http.NewRequest(
 				"GET",
 				"/apps/guid/recentlogs",
-				nil,
-			)
-			req.Header.Set("Origin", "fake-origin-string")
-
-			dopplerProxy.ServeHTTP(recorder, req)
-
-			Expect(recorder.Header().Get("Access-Control-Allow-Origin")).To(Equal("fake-origin-string"))
-			Expect(recorder.Header().Get("Access-Control-Allow-Credentials")).To(Equal("true"))
-			Expect(recorder.Header().Get("Access-Control-Allow-Headers")).To(Equal(""))
-		})
-
-		It("configures CORS for container metrics", func() {
-			req, _ := http.NewRequest(
-				"GET",
-				"/apps/guid/containermetrics",
 				nil,
 			)
 			req.Header.Set("Origin", "fake-origin-string")

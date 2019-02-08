@@ -3,6 +3,7 @@ package sinks_test
 import (
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
@@ -505,4 +506,33 @@ func constantlySend(inputChan chan<- *events.Envelope, message *events.Envelope,
 			return
 		}
 	}
+}
+
+type SpyHealthRegistrar struct {
+	mu     sync.Mutex
+	values map[string]float64
+}
+
+func newSpyHealthRegistrar() *SpyHealthRegistrar {
+	return &SpyHealthRegistrar{
+		values: make(map[string]float64),
+	}
+}
+
+func (s *SpyHealthRegistrar) Inc(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.values[name]++
+}
+
+func (s *SpyHealthRegistrar) Dec(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.values[name]--
+}
+
+func (s *SpyHealthRegistrar) Get(name string) float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.values[name]
 }

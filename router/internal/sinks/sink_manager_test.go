@@ -7,7 +7,6 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -22,7 +21,6 @@ var _ = Describe("SinkManager", func() {
 		health := newSpyHealthRegistrar()
 		sinkManager = sinks.NewSinkManager(
 			1,
-			1*time.Second,
 			1*time.Second,
 			testhelper.NewMetricClient(),
 			health,
@@ -193,40 +191,6 @@ var _ = Describe("SinkManager", func() {
 			})
 		})
 	})
-
-	Describe("Latest Container Metrics", func() {
-		var sink *channelSink
-		BeforeEach(func() {
-			sink = &channelSink{
-				appId:      "myApp",
-				identifier: "myAppChan1",
-				done:       make(chan struct{}),
-			}
-			sinkManager.RegisterSink(sink)
-		})
-
-		It("sends latest container metrics for a given app", func() {
-			env := &events.Envelope{
-				EventType: events.Envelope_ContainerMetric.Enum(),
-				Timestamp: proto.Int64(time.Now().UnixNano()),
-				ContainerMetric: &events.ContainerMetric{
-					ApplicationId: proto.String("myApp"),
-					InstanceIndex: proto.Int32(1),
-					CpuPercentage: proto.Float64(73),
-					MemoryBytes:   proto.Uint64(2),
-					DiskBytes:     proto.Uint64(3),
-				},
-			}
-
-			sinkManager.SendTo("myApp", env)
-
-			f := func() []*events.Envelope {
-				return sinkManager.LatestContainerMetrics("myApp")
-			}
-			Eventually(f).Should(ConsistOf(env))
-		})
-	})
-
 })
 
 type channelSink struct {

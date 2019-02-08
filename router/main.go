@@ -29,7 +29,6 @@ func main() {
 		conf.GRPC,
 		app.WithPersistence(
 			conf.MaxRetainedLogMessages,
-			conf.ContainerMetricTTLSeconds,
 			conf.SinkInactivityTimeoutSeconds,
 		),
 		app.WithMetricReporting(

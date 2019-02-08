@@ -303,13 +303,3 @@ func recvMessages(recv chan struct{}, client plumbing.Doppler_SubscribeClient) {
 		}
 	}()
 }
-
-func NewContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) *events.ContainerMetric {
-	return &events.ContainerMetric{
-		ApplicationId: &applicationId,
-		InstanceIndex: &instanceIndex,
-		CpuPercentage: &cpuPercentage,
-		MemoryBytes:   &memoryBytes,
-		DiskBytes:     &diskBytes,
-	}
-}

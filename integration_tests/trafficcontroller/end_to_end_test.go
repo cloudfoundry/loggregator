@@ -68,17 +68,6 @@ var _ = Describe("TrafficController for v1 messages", func() {
 					Expect(string(logMessages[0].GetMessage())).To(Equal("recent log endpoint requires a log cache. please talk to you operator"))
 				})
 			})
-
-			Context("ContainerMetrics", func() {
-				It("returns an empty result", func() {
-					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
-
-					metrics, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
-
-					Expect(err).ToNot(HaveOccurred())
-					Expect(metrics).To(HaveLen(1))
-				})
-			})
 		})
 	})
 
@@ -208,19 +197,6 @@ var _ = Describe("TrafficController for v1 messages", func() {
 
 						return len(messages)
 					}, 5).Should(Equal(2))
-				})
-			})
-
-			Context("ContainerMetrics", func() {
-				It("returns a multi-part HTTP response with the most recent container metrics for all instances for a given app", func() {
-					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
-
-					Eventually(func() bool {
-						messages, err := client.ContainerMetrics("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
-						Expect(err).NotTo(HaveOccurred())
-
-						return len(messages) > 0
-					}, 5).Should(BeTrue())
 				})
 			})
 		})

@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"code.cloudfoundry.org/go-batching"
+	batching "code.cloudfoundry.org/go-batching"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
@@ -29,14 +29,13 @@ type DataSetter interface {
 	Set(data []byte)
 }
 
-// EnvelopeStore returns Envelopes for container metrics and recent logs requests.
+// EnvelopeStore returns Envelopes recent logs requests.
 type EnvelopeStore interface {
-	LatestContainerMetrics(appID string) []*events.Envelope
 	RecentLogsFor(appID string) []*events.Envelope
 }
 
 // DopplerServer is the GRPC server component that accepts requests for firehose
-// streams, application streams, container metrics, and recent logs.
+// streams, application streams, and recent logs.
 type DopplerServer struct {
 	registrar           Registrar
 	envelopeStore       EnvelopeStore
@@ -106,12 +105,9 @@ func (m *DopplerServer) BatchSubscribe(req *plumbing.SubscriptionRequest, sender
 	return m.sendBatchData(req, sender)
 }
 
-// ContainerMetrics is called by GRPC on container metrics requests.
+//TODO: Deprecated
 func (m *DopplerServer) ContainerMetrics(ctx context.Context, req *plumbing.ContainerMetricsRequest) (*plumbing.ContainerMetricsResponse, error) {
-	envelopes := m.envelopeStore.LatestContainerMetrics(req.AppID)
-	return &plumbing.ContainerMetricsResponse{
-		Payload: marshalEnvelopes(envelopes),
-	}, nil
+	return nil, nil
 }
 
 // RecentLogs is called by GRPC on recent logs requests.

@@ -82,15 +82,6 @@ func NewDopplerProxy(
 		),
 	)
 
-	containerMetricsHandler := NewContainerMetricsHandler(logCacheClient, timeout, m)
-	r.Handle(
-		"/apps/{appID}/containermetrics",
-		corsMiddleware.Wrap(
-			logAccessMiddleware.Wrap(containerMetricsHandler),
-			AllowCredentials(),
-		),
-	)
-
 	r.Handle(
 		"/apps/{appID}/recentlogs",
 		corsMiddleware.Wrap(

@@ -27,6 +27,5 @@ var _ = Describe("Doppler Health Endpoint", func() {
 		Expect(body).To(ContainSubstring("ingressStreamCount"))
 		Expect(body).To(ContainSubstring("subscriptionCount"))
 		Expect(body).To(ContainSubstring("recentLogCacheCount"))
-		Expect(body).To(ContainSubstring("containerMetricCacheCount"))
 	})
 })

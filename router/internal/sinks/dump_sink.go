@@ -8,6 +8,11 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
+type HealthRegistrar interface {
+	Inc(name string)
+	Dec(name string)
+}
+
 type DumpSink struct {
 	appId              string
 	messageRing        *ring.Ring

@@ -81,17 +81,6 @@ func (group *GroupedSinks) DumpFor(appId string) *DumpSink {
 	return sinksForApp.RecentLogsSink(appId)
 }
 
-func (group *GroupedSinks) ContainerMetricsFor(appId string) *ContainerMetricSink {
-	group.RLock()
-	defer group.RUnlock()
-
-	sinksForApp, ok := group.apps[appId]
-	if !ok || sinksForApp == nil {
-		return nil
-	}
-	return sinksForApp.ContainerMetricsSink("container-metrics-" + appId)
-}
-
 func (group *GroupedSinks) CloseAndDelete(sink Sink) bool {
 	group.Lock()
 	defer group.Unlock()

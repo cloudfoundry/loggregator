@@ -27,7 +27,6 @@ type Config struct {
 
 	// persistence
 	MaxRetainedLogMessages       uint32 `env:"ROUTER_MAX_RETAINED_LOG_MESSAGES"`
-	ContainerMetricTTLSeconds    int    `env:"ROUTER_CONTAINER_METRIC_TTL_SECONDS"`
 	SinkInactivityTimeoutSeconds int    `env:"ROUTER_SINK_INACTIVITY_TIMEOUT_SECONDS"`
 
 	// health

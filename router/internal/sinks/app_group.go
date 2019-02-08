@@ -82,17 +82,6 @@ func (g *AppGroup) RecentLogsSink(id string) *DumpSink {
 	return dump
 }
 
-func (g *AppGroup) ContainerMetricsSink(id string) *ContainerMetricSink {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-
-	containerMetrics, ok := g.sink(id).(*ContainerMetricSink)
-	if !ok {
-		return nil
-	}
-	return containerMetrics
-}
-
 // sink needs to be called with read or write lock held.
 func (g *AppGroup) sink(id string) Sink {
 	wrapper, ok := g.wrappers[id]

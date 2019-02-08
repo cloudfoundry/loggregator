@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -13,8 +14,9 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/plumbing/conversion"
-	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
+	v1 "code.cloudfoundry.org/loggregator/router/internal/server/v1"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -77,35 +79,17 @@ var _ = Describe("IngestorServer", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		someEnvelope, data := buildContainerMetric()
-		pusherClient.Send(&plumbing.EnvelopeData{data})
-
-		f := func() *events.Envelope {
-			env, ok := v1Buf.TryNext()
-			if !ok {
-				return nil
-			}
-
-			return env
-		}
-		Eventually(f).Should(Equal(someEnvelope))
-		Expect(ingressMetric.GetDelta()).To(BeNumerically(">", 0))
-	})
-
-	It("reads envelopes from ingestor client into the v1 Buffer", func() {
-		pusherClient, err := dopplerClient.Pusher(context.TODO())
+		err = pusherClient.Send(&plumbing.EnvelopeData{data})
 		Expect(err).ToNot(HaveOccurred())
 
-		someEnvelope, data := buildContainerMetric()
-		pusherClient.Send(&plumbing.EnvelopeData{data})
-
 		f := func() *events.Envelope {
 			env, ok := v1Buf.TryNext()
 			if !ok {
 				return nil
 			}
-
 			return env
 		}
+
 		Eventually(f).Should(Equal(someEnvelope))
 		Expect(ingressMetric.GetDelta()).To(BeNumerically(">", 0))
 	})
@@ -208,6 +192,24 @@ var _ = Describe("IngestorServer", func() {
 		})
 	})
 })
+
+func buildContainerMetric() (*events.Envelope, []byte) {
+	envelope := &events.Envelope{
+		Origin:    proto.String("doppler"),
+		EventType: events.Envelope_ContainerMetric.Enum(),
+		Timestamp: proto.Int64(time.Now().UnixNano()),
+		ContainerMetric: &events.ContainerMetric{
+			ApplicationId: proto.String("some-app"),
+			InstanceIndex: proto.Int32(int32(1)),
+			CpuPercentage: proto.Float64(float64(1)),
+			MemoryBytes:   proto.Uint64(uint64(1)),
+			DiskBytes:     proto.Uint64(uint64(1)),
+		},
+	}
+	data, err := proto.Marshal(envelope)
+	Expect(err).ToNot(HaveOccurred())
+	return envelope, data
+}
 
 type SpyHealthRegistrar struct {
 	mu     sync.Mutex

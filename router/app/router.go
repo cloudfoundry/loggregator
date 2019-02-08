@@ -11,8 +11,8 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
 	"code.cloudfoundry.org/loggregator/router/internal/server"
-	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
-	"code.cloudfoundry.org/loggregator/router/internal/server/v2"
+	v1 "code.cloudfoundry.org/loggregator/router/internal/server/v1"
+	v2 "code.cloudfoundry.org/loggregator/router/internal/server/v2"
 	"code.cloudfoundry.org/loggregator/router/internal/sinks"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -33,9 +33,8 @@ type Router struct {
 func NewRouter(grpc GRPC, opts ...RouterOption) *Router {
 	r := &Router{
 		c: &Config{
-			GRPC: grpc,
+			GRPC:                         grpc,
 			MaxRetainedLogMessages:       100,
-			ContainerMetricTTLSeconds:    120,
 			SinkInactivityTimeoutSeconds: 3600,
 			HealthAddr:                   "localhost:14825",
 			Agent: Agent{
@@ -71,15 +70,13 @@ func WithMetricReporting(
 	}
 }
 
-// WithPersistence turns on recent logs and container metric storage.
+// WithPersistence turns on recent log storage.
 func WithPersistence(
 	maxRetainedLogMessages uint32,
-	containerMetricTTLSeconds int,
 	sinkInactivityTimeoutSeconds int,
 ) RouterOption {
 	return func(r *Router) {
 		r.c.MaxRetainedLogMessages = maxRetainedLogMessages
-		r.c.ContainerMetricTTLSeconds = containerMetricTTLSeconds
 		r.c.SinkInactivityTimeoutSeconds = sinkInactivityTimeoutSeconds
 	}
 }
@@ -107,12 +104,10 @@ func (d *Router) Start() {
 	//------------------------------
 	// In memory store of
 	// - recent logs
-	// - container metrics
 	//------------------------------
 	sinkManager := sinks.NewSinkManager(
 		d.c.MaxRetainedLogMessages,
 		time.Duration(d.c.SinkInactivityTimeoutSeconds)*time.Second,
-		time.Duration(d.c.ContainerMetricTTLSeconds)*time.Second,
 		metricClient,
 		healthRegistrar,
 	)
@@ -306,16 +301,6 @@ func initHealthRegistrar(r prometheus.Registerer) *healthendpoint.Registrar {
 				Subsystem: "router",
 				Name:      "recentLogCacheCount",
 				Help:      "Number of recent log caches",
-			},
-		),
-		// metric-documentation-health: (containerMetricCacheCount)
-		// Number of container metric caches
-		"containerMetricCacheCount": prometheus.NewGauge(
-			prometheus.GaugeOpts{
-				Namespace: "loggregator",
-				Subsystem: "router",
-				Name:      "containerMetricCacheCount",
-				Help:      "Number of container metric caches",
 			},
 		),
 	})

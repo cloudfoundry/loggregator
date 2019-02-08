@@ -1,7 +1,6 @@
 package plumbing_test
 
 import (
-	"log"
 	"net"
 	"time"
 
@@ -380,70 +379,6 @@ var _ = Describe("GRPCConnector", func() {
 		})
 	})
 })
-
-type MockDopplerServer struct {
-	addr       net.Addr
-	grpcServer *grpc.Server
-
-	containerMetric []byte
-	recentLog       []byte
-}
-
-func NewMockDopplerServer(containerMetric, recentLog []byte) *MockDopplerServer {
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
-	Expect(err).ToNot(HaveOccurred())
-
-	mockServer := &MockDopplerServer{
-		addr:            lis.Addr(),
-		containerMetric: containerMetric,
-		recentLog:       recentLog,
-		grpcServer:      grpc.NewServer(),
-	}
-
-	plumbing.RegisterDopplerServer(mockServer.grpcServer, mockServer)
-
-	go func() {
-		log.Println(mockServer.grpcServer.Serve(lis))
-	}()
-
-	return mockServer
-}
-
-func (m *MockDopplerServer) Subscribe(*plumbing.SubscriptionRequest, plumbing.Doppler_SubscribeServer) error {
-	return nil
-}
-
-func (m *MockDopplerServer) BatchSubscribe(*plumbing.SubscriptionRequest, plumbing.Doppler_BatchSubscribeServer) error {
-	return nil
-}
-
-func (m *MockDopplerServer) ContainerMetrics(context.Context, *plumbing.ContainerMetricsRequest) (*plumbing.ContainerMetricsResponse, error) {
-	if m.containerMetric == nil {
-		time.Sleep(5 * time.Second)
-	}
-
-	cm := &plumbing.ContainerMetricsResponse{
-		Payload: [][]byte{m.containerMetric},
-	}
-
-	return cm, nil
-}
-
-func (m *MockDopplerServer) RecentLogs(context.Context, *plumbing.RecentLogsRequest) (*plumbing.RecentLogsResponse, error) {
-	if m.recentLog == nil {
-		time.Sleep(5 * time.Second)
-	}
-
-	rl := &plumbing.RecentLogsResponse{
-		Payload: [][]byte{m.recentLog},
-	}
-
-	return rl, nil
-}
-
-func (m *MockDopplerServer) Stop() {
-	m.grpcServer.Stop()
-}
 
 func readFromSubscription(ctx context.Context, req *plumbing.SubscriptionRequest, connector *plumbing.GRPCConnector) (<-chan []byte, <-chan error, chan struct{}) {
 	data := make(chan []byte, 100)

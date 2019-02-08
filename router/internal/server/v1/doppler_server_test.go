@@ -10,7 +10,7 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
+	v1 "code.cloudfoundry.org/loggregator/router/internal/server/v1"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
@@ -328,50 +328,6 @@ var _ = Describe("v1 doppler server", func() {
 		})
 	})
 
-	Describe("container metrics", func() {
-		BeforeEach(func() {
-			dopplerClient, subscribeRequest, listener, connCloser = dopplerSetup(
-				mockRegistrar,
-				mockDataDumper,
-				batchInterval,
-				healthRegistrar,
-				metricClient,
-				subscriptionsMetric,
-			)
-
-		})
-
-		It("returns container metrics from its data dumper", func() {
-			envelope, data := buildContainerMetric()
-			mockDataDumper.latestContainerMetricsEnvelopes = []*events.Envelope{
-				envelope,
-			}
-
-			resp, err := dopplerClient.ContainerMetrics(context.TODO(),
-				&plumbing.ContainerMetricsRequest{AppID: "some-app"})
-
-			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.Payload).To(ContainElement(
-				data,
-			))
-			Expect(mockDataDumper.latestContainerMetricsAppID).To(Equal("some-app"))
-		})
-
-		It("throw away invalid envelopes from its data dumper", func() {
-			envelope, _ := buildContainerMetric()
-			mockDataDumper.latestContainerMetricsEnvelopes = []*events.Envelope{
-				{},
-				envelope,
-			}
-
-			resp, err := dopplerClient.ContainerMetrics(context.TODO(),
-				&plumbing.ContainerMetricsRequest{AppID: "some-app"})
-
-			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.Payload).To(HaveLen(1))
-		})
-	})
-
 	Describe("recent logs", func() {
 		BeforeEach(func() {
 			dopplerClient, subscribeRequest, listener, connCloser = dopplerSetup(
@@ -446,24 +402,6 @@ func dopplerSetup(
 	}
 
 	return dopplerClient, subscribeRequest, listener, connCloser
-}
-
-func buildContainerMetric() (*events.Envelope, []byte) {
-	envelope := &events.Envelope{
-		Origin:    proto.String("doppler"),
-		EventType: events.Envelope_ContainerMetric.Enum(),
-		Timestamp: proto.Int64(time.Now().UnixNano()),
-		ContainerMetric: &events.ContainerMetric{
-			ApplicationId: proto.String("some-app"),
-			InstanceIndex: proto.Int32(int32(1)),
-			CpuPercentage: proto.Float64(float64(1)),
-			MemoryBytes:   proto.Uint64(uint64(1)),
-			DiskBytes:     proto.Uint64(uint64(1)),
-		},
-	}
-	data, err := proto.Marshal(envelope)
-	Expect(err).ToNot(HaveOccurred())
-	return envelope, data
 }
 
 func buildLogMessage() (*events.Envelope, []byte) {
@@ -579,17 +517,8 @@ func newSpyDataDumper() *spyDataDumper {
 }
 
 type spyDataDumper struct {
-	latestContainerMetricsAppID     string
-	latestContainerMetricsEnvelopes []*events.Envelope
-
 	recentLogsForAppID     string
 	recentLogsForEnvelopes []*events.Envelope
-}
-
-func (s *spyDataDumper) LatestContainerMetrics(appID string) []*events.Envelope {
-	s.latestContainerMetricsAppID = appID
-
-	return s.latestContainerMetricsEnvelopes
 }
 
 func (s *spyDataDumper) RecentLogsFor(appID string) []*events.Envelope {

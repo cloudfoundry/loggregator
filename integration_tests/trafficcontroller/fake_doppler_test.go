@@ -13,26 +13,24 @@ import (
 )
 
 type FakeDoppler struct {
-	GrpcEndpoint             string
-	grpcListener             net.Listener
-	grpcOut                  chan []byte
-	grpcServer               *grpc.Server
-	SubscriptionRequests     chan *plumbing.SubscriptionRequest
-	ContainerMetricsRequests chan *plumbing.ContainerMetricsRequest
-	RecentLogsRequests       chan *plumbing.RecentLogsRequest
-	SubscribeServers         chan plumbing.Doppler_BatchSubscribeServer
-	done                     chan struct{}
+	GrpcEndpoint         string
+	grpcListener         net.Listener
+	grpcOut              chan []byte
+	grpcServer           *grpc.Server
+	SubscriptionRequests chan *plumbing.SubscriptionRequest
+	RecentLogsRequests   chan *plumbing.RecentLogsRequest
+	SubscribeServers     chan plumbing.Doppler_BatchSubscribeServer
+	done                 chan struct{}
 }
 
 func NewFakeDoppler() *FakeDoppler {
 	return &FakeDoppler{
-		GrpcEndpoint:             "127.0.0.1:0",
-		grpcOut:                  make(chan []byte, 100),
-		SubscriptionRequests:     make(chan *plumbing.SubscriptionRequest, 100),
-		ContainerMetricsRequests: make(chan *plumbing.ContainerMetricsRequest, 100),
-		RecentLogsRequests:       make(chan *plumbing.RecentLogsRequest, 100),
-		SubscribeServers:         make(chan plumbing.Doppler_BatchSubscribeServer, 100),
-		done:                     make(chan struct{}),
+		GrpcEndpoint:         "127.0.0.1:0",
+		grpcOut:              make(chan []byte, 100),
+		SubscriptionRequests: make(chan *plumbing.SubscriptionRequest, 100),
+		RecentLogsRequests:   make(chan *plumbing.RecentLogsRequest, 100),
+		SubscribeServers:     make(chan plumbing.Doppler_BatchSubscribeServer, 100),
+		done:                 make(chan struct{}),
 	}
 }
 
@@ -99,14 +97,9 @@ func (fakeDoppler *FakeDoppler) BatchSubscribe(request *plumbing.SubscriptionReq
 	return nil
 }
 
+//TODO: Deprecated
 func (fakeDoppler *FakeDoppler) ContainerMetrics(ctx context.Context, request *plumbing.ContainerMetricsRequest) (*plumbing.ContainerMetricsResponse, error) {
-	fakeDoppler.ContainerMetricsRequests <- request
-	resp := new(plumbing.ContainerMetricsResponse)
-	for msg := range fakeDoppler.grpcOut {
-		resp.Payload = append(resp.Payload, msg)
-	}
-
-	return resp, nil
+	return nil, nil
 }
 
 func (fakeDoppler *FakeDoppler) RecentLogs(ctx context.Context, request *plumbing.RecentLogsRequest) (*plumbing.RecentLogsResponse, error) {

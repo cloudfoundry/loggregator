@@ -87,23 +87,16 @@ type recentLogsRequest struct {
 	appID string
 }
 
-type containerMetricsRequest struct {
-	ctx   context.Context
-	appID string
-}
-
 type subscribeRequest struct {
 	ctx     context.Context
 	request *plumbing.SubscriptionRequest
 }
 
 type SpyGRPCConnector struct {
-	mu                    sync.Mutex
-	subscriptions         *subscribeRequest
-	subscriptionsErr      error
-	recentLogs            *recentLogsRequest
-	containerMetrics      containerMetricsRequest
-	containerMetricsBlock bool
+	mu               sync.Mutex
+	subscriptions    *subscribeRequest
+	subscriptionsErr error
+	recentLogs       *recentLogsRequest
 }
 
 func newSpyGRPCConnector(err error) *SpyGRPCConnector {

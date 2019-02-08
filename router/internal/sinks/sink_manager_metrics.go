@@ -5,8 +5,7 @@ import (
 )
 
 type SinkManagerMetrics struct {
-	dumpSinksMetric      *metricemitter.Gauge
-	containerSinksMetric *metricemitter.Gauge
+	dumpSinksMetric *metricemitter.Gauge
 }
 
 func NewSinkManagerMetrics(mc MetricClient) *SinkManagerMetrics {
@@ -15,15 +14,9 @@ func NewSinkManagerMetrics(mc MetricClient) *SinkManagerMetrics {
 	dumpSinksMetric := mc.NewGauge("dump_sinks", "sinks",
 		metricemitter.WithVersion(2, 0),
 	)
-	// metric-documentation-v2: (loggregator.doppler.container_metric_sinks)
-	// Number of container metric sinks.
-	containerSinksMetric := mc.NewGauge("container_metric_sinks", "sinks",
-		metricemitter.WithVersion(2, 0),
-	)
 
 	return &SinkManagerMetrics{
-		dumpSinksMetric:      dumpSinksMetric,
-		containerSinksMetric: containerSinksMetric,
+		dumpSinksMetric: dumpSinksMetric,
 	}
 }
 
@@ -31,8 +24,6 @@ func (s *SinkManagerMetrics) Inc(sink Sink) {
 	switch sink.(type) {
 	case *DumpSink:
 		s.dumpSinksMetric.Increment(1.0)
-	case *ContainerMetricSink:
-		s.containerSinksMetric.Increment(1.0)
 	}
 }
 
@@ -40,7 +31,5 @@ func (s *SinkManagerMetrics) Dec(sink Sink) {
 	switch sink.(type) {
 	case *DumpSink:
 		s.dumpSinksMetric.Decrement(1.0)
-	case *ContainerMetricSink:
-		s.containerSinksMetric.Decrement(1.0)
 	}
 }

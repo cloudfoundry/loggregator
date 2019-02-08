@@ -8,7 +8,7 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
-// SinkManager provides an in memory store of recent logs and container metrics.
+// SinkManager provides an in memory store of recent logs.
 type SinkManager struct {
 	metrics        *SinkManagerMetrics
 	recentLogCount uint32
@@ -16,7 +16,6 @@ type SinkManager struct {
 	errorChannel   chan *events.Envelope
 	sinks          *GroupedSinks
 	sinkTimeout    time.Duration
-	metricTTL      time.Duration
 	health         HealthRegistrar
 	stopOnce       sync.Once
 }
@@ -25,7 +24,6 @@ type SinkManager struct {
 func NewSinkManager(
 	maxRetainedLogMessages uint32,
 	sinkTimeout time.Duration,
-	metricTTL time.Duration,
 	metricClient MetricClient,
 	health HealthRegistrar,
 ) *SinkManager {
@@ -36,7 +34,6 @@ func NewSinkManager(
 		recentLogCount: maxRetainedLogMessages,
 		metrics:        NewSinkManagerMetrics(metricClient),
 		sinkTimeout:    sinkTimeout,
-		metricTTL:      metricTTL,
 		health:         health,
 	}
 }
@@ -53,7 +50,6 @@ func (sm *SinkManager) Stop() {
 // application ID.
 func (sm *SinkManager) SendTo(appID string, msg *events.Envelope) {
 	sm.ensureRecentLogsSinkFor(appID)
-	sm.ensureContainerMetricsSinkFor(appID)
 	sm.sinks.Broadcast(appID, msg)
 }
 
@@ -100,15 +96,6 @@ func (sm *SinkManager) RecentLogsFor(appID string) []*events.Envelope {
 	return nil
 }
 
-// LatestContainerMetrics returns the most recent container metrics for an
-// application ID.
-func (sm *SinkManager) LatestContainerMetrics(appID string) []*events.Envelope {
-	if sink := sm.sinks.ContainerMetricsFor(appID); sink != nil {
-		return sink.GetLatest()
-	}
-	return []*events.Envelope{}
-}
-
 func (sm *SinkManager) listenForErrorMessages() {
 	for {
 		select {
@@ -132,21 +119,6 @@ func (sm *SinkManager) ensureRecentLogsSinkFor(appID string) {
 	sink := NewDumpSink(
 		appID,
 		sm.recentLogCount,
-		sm.sinkTimeout,
-		sm.health,
-	)
-
-	sm.RegisterSink(sink)
-}
-
-func (sm *SinkManager) ensureContainerMetricsSinkFor(appID string) {
-	if sm.sinks.ContainerMetricsFor(appID) != nil {
-		return
-	}
-
-	sink := NewContainerMetricSink(
-		appID,
-		sm.metricTTL,
 		sm.sinkTimeout,
 		sm.health,
 	)

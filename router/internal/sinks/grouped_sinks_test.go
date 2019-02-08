@@ -145,16 +145,12 @@ var _ = Describe("GroupedSink", func() {
 	Describe("DumpFor", func() {
 		It("returns only dumps", func() {
 			appId := "789"
-			sink1 := sinks.NewContainerMetricSink(appId, 1*time.Second, time.Second, &spyHealthRegistrar{})
-			sink2 := sinks.NewContainerMetricSink(appId, 1*time.Second, time.Second, &spyHealthRegistrar{})
 			health := newSpyHealthRegistrar()
-			sink3 := sinks.NewDumpSink(appId, 5, time.Second, health)
+			sink1 := sinks.NewDumpSink(appId, 5, time.Second, health)
 
 			groupedSinks.RegisterAppSink(inputChan, sink1)
-			groupedSinks.RegisterAppSink(inputChan, sink2)
-			groupedSinks.RegisterAppSink(inputChan, sink3)
 
-			Expect(groupedSinks.DumpFor(appId)).To(Equal(sink3))
+			Expect(groupedSinks.DumpFor(appId)).To(Equal(sink1))
 		})
 
 		It("returns only dumps that match the appId", func() {
@@ -174,59 +170,12 @@ var _ = Describe("GroupedSink", func() {
 		It("returns nil if no dumps are registered", func() {
 			target := "789"
 
-			sink1 := sinks.NewContainerMetricSink(target, 1*time.Second, time.Second, &spyHealthRegistrar{})
-
-			groupedSinks.RegisterAppSink(inputChan, sink1)
-
 			Expect(groupedSinks.DumpFor(target)).To(BeNil())
 		})
 
 		It("returns nil if no sinks exist", func() {
 			Expect(groupedSinks.DumpFor("empty")).To(BeNil())
 		})
-	})
-
-	Describe("ContainerMetricsFor", func() {
-		It("returns only container metric sinks", func() {
-			appId := "456"
-
-			health := newSpyHealthRegistrar()
-			sink1 := sinks.NewContainerMetricSink(appId, 1*time.Second, time.Second, health)
-			sink2 := sinks.NewDumpSink(appId, 5, time.Second, health)
-
-			groupedSinks.RegisterAppSink(inputChan, sink1)
-			groupedSinks.RegisterAppSink(inputChan, sink2)
-
-			Expect(groupedSinks.ContainerMetricsFor(appId)).To(Equal(sink1))
-		})
-
-		It("returns only container metrics for appId", func() {
-			appId1 := "123"
-			appId2 := "456"
-
-			health := newSpyHealthRegistrar()
-			sink1 := sinks.NewContainerMetricSink(appId1, 1*time.Second, time.Second, health)
-			sink2 := sinks.NewContainerMetricSink(appId2, 1*time.Second, time.Second, health)
-
-			groupedSinks.RegisterAppSink(inputChan, sink1)
-			groupedSinks.RegisterAppSink(inputChan, sink2)
-
-			Expect(groupedSinks.ContainerMetricsFor(appId1)).To(Equal(sink1))
-		})
-
-		It("returns nil if no container metrics sinks are registered", func() {
-			appId := "1234"
-			health := newSpyHealthRegistrar()
-			sink2 := sinks.NewDumpSink(appId, 5, time.Second, health)
-			groupedSinks.RegisterAppSink(inputChan, sink2)
-
-			Expect(groupedSinks.ContainerMetricsFor(appId)).To(BeNil())
-		})
-
-		It("returns nil if no sinks exist", func() {
-			Expect(groupedSinks.ContainerMetricsFor("1234")).To(BeNil())
-		})
-
 	})
 })
 
