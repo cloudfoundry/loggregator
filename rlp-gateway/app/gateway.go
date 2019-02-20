@@ -88,7 +88,7 @@ func (g *Gateway) Start(blocking bool) {
 		),
 	)
 
-	l, err := net.Listen("tcp", g.cfg.GatewayAddr)
+	l, err := net.Listen("tcp", g.cfg.HTTP.GatewayAddr)
 	if err != nil {
 		g.log.Fatalf("failed to start listener: %s", err)
 	}
@@ -96,16 +96,16 @@ func (g *Gateway) Start(blocking bool) {
 
 	g.listener = l
 	g.server = &http.Server{
-		Addr:    g.cfg.GatewayAddr,
+		Addr:    g.cfg.HTTP.GatewayAddr,
 		Handler: stack,
 	}
 
 	if blocking {
-		g.server.Serve(g.listener)
+		g.server.ServeTLS(g.listener, g.cfg.HTTP.CertPath, g.cfg.HTTP.KeyPath)
 		return
 	}
 
-	go g.server.Serve(g.listener)
+	go g.server.ServeTLS(g.listener, g.cfg.HTTP.CertPath, g.cfg.HTTP.KeyPath)
 }
 
 // Stop closes the server connection

@@ -27,7 +27,9 @@ func BuildRLPGatewayConfig(
 		LogsProviderClientKeyPath:  Cert("rlpgateway.key"),
 		LogsProviderCommonName:     "reverselogproxy",
 
-		GatewayAddr: fmt.Sprintf("127.0.0.1:%d", gatewayPort),
+		HTTP: app.HTTP{
+			GatewayAddr: fmt.Sprintf("127.0.0.1:%d", gatewayPort),
+		},
 
 		LogAccessAuthorization: app.LogAccessAuthorization{
 			Addr:         logAccessAddr,

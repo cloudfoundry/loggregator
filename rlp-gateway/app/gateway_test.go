@@ -44,7 +44,11 @@ var _ = Describe("Gateway", func() {
 
 			StreamTimeout: 10 * time.Minute,
 
-			GatewayAddr: ":0",
+			HTTP: app.HTTP{
+				GatewayAddr: ":0",
+				CertPath:    testservers.Cert("localhost.crt"),
+				KeyPath:     testservers.Cert("localhost.key"),
+			},
 
 			LogAccessAuthorization: app.LogAccessAuthorization{
 				CertPath:   testservers.Cert("capi.crt"),
@@ -84,13 +88,13 @@ var _ = Describe("Gateway", func() {
 			cfg.LogAdminAuthorization.Addr = logAdmin.URL
 		})
 
-		It("forwards HTTP requests to RLP", func() {
+		It("forwards requests to RLP", func() {
 			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
 			gateway.Start(false)
 			defer gateway.Stop()
 
 			client := newTestClient()
-			go client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef-dead-dead-dead-deaddeafbeef")
+			go client.open("https://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef-dead-dead-dead-deaddeafbeef")
 
 			Eventually(client.envelopes).Should(HaveLen(10))
 		})
@@ -104,8 +108,19 @@ var _ = Describe("Gateway", func() {
 
 			client := newTestClient()
 			Expect(func() {
-				client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef-dead-dead-dead-deaddeafbeef")
+				client.open("https://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef-dead-dead-dead-deaddeafbeef")
 			}).ToNot(Panic())
+		})
+
+		It("does not accept unencrypted connections", func () {
+			gateway := app.NewGateway(cfg, metrics, logger, GinkgoWriter)
+			gateway.Start(false)
+			defer gateway.Stop()
+
+			client := newTestClient()
+			Expect(func() {
+				client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef")
+			}).To(Panic())
 		})
 	})
 
@@ -138,7 +153,7 @@ var _ = Describe("Gateway", func() {
 			defer gateway.Stop()
 
 			client := newTestClient()
-			go client.open("http://" + gateway.Addr() + "/v2/read?log")
+			go client.open("https://" + gateway.Addr() + "/v2/read?log")
 
 			Eventually(client.envelopes).Should(HaveLen(10))
 		})
@@ -152,7 +167,7 @@ var _ = Describe("Gateway", func() {
 
 			client := newTestClient()
 			Expect(func() {
-				client.open("http://" + gateway.Addr() + "/v2/read?log")
+				client.open("https://" + gateway.Addr() + "/v2/read?log")
 			}).ToNot(Panic())
 		})
 	})
@@ -185,7 +200,7 @@ var _ = Describe("Gateway", func() {
 			defer gateway.Stop()
 
 			client := newTestClient()
-			resp, err := client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=some-id")
+			resp, err := client.open("https://" + gateway.Addr() + "/v2/read?log&source_id=some-id")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 		})
@@ -196,7 +211,7 @@ var _ = Describe("Gateway", func() {
 			defer gateway.Stop()
 
 			client := newTestClient()
-			resp, err := client.open("http://" + gateway.Addr() + "/v2/read?log")
+			resp, err := client.open("https://" + gateway.Addr() + "/v2/read?log")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 		})
@@ -288,7 +303,12 @@ func (tc *testClient) open(url string) (*http.Response, error) {
 	}
 	req.Header.Set("Authorization", "my-token")
 
-	resp, err := http.DefaultClient.Do(req)
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}

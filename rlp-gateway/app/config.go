@@ -26,6 +26,12 @@ type LogAdminAuthorization struct {
 	CAPath       string `env:"LOG_ADMIN_CA_PATH,       required, report"`
 }
 
+type HTTP struct {
+	GatewayAddr string `env:"GATEWAY_ADDR, report"`
+	CertPath    string `env:"HTTP_CERT_PATH,   required, report"`
+	KeyPath     string `env:"HTTP_KEY_PATH,    required, report"`
+}
+
 // Config holds the configuration for the RLP Gateway
 type Config struct {
 	LogsProviderAddr           string `env:"LOGS_PROVIDER_ADDR,             required, report"`
@@ -35,20 +41,23 @@ type Config struct {
 	LogsProviderCommonName     string `env:"LOGS_PROVIDER_COMMON_NAME, report"`
 	SkipCertVerify             bool   `env:"SKIP_CERT_VERIFY, report"`
 
-	GatewayAddr string `env:"GATEWAY_ADDR, report"`
-	PProfPort   uint32 `env:"PPROF_PORT"`
+	PProfPort uint32 `env:"PPROF_PORT"`
 
 	LogAccessAuthorization LogAccessAuthorization
 	LogAdminAuthorization  LogAdminAuthorization
 
 	StreamTimeout time.Duration `env:"STREAM_TIMEOUT, report"`
+
+	HTTP HTTP
 }
 
 // LoadConfig will load and return the config from the current environment. If
 // this fails this function will fatally log.
 func LoadConfig() Config {
 	cfg := Config{
-		GatewayAddr:            "localhost:8088",
+		HTTP: HTTP{
+			GatewayAddr: "127.0.0.1:8088",
+		},
 		LogsProviderCommonName: "reverselogproxy",
 		StreamTimeout:          14 * time.Minute,
 	}
