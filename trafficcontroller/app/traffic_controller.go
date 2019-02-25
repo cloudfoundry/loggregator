@@ -198,7 +198,10 @@ func (t *TrafficController) Start() {
 			log.Fatal(err)
 		}
 		log.Printf("ws bound to: %s", lis.Addr())
-		log.Fatal(http.Serve(lis, dopplerHandler))
+		log.Fatal(http.ServeTLS(lis,
+			dopplerHandler,
+			t.conf.OutgoingCertFile,
+			t.conf.OutgoingKeyFile))
 	}()
 
 	go profiler.New(t.conf.PProfPort).Start()

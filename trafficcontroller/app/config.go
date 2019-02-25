@@ -42,6 +42,8 @@ type Config struct {
 	IP                    string        `env:"TRAFFIC_CONTROLLER_IP, report"`
 	ApiHost               string        `env:"TRAFFIC_CONTROLLER_API_HOST, report"`
 	OutgoingDropsondePort uint32        `env:"TRAFFIC_CONTROLLER_OUTGOING_DROPSONDE_PORT, report"`
+	OutgoingCertFile      string        `env:"TRAFFIC_CONTROLLER_OUTGOING_CERT_FILE, report"`
+	OutgoingKeyFile       string        `env:"TRAFFIC_CONTROLLER_OUTGOING_KEY_FILE, report"`
 	SystemDomain          string        `env:"TRAFFIC_CONTROLLER_SYSTEM_DOMAIN, report"`
 	SkipCertVerify        bool          `env:"TRAFFIC_CONTROLLER_SKIP_CERT_VERIFY, report"`
 	UaaHost               string        `env:"TRAFFIC_CONTROLLER_UAA_HOST, report"`
