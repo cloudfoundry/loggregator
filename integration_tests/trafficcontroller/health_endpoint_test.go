@@ -1,6 +1,7 @@
 package trafficcontroller_test
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +13,13 @@ import (
 
 var _ = Describe("TrafficController Health Endpoint", func() {
 	It("returns health metrics", func() {
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		}
 		cfg := testservers.BuildTrafficControllerConf("", 37474, "")
 
 		var tcPorts testservers.TrafficControllerPorts
@@ -19,12 +27,12 @@ var _ = Describe("TrafficController Health Endpoint", func() {
 
 		// wait for TC
 		trafficControllerDropsondeEndpoint := fmt.Sprintf(
-			"http://%s:%d",
+			"https://%s:%d",
 			localIPAddress,
 			tcPorts.WS,
 		)
 		Eventually(func() error {
-			resp, err := http.Get(trafficControllerDropsondeEndpoint)
+			resp, err := httpClient.Get(trafficControllerDropsondeEndpoint)
 			if err == nil {
 				resp.Body.Close()
 			}

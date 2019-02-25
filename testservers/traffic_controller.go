@@ -28,6 +28,8 @@ func BuildTrafficControllerConf(routerAddr string, agentPort int, logCacheAddr s
 		UaaClientSecret:       "yourUncle",
 		DisableAccessControl:  true,
 		OutgoingDropsondePort: 0,
+		OutgoingCertFile: Cert("trafficcontroller.crt"),
+		OutgoingKeyFile: Cert("trafficcontroller.key"),
 
 		CCTLSClientConfig: tcConf.CCTLSClientConfig{
 			CertFile:   Cert("trafficcontroller.crt"),

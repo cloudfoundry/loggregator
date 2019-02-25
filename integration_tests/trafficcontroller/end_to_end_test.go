@@ -23,6 +23,11 @@ var _ = Describe("TrafficController for v1 messages", func() {
 		fakeDoppler  *FakeDoppler
 		tcWSEndpoint string
 		wsPort       int
+		httpClient   = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
 	)
 
 	Context("without a configured log cache", func() {
@@ -38,12 +43,12 @@ var _ = Describe("TrafficController for v1 messages", func() {
 
 			wsPort = tcPorts.WS
 
-			tcHTTPEndpoint := fmt.Sprintf("http://%s:%d", localIPAddress, tcPorts.WS)
-			tcWSEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, tcPorts.WS)
+			tcHTTPEndpoint := fmt.Sprintf("https://%s:%d", localIPAddress, tcPorts.WS)
+			tcWSEndpoint = fmt.Sprintf("wss://%s:%d", localIPAddress, tcPorts.WS)
 
 			// wait for TC
 			Eventually(func() error {
-				resp, err := http.Get(tcHTTPEndpoint)
+				resp, err := httpClient.Get(tcHTTPEndpoint)
 				if err == nil {
 					resp.Body.Close()
 				}
@@ -59,7 +64,9 @@ var _ = Describe("TrafficController for v1 messages", func() {
 		Describe("LogCache API Paths", func() {
 			Context("Recent", func() {
 				It("returns a helpful error message", func() {
-					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
+					client := consumer.New(tcWSEndpoint, &tls.Config{
+						InsecureSkipVerify: true,
+					}, nil)
 
 					logMessages, err := client.RecentLogs("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
 
@@ -85,12 +92,12 @@ var _ = Describe("TrafficController for v1 messages", func() {
 
 			wsPort = tcPorts.WS
 
-			tcHTTPEndpoint := fmt.Sprintf("http://%s:%d", localIPAddress, tcPorts.WS)
-			tcWSEndpoint = fmt.Sprintf("ws://%s:%d", localIPAddress, tcPorts.WS)
+			tcHTTPEndpoint := fmt.Sprintf("https://%s:%d", localIPAddress, tcPorts.WS)
+			tcWSEndpoint = fmt.Sprintf("wss://%s:%d", localIPAddress, tcPorts.WS)
 
 			// wait for TC
 			Eventually(func() error {
-				resp, err := http.Get(tcHTTPEndpoint)
+				resp, err := httpClient.Get(tcHTTPEndpoint)
 				if err == nil {
 					resp.Body.Close()
 				}
@@ -113,7 +120,9 @@ var _ = Describe("TrafficController for v1 messages", func() {
 				)
 
 				BeforeEach(func() {
-					client = consumer.New(tcWSEndpoint, &tls.Config{}, nil)
+					client = consumer.New(tcWSEndpoint, &tls.Config{
+						InsecureSkipVerify: true,
+					}, nil)
 					messages, errors = client.StreamWithoutReconnect(APP_ID, AUTH_TOKEN)
 				})
 
@@ -156,7 +165,9 @@ var _ = Describe("TrafficController for v1 messages", func() {
 				)
 
 				It("passes messages through for every app for uaa admins", func() {
-					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
+					client := consumer.New(tcWSEndpoint, &tls.Config{
+						InsecureSkipVerify: true,
+					}, nil)
 					defer client.Close()
 					messages, errors = client.FirehoseWithoutReconnect(SUBSCRIPTION_ID, AUTH_TOKEN)
 
@@ -185,7 +196,9 @@ var _ = Describe("TrafficController for v1 messages", func() {
 		Describe("LogCache API Paths", func() {
 			Context("Recent", func() {
 				It("returns a multi-part HTTP response with all recent messages", func() {
-					client := consumer.New(tcWSEndpoint, &tls.Config{}, nil)
+					client := consumer.New(tcWSEndpoint, &tls.Config{
+						InsecureSkipVerify: true,
+					}, nil)
 
 					Eventually(func() int {
 						messages, err := client.RecentLogs("efe5c422-e8a7-42c2-a52b-98bffd8d6a07", "bearer iAmAnAdmin")
@@ -203,8 +216,8 @@ var _ = Describe("TrafficController for v1 messages", func() {
 
 		Context("SetCookie", func() {
 			It("sets the desired cookie on the response", func() {
-				response, err := http.PostForm(
-					fmt.Sprintf("http://%s:%d/set-cookie",
+				response, err := httpClient.PostForm(
+					fmt.Sprintf("https://%s:%d/set-cookie",
 						localIPAddress,
 						wsPort,
 					),

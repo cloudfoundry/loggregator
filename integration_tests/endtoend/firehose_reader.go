@@ -72,7 +72,7 @@ func (r *FirehoseReader) Close() {
 
 func initiateFirehoseConnection(tcPort int) (*consumer.Consumer, <-chan *events.Envelope) {
 	localIP := "127.0.0.1"
-	url := fmt.Sprintf("ws://%s:%d", localIP, tcPort)
+	url := fmt.Sprintf("wss://%s:%d", localIP, tcPort)
 	firehoseConnection := consumer.New(url, &tls.Config{InsecureSkipVerify: true}, nil)
 	msgChan, _ := firehoseConnection.Firehose("uniqueId", "")
 	return firehoseConnection, msgChan
