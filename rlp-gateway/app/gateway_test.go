@@ -118,9 +118,9 @@ var _ = Describe("Gateway", func() {
 			defer gateway.Stop()
 
 			client := newTestClient()
-			Expect(func() {
-				client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef")
-			}).To(Panic())
+			resp, err := client.open("http://" + gateway.Addr() + "/v2/read?log&source_id=deadbeef")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 		})
 	})
 
