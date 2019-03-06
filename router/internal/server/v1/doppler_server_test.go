@@ -151,7 +151,7 @@ var _ = Describe("v1 doppler server", func() {
 				Eventually(mockRegistrar.registerSetter).ShouldNot(BeNil())
 
 				setter := mockRegistrar.registerSetter()
-				for i := 0; i < 1002; i++ {
+				for i := 0; i < 1500; i++ {
 					setter.Set([]byte("some-data-0"))
 				}
 
