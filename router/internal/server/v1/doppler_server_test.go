@@ -10,7 +10,7 @@ import (
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/metricemitter/testhelper"
 	"code.cloudfoundry.org/loggregator/plumbing"
-	v1 "code.cloudfoundry.org/loggregator/router/internal/server/v1"
+	"code.cloudfoundry.org/loggregator/router/internal/server/v1"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
@@ -143,6 +143,21 @@ var _ = Describe("v1 doppler server", func() {
 				Eventually(func() float64 {
 					return healthRegistrar.Get("subscriptionCount")
 				}).Should(Equal(0.0))
+			})
+
+			It("emits a metric for the egress dropped", func() {
+				_, err := dopplerClient.Subscribe(context.TODO(), subscribeRequest)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(mockRegistrar.registerSetter).ShouldNot(BeNil())
+
+				setter := mockRegistrar.registerSetter()
+				for i := 0; i < 1002; i++ {
+					setter.Set([]byte("some-data-0"))
+				}
+
+				Eventually(func() float64 {
+					return metricClient.GetValue("egressDropped")
+				}).Should(Equal(float64(1000)))
 			})
 		})
 

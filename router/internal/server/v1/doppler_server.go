@@ -1,11 +1,10 @@
 package v1
 
 import (
-	"log"
 	"sync/atomic"
 	"time"
 
-	batching "code.cloudfoundry.org/go-batching"
+	"code.cloudfoundry.org/go-batching"
 	"code.cloudfoundry.org/loggregator/diodes"
 	"code.cloudfoundry.org/loggregator/metricemitter"
 	"code.cloudfoundry.org/loggregator/plumbing"
@@ -40,6 +39,7 @@ type DopplerServer struct {
 	registrar           Registrar
 	envelopeStore       EnvelopeStore
 	egressMetric        *metricemitter.Counter
+	egressDroppedMetric *metricemitter.Gauge
 	subscriptionsMetric *metricemitter.Gauge
 	health              HealthRegistrar
 	batchInterval       time.Duration
@@ -54,6 +54,7 @@ type sender interface {
 // MetricClient creates new CounterMetrics to be emitted periodically.
 type MetricClient interface {
 	NewCounter(name string, opts ...metricemitter.MetricOption) *metricemitter.Counter
+	NewGauge(name, unit string, opts ...metricemitter.MetricOption) *metricemitter.Gauge
 }
 
 // NewDopplerServer creates a new DopplerServer.
@@ -72,10 +73,15 @@ func NewDopplerServer(
 		metricemitter.WithVersion(2, 0),
 	)
 
+	egressDroppedMetric := metricClient.NewGauge("egressDropped", "envelope",
+		metricemitter.WithVersion(2, 0),
+	)
+
 	m := &DopplerServer{
 		registrar:           registrar,
 		envelopeStore:       envelopeStore,
 		egressMetric:        egressMetric,
+		egressDroppedMetric: egressDroppedMetric,
 		subscriptionsMetric: subscriptionsMetric,
 		health:              health,
 		batchInterval:       batchInterval,
@@ -212,7 +218,7 @@ func (m *DopplerServer) sendBatchData(req *plumbing.SubscriptionRequest, sender 
 
 // Alert logs dropped message counts to stderr.
 func (m *DopplerServer) Alert(missed int) {
-	log.Printf("Dropped (egress) %d envelopes", missed)
+	m.egressDroppedMetric.Increment(float64(missed))
 }
 
 func (m *DopplerServer) monitorContext(ctx context.Context, done *int64) {
