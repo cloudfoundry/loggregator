@@ -22,6 +22,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				nil,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				nil,
 				time.Millisecond,
@@ -43,6 +44,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Millisecond,
@@ -65,6 +67,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Hour,
@@ -90,6 +93,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Millisecond,
@@ -110,6 +114,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Millisecond,
@@ -130,6 +135,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Millisecond,
@@ -150,6 +156,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Millisecond,
@@ -175,6 +182,7 @@ var _ = Describe("EgressServer", func() {
 			server := v2.NewEgressServer(
 				subscriber,
 				testhelper.NewMetricClient(),
+				&metricemitter.Counter{},
 				subscriptionsMetric,
 				healthRegistrar,
 				time.Millisecond,
@@ -210,10 +218,12 @@ var _ = Describe("EgressServer", func() {
 			spyReceiver := &spyBatchReceiver{
 				_context: context.Background(),
 			}
+
 			subscriber := &spySubscriber{}
 			server := v2.NewEgressServer(
 				subscriber,
 				metricClient,
+				&metricemitter.Counter{},
 				&metricemitter.Gauge{},
 				healthRegistrar,
 				time.Millisecond,
@@ -225,8 +235,56 @@ var _ = Describe("EgressServer", func() {
 				return metricClient.GetDelta("egress")
 			}).Should(BeNumerically(">", 1))
 		})
+
+		It("emits a metric for the number of envelopes dropped", func() {
+			metricClient := testhelper.NewMetricClient()
+			healthRegistrar := newSpyHealthRegistrar()
+			subscriber := &spySubscriber{
+				wait: time.Millisecond,
+			}
+
+			egressDropped := &metricemitter.Counter{}
+
+			server := v2.NewEgressServer(
+				subscriber,
+				metricClient,
+				egressDropped,
+				&metricemitter.Gauge{},
+				healthRegistrar,
+				10*time.Second,
+				10,
+			)
+
+			br := newSlowBatchReciever(100 * time.Millisecond)
+
+			go server.BatchedReceiver(&loggregator_v2.EgressBatchRequest{}, br)
+
+			Eventually(
+				egressDropped.GetDelta,
+				10).Should(BeNumerically(">", 1))
+		})
 	})
 })
+
+type slowBatchReceiver struct {
+	grpc.ServerStream
+	sendDelay time.Duration
+}
+
+func newSlowBatchReciever(sendDelay time.Duration) *slowBatchReceiver {
+	return &slowBatchReceiver{
+		sendDelay: sendDelay,
+	}
+}
+
+func (s *slowBatchReceiver) Send(batch *loggregator_v2.EnvelopeBatch) error {
+	time.Sleep(s.sendDelay)
+	return nil
+}
+
+func (s *slowBatchReceiver) Context() context.Context {
+	return context.Background()
+}
 
 type spyBatchReceiver struct {
 	grpc.ServerStream

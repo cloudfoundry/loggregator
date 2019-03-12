@@ -39,7 +39,7 @@ type DopplerServer struct {
 	registrar           Registrar
 	envelopeStore       EnvelopeStore
 	egressMetric        *metricemitter.Counter
-	egressDroppedMetric *metricemitter.Gauge
+	egressDropped       *metricemitter.Counter
 	subscriptionsMetric *metricemitter.Gauge
 	health              HealthRegistrar
 	batchInterval       time.Duration
@@ -62,6 +62,7 @@ func NewDopplerServer(
 	registrar Registrar,
 	envelopeStore EnvelopeStore,
 	metricClient MetricClient,
+	droppedMetric *metricemitter.Counter,
 	subscriptionsMetric *metricemitter.Gauge,
 	health HealthRegistrar,
 	batchInterval time.Duration,
@@ -73,15 +74,11 @@ func NewDopplerServer(
 		metricemitter.WithVersion(2, 0),
 	)
 
-	egressDroppedMetric := metricClient.NewGauge("egressDropped", "envelope",
-		metricemitter.WithVersion(2, 0),
-	)
-
 	m := &DopplerServer{
 		registrar:           registrar,
 		envelopeStore:       envelopeStore,
 		egressMetric:        egressMetric,
-		egressDroppedMetric: egressDroppedMetric,
+		egressDropped:       droppedMetric,
 		subscriptionsMetric: subscriptionsMetric,
 		health:              health,
 		batchInterval:       batchInterval,
@@ -218,7 +215,7 @@ func (m *DopplerServer) sendBatchData(req *plumbing.SubscriptionRequest, sender 
 
 // Alert logs dropped message counts to stderr.
 func (m *DopplerServer) Alert(missed int) {
-	m.egressDroppedMetric.Increment(float64(missed))
+	m.egressDropped.Increment(uint64(missed))
 }
 
 func (m *DopplerServer) monitorContext(ctx context.Context, done *int64) {

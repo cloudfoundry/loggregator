@@ -119,26 +119,34 @@ func (d *Router) Start() {
 
 	// metric-documentation-v2: (loggregator.doppler.dropped) Number of
 	// envelopes dropped by the diode inbound from metron
-	droppedMetric := metricClient.NewCounter("dropped",
+	ingressDropped := metricClient.NewCounter("dropped",
 		metricemitter.WithVersion(2, 0),
 		metricemitter.WithTags(map[string]string{"direction": "ingress"}),
 	)
+
+	// metric-documentation-v2: (loggregator.doppler.dropped) Number of
+	// envelopes dropped by the outbound diode to subscribers
+	droppedEgress := metricClient.NewCounter("dropped",
+		metricemitter.WithVersion(2, 0),
+		metricemitter.WithTags(map[string]string{"direction": "egress"}),
+	)
+
 	// metric-documentation-v2: (loggregator.doppler.ingress) Number of received
 	// envelopes from Metron on Doppler's v2 gRPC server
-	ingressMetric := metricClient.NewCounter("ingress",
+	ingress := metricClient.NewCounter("ingress",
 		metricemitter.WithVersion(2, 0),
 	)
 
 	v1Buf := diodes.NewManyToOneEnvelope(10000, gendiodes.AlertFunc(func(missed int) {
 		log.Printf("Dropped %d envelopes (v1 buffer)", missed)
 
-		droppedMetric.Increment(uint64(missed))
+		ingressDropped.Increment(uint64(missed))
 	}))
 
 	v2Buf := diodes.NewManyToOneEnvelopeV2(10000, gendiodes.AlertFunc(func(missed int) {
 		log.Printf("Dropped %d envelopes (v2 buffer)", missed)
 
-		droppedMetric.Increment(uint64(missed))
+		ingressDropped.Increment(uint64(missed))
 	}))
 
 	// metric-documentation-v2: (loggregator.doppler.subscriptions) Number of
@@ -150,7 +158,7 @@ func (d *Router) Start() {
 	v1Ingress := v1.NewIngestorServer(
 		v1Buf,
 		v2Buf,
-		ingressMetric,
+		ingress,
 		healthRegistrar,
 	)
 	v1Router := v1.NewRouter()
@@ -158,6 +166,7 @@ func (d *Router) Start() {
 		v1Router,
 		sinkManager,
 		metricClient,
+		droppedEgress,
 		subscriptionsMetric,
 		healthRegistrar,
 		100*time.Millisecond,
@@ -166,13 +175,14 @@ func (d *Router) Start() {
 	v2Ingress := v2.NewIngressServer(
 		v1Buf,
 		v2Buf,
-		ingressMetric,
+		ingress,
 		healthRegistrar,
 	)
 	v2PubSub := v2.NewPubSub()
 	v2Egress := v2.NewEgressServer(
 		v2PubSub,
 		metricClient,
+		droppedEgress,
 		subscriptionsMetric,
 		healthRegistrar,
 		100*time.Millisecond,

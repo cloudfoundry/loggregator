@@ -29,6 +29,7 @@ var _ = Describe("v1 doppler server", func() {
 		healthRegistrar *SpyHealthRegistrar
 
 		metricClient        *testhelper.SpyMetricClient
+		egressDropped       *metricemitter.Counter
 		subscriptionsMetric *metricemitter.Gauge
 
 		batchInterval time.Duration
@@ -51,6 +52,7 @@ var _ = Describe("v1 doppler server", func() {
 		batchInterval = 50 * time.Millisecond
 
 		metricClient = testhelper.NewMetricClient()
+		egressDropped = &metricemitter.Counter{}
 		subscriptionsMetric = metricClient.NewGauge("subs", "subscriptions")
 	})
 
@@ -67,6 +69,7 @@ var _ = Describe("v1 doppler server", func() {
 				batchInterval,
 				healthRegistrar,
 				metricClient,
+				egressDropped,
 				subscriptionsMetric,
 			)
 		})
@@ -155,9 +158,7 @@ var _ = Describe("v1 doppler server", func() {
 					setter.Set([]byte("some-data-0"))
 				}
 
-				Eventually(func() float64 {
-					return metricClient.GetValue("egressDropped")
-				}).Should(Equal(float64(1000)))
+				Eventually(egressDropped.GetDelta).Should(BeNumerically("==", 1000))
 			})
 		})
 
@@ -187,6 +188,7 @@ var _ = Describe("v1 doppler server", func() {
 					batchInterval,
 					healthRegistrar,
 					metricClient,
+					egressDropped,
 					subscriptionsMetric,
 				)
 
@@ -227,6 +229,7 @@ var _ = Describe("v1 doppler server", func() {
 					batchInterval,
 					healthRegistrar,
 					metricClient,
+					egressDropped,
 					subscriptionsMetric,
 				)
 
@@ -287,6 +290,7 @@ var _ = Describe("v1 doppler server", func() {
 						batchInterval,
 						healthRegistrar,
 						metricClient,
+						egressDropped,
 						subscriptionsMetric,
 					)
 
@@ -317,6 +321,7 @@ var _ = Describe("v1 doppler server", func() {
 						time.Hour,
 						healthRegistrar,
 						metricClient,
+						egressDropped,
 						subscriptionsMetric,
 					)
 
@@ -351,6 +356,7 @@ var _ = Describe("v1 doppler server", func() {
 				batchInterval,
 				healthRegistrar,
 				metricClient,
+				egressDropped,
 				subscriptionsMetric,
 			)
 
@@ -392,6 +398,7 @@ func dopplerSetup(
 	batchInterval time.Duration,
 	healthRegistrar *SpyHealthRegistrar,
 	metricClient *testhelper.SpyMetricClient,
+	droppedMetric *metricemitter.Counter,
 	subscriptionsMetric *metricemitter.Gauge,
 ) (
 	plumbing.DopplerClient,
@@ -403,6 +410,7 @@ func dopplerSetup(
 		mockRegistrar,
 		mockDataDumper,
 		metricClient,
+		droppedMetric,
 		subscriptionsMetric,
 		healthRegistrar,
 		batchInterval,

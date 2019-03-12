@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"log"
 	"time"
 
 	gendiode "code.cloudfoundry.org/go-diodes"
@@ -28,6 +27,7 @@ type DataSetter interface {
 type EgressServer struct {
 	subscriber          Subscriber
 	egressMetric        *metricemitter.Counter
+	droppedMetric		*metricemitter.Counter
 	subscriptionsMetric *metricemitter.Gauge
 	health              HealthRegistrar
 	batchInterval       time.Duration
@@ -38,6 +38,7 @@ type EgressServer struct {
 func NewEgressServer(
 	s Subscriber,
 	m MetricClient,
+	droppedMetric *metricemitter.Counter,
 	subscriptionsMetric *metricemitter.Gauge,
 	h HealthRegistrar,
 	batchInterval time.Duration,
@@ -52,6 +53,7 @@ func NewEgressServer(
 	return &EgressServer{
 		subscriber:          s,
 		egressMetric:        egressMetric,
+		droppedMetric: 		 droppedMetric,
 		subscriptionsMetric: subscriptionsMetric,
 		health:              h,
 		batchInterval:       batchInterval,
@@ -60,8 +62,8 @@ func NewEgressServer(
 }
 
 // Alert logs dropped message counts to stderr.
-func (*EgressServer) Alert(missed int) {
-	log.Printf("Dropped %d envelopes (v2 Egress Server)", missed)
+func (s *EgressServer) Alert(missed int) {
+	s.droppedMetric.Increment(uint64(missed))
 }
 
 // Receiver implements loggregator_v2.EgressServer.
