@@ -25,5 +25,6 @@ func (h SetCookieHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Value:  cookieValue,
 		Domain: h.domain,
 		Secure: true,
+		HttpOnly: true,
 	})
 }

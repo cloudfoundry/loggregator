@@ -176,7 +176,7 @@ var _ = Describe("DopplerProxy", func() {
 			dopplerProxy.ServeHTTP(recorder, req)
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(recorder.Header().Get("Set-Cookie")).To(Equal("cookie=monster; Domain=cookieDomain; Secure"))
+			Expect(recorder.Header().Get("Set-Cookie")).To(Equal("cookie=monster; Domain=cookieDomain; HttpOnly; Secure"))
 		})
 
 		It("returns a bad request if the form does not parse", func() {
