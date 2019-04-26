@@ -29,4 +29,15 @@ var _ = Describe("Tov1", func() {
 		conversion.ToV1(v2e)
 		Expect(v2e.Tags["foo"]).To(Equal("bar"))
 	})
+
+	It("sets the application id to nil when it's not parsable into a UUID", func() {
+		v2e := &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Timer{
+				Timer: &loggregator_v2.Timer{},
+			},
+			SourceId: "some-id",
+		}
+		v1e := conversion.ToV1(v2e)
+		Expect(v1e[0].HttpStartStop.ApplicationId).To(BeNil())
+	})
 })
