@@ -1,6 +1,6 @@
 package testservers
 
-//go:generate go get github.com/jteeuwen/go-bindata/...
+//go:generate go get github.com/loggregator/go-bindata/...
 //go:generate ../../../../scripts/generate-loggregator-certs no-bbs-ca
 //go:generate go-bindata -nocompress -pkg testservers -prefix loggregator-certs/ loggregator-certs/
 //go:generate rm -rf loggregator-certs
