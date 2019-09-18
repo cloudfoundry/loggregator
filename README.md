@@ -1,3 +1,5 @@
+**Archived** Now bundled in https://github.com/cloudfoundry/loggregator-release
+
 # Loggregator [![slack.cloudfoundry.org][slack-badge]][loggregator-slack] [![CI Badge][ci-badge]][ci-pipeline]
 
 Loggregator is the logging system used in [CloudFoundry][cf-deployment].
